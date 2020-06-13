@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 import numpy as _np
 
 def _cvt_coordinates_to_points(coords):
@@ -172,13 +173,53 @@ class Rectangle(BaseLayoutElement):
     
     def is_in(self, other): pass
     
-    def pad(self): pass
+    def pad(self, left=0, right=0, top=0, bottom=0, 
+                safe_mode=True):
+        
+        x_1 = self.x_1 - left
+        y_1 = self.y_1 - top
+        x_2 = self.x_2 + right
+        y_2 = self.y_2 + bottom
+        
+        if safe_mode:
+            x_1 = max(0, x_1)
+            y_1 = max(0, y_1)
+        
+        return self.__class__(x_1, y_1, x_2, y_2)
     
-    def shift(self): pass
+    def shift(self, shift_distance=0): 
+        
+        if not isinstance(shift_distance, Iterable):
+            shift_x = shift_distance
+            shift_y = shift_distance
+        else:
+            assert len(shift_distance) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            shift_x, shift_y = shift_distance
+            
+        x_1 = self.x_1 + shift_x
+        y_1 = self.y_1 + shift_y
+        x_2 = self.x_2 + shift_x
+        y_2 = self.y_2 + shift_y
+        return self.__class__(x_1, y_1, x_2, y_2)
     
-    def scale(self): pass
-    
-    def crop_image(self): pass
+    def scale(self, scale_factor=1):
+        
+        if not isinstance(scale_factor, Iterable):
+            scale_x = scale_factor
+            scale_y = scale_factor
+        else:
+            assert len(scale_factor) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            scale_x, scale_y = scale_factor
+        
+        x_1 = self.x_1 * scale_x
+        y_1 = self.y_1 * scale_y
+        x_2 = self.x_2 * scale_x
+        y_2 = self.y_2 * scale_y
+        return self.__class__(x_1, y_1, x_2, y_2)
+
+    def crop_image(self, image): 
+        x_1, y_1, x_2, y_2 = self.coordinates
+        return image[int(y_1):int(y_2), int(x_1):int(x_2)]
     
     def to_interval(self, axis='x', **kwargs):
         if axis == 'x':
