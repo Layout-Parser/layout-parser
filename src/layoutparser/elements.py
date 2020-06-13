@@ -70,6 +70,13 @@ class BaseLayoutElement(ABC):
         info_str = ', '.join([f'{key}={val}' for key, val in vars(self).items()])
         return f"{self.__class__.__name__}({info_str})"
 
+    def __eq__(self, other):
+        
+        if other.__class__ is not self.__class__:
+            return False
+        
+        return vars(self) == vars(other)
+
 
 class Interval(BaseLayoutElement):
 
