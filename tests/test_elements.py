@@ -14,6 +14,14 @@ def test_rectangle():
     r = Rectangle(1, 2, 3, 4)
     r.to_interval()
     r.to_quadrilateral()
+    assert r.pad(left=1, right=5, top=2, bottom=4) == Rectangle(0, 0, 8, 8)
+    assert r.shift([1,2]) == Rectangle(2, 4, 4, 6)
+    assert r.shift(1) == Rectangle(2, 3, 4, 5)
+    assert r.scale([3,2]) == Rectangle(3, 4, 9, 8)
+    assert r.scale(2) == Rectangle(2, 4, 6, 8)
+    
+    img = np.random.randint(12, 24, (40,40))
+    r.crop_image(img).shape == (2, 2)
     
 def test_quadrilateral():
     
