@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 import numpy as _np
+from cv2 import getPerspectiveTransform as _getPerspectiveTransform
+from cv2 import warpPerspective as _warpPerspective
 
 def _cvt_coordinates_to_points(coords):
 
@@ -232,6 +234,7 @@ class Rectangle(BaseLayoutElement):
     def to_quadrilateral(self):
         return Quadrilateral(self.points)
 
+
 class Quadrilateral(BaseLayoutElement):
     
     def __init__(self, points, width=None, height=None):
@@ -244,10 +247,14 @@ class Quadrilateral(BaseLayoutElement):
         
     @property
     def height(self):
+        if self._height is not None:
+            return self._height
         return self.points[:,1].max() - self.points[:,1].min()
     
     @property
     def width(self):
+        if self._width is not None:
+            return self._width
         return self.points[:,0].max() - self.points[:,0].min()
      
     @property
@@ -266,19 +273,75 @@ class Quadrilateral(BaseLayoutElement):
     def center(self):
         return tuple(self.points.mean(axis=0).tolist())
     
+    @property
+    def mapped_rectangle_points(self):
+
+        x_map = {0:0, 1:0, 2:self.width, 3:self.width}
+        y_map = {0:0, 1:0, 2:self.height, 3:self.height}
+
+        return self.map_to_points_ordering(x_map, y_map)
+    
+    @property
+    def perspective_matrix(self):
+        return _getPerspectiveTransform(self.points.astype('float32'),
+                                        self.mapped_rectangle_points.astype('float32'))
+    
+    def map_to_points_ordering(self, x_map, y_map):
+        
+        points_ordering = self.points.argsort(axis=0).argsort(axis=0)
+        # Ref: https://github.com/numpy/numpy/issues/8757#issuecomment-355126992
+        
+        return _np.vstack([
+                    _np.vectorize(x_map.get)(points_ordering[:,0]),
+                    _np.vectorize(y_map.get)(points_ordering[:,1])
+                ]).T
+    
     def condition_on(self, other): pass
     
     def relative_to(self, other): pass
     
     def is_in(self, other): pass
     
-    def pad(self): pass
-    
-    def shift(self): pass
-    
-    def scale(self): pass
-    
-    def crop_image(self): pass
+    def pad(self, left=0, right=0, top=0, bottom=0, 
+                safe_mode=True):
+        
+        x_map = {0:-left,  1:-left,  2:right,  3:right}
+        y_map = {0:-top,   1:-top,   2:bottom, 3:bottom}
+        
+        padding_mat  = self.map_to_points_ordering(x_map, y_map)
+        
+        points = self.points + padding_mat
+        if safe_mode:
+            points = _np.maximum(points, 0)
+        
+        return self.__class__(points)
+
+    def shift(self, shift_distance=0):
+        
+        if not isinstance(shift_distance, Iterable):
+            shift_mat = [shift_distance, shift_distance]
+        else:
+            assert len(shift_distance) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            shift_mat = shift_distance
+        
+        points = self.points + _np.array(shift_mat)
+        
+        return self.__class__(points)
+        
+    def scale(self, scale_factor=1):
+        
+        if not isinstance(scale_factor, Iterable):
+            scale_mat = [scale_factor, scale_factor]
+        else:
+            assert len(scale_factor) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            scale_mat = scale_factor
+        
+        points = self.points * _np.array(scale_mat)    
+
+        return self.__class__(points)
+
+    def crop_image(self, image):
+        return _warpPerspective(image, self.perspective_matrix, (int(self.width), int(self.height)))
     
     def to_interval(self, axis='x', **kwargs):
 
@@ -292,3 +355,13 @@ class Quadrilateral(BaseLayoutElement):
     
     def to_rectangle(self):
         return Rectangle(*self.coordinates)
+    
+    def __eq__(self, other):
+        if other.__class__ is not self.__class__:
+            return False
+        return _np.isclose(self.points, other.points).all()
+    
+    def __repr__(self):
+        keys = ['points', 'width', 'height']
+        info_str = ', '.join([f'{key}={getattr(self, key)}' for key in keys])
+        return f"{self.__class__.__name__}({info_str})"

@@ -25,6 +25,19 @@ def test_rectangle():
     
 def test_quadrilateral():
     
-    q = Quadrilateral(np.array([[1, 2], [3, 4], [5,6], [7,8]]))
+    points = np.array([[2, 2], [6, 2], [6,7], [2,6]])
+    q = Quadrilateral(points)
     q.to_interval()
     q.to_rectangle()
+    assert q.shift(1) == Quadrilateral(points + 1)
+    assert q.shift([1,2]) == Quadrilateral(points + np.array([1,2]))
+    assert q.scale(2) == Quadrilateral(points * 2)
+    assert q.scale([3,2]) == Quadrilateral(points * np.array([3,2]))
+    assert q.pad(left=1, top=2, bottom=4) == Quadrilateral(np.array([[1, 0], [6, 0], [6, 11], [1, 10]]))
+    assert (q.mapped_rectangle_points == np.array([[0,0],[4,0],[4,5],[0,5]])).all()
+
+    points = np.array([[2, 2], [6, 2], [6,5], [2,5]])
+    q = Quadrilateral(points)
+    img = np.random.randint(2, 24, (30, 20)).astype('uint8')
+    img[2:5, 2:6] = 0
+    assert np.unique(q.crop_image(img)) == np.array([0])
