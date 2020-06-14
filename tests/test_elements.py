@@ -3,10 +3,10 @@ import numpy as np
 
 def test_interval():
     
-    i = Interval(1, 2, axis='y', img_height=30, img_width=400)
+    i = Interval(1, 2, axis='y', canvas_height=30, canvas_width=400)
     i.to_rectangle()
     i.to_quadrilateral()
-    assert i.shift(1) == Interval(2, 3, axis='y', img_height=30, img_width=400)
+    assert i.shift(1) == Interval(2, 3, axis='y', canvas_height=30, canvas_width=400)
     
     i = Interval(1, 2, axis='x')
     assert i.shift([1,2]) == Interval(2, 3, axis='x')

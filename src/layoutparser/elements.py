@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from copy import copy
 import warnings
 import numpy as _np
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
@@ -13,6 +14,13 @@ def _cvt_coordinates_to_points(coords):
                    [x_2, y_2], # Bottom Right
                    [x_1, y_2], # Bottom Left
                   ])
+
+def _cvt_points_to_coordinates(points):
+    x_1 = points[:,0].min()
+    y_1 = points[:,1].min()
+    x_2 = points[:,0].max()
+    y_2 = points[:,1].max()
+    return (x_1, y_1, x_2, y_2)
 
 class BaseLayoutElement(ABC):
 
@@ -69,6 +77,20 @@ class BaseLayoutElement(ABC):
     @abstractmethod
     def crop_image(self): pass
     
+    def set(self, inplace=False, **kwargs):
+        
+        obj = self if inplace else copy(self)
+        var_dict = vars(obj)
+        for key, val in kwargs.items():
+            if key in var_dict:
+                var_dict[key] = val
+            elif f"_{key}" in var_dict:
+                var_dict[f"_{key}"] = val
+            else:
+                raise ValueError(f"Unkonwn attribute name: {key}")
+
+        return obj
+    
     def __repr__(self):
 
         info_str = ', '.join([f'{key}={val}' for key, val in vars(self).items()])
@@ -85,7 +107,7 @@ class BaseLayoutElement(ABC):
 class Interval(BaseLayoutElement):
 
     def __init__(self, start, end, axis='x',
-                    img_height=0, img_width=0):
+                    canvas_height=0, canvas_width=0):
         
         assert start<=end, f"Invalid input for start and end. Start must <= end."
         self.start = start
@@ -94,25 +116,25 @@ class Interval(BaseLayoutElement):
         assert axis in ['x', 'y'], f"Invalid axis {axis}. Axis must be in 'x' or 'y'"
         self.axis  = axis
         
-        self.img_height = img_height
-        self.img_width  = img_width
+        self.canvas_height = canvas_height
+        self.canvas_width  = canvas_width
     
     @property
     def height(self):
-        if self.axis == 'x': return self.img_height
+        if self.axis == 'x': return self.canvas_height
         else: return self.end - self.start
         
     @property
     def width(self):
-        if self.axis == 'y': return self.img_width
+        if self.axis == 'y': return self.canvas_width
         else: return self.end - self.start
 
     @property
     def coordinates(self):
         if self.axis == 'x':
-            coords = (self.start, 0, self.end, self.img_height)
+            coords = (self.start, 0, self.end, self.canvas_height)
         else:
-            coords = (0, self.start, self.img_width, self.end)
+            coords = (0, self.start, self.canvas_width, self.end)
         
         return coords
     
@@ -120,8 +142,20 @@ class Interval(BaseLayoutElement):
     def points(self):
         return _cvt_coordinates_to_points(self.coordinates)
     
-    def condition_on(self, other): pass
-    
+    @property
+    def center(self): 
+        return (self.start + self.end) / 2.
+
+    def put_on_canvas(self, canvas):
+        if isinstance(canvas, _np.ndarray):
+            h, w = canvas.shape[:2]
+        elif isinstance(canvas, BaseLayoutElement):
+            h, w = canvas.height, canvas.width
+        else:
+            raise NotImplementedError
+        
+        return self.set(canvas_height=h, canvas_width=w)
+
     def relative_to(self, other): pass
     
     def is_in(self, other): pass
@@ -142,8 +176,7 @@ class Interval(BaseLayoutElement):
         if safe_mode:
             start = max(0, start)
         
-        return self.__class__(start, end, axis=self.axis, 
-                              img_height=self.img_height, img_width=self.img_width)
+        return self.set(start=start, end=end)
 
     def shift(self, shift_distance): 
         
@@ -154,8 +187,7 @@ class Interval(BaseLayoutElement):
 
         start = self.start + shift_distance
         end   = self.end   + shift_distance
-        return self.__class__(start, end, axis=self.axis, 
-                              img_height=self.img_height, img_width=self.img_width)
+        return self.set(start=start, end=end)
         
     def scale(self, scale_factor): 
         
@@ -166,14 +198,10 @@ class Interval(BaseLayoutElement):
             
         start = self.start * scale_factor
         end   = self.end   * scale_factor
-        return self.__class__(start, end, axis=self.axis, 
-                              img_height=self.img_height, img_width=self.img_width)
+        return self.set(start=start, end=end)
 
     def crop_image(self, image): 
-        tmp = self.img_height, self.img_width
-        self.img_height, self.img_width = image.shape[:2]
-        x_1, y_1, x_2, y_2 = self.coordinates
-        self.img_height, self.img_width = tmp
+        x_1, y_1, x_2, y_2 = self.put_on_canvas(image).coordinates
         return image[int(y_1):int(y_2), int(x_1):int(x_2)]
     
     def to_rectangle(self): 
@@ -280,7 +308,7 @@ class Rectangle(BaseLayoutElement):
 
 class Quadrilateral(BaseLayoutElement):
     
-    def __init__(self, points, width=None, height=None):
+    def __init__(self, points, height=None, width=None):
         
         assert isinstance(points, _np.ndarray), f" Invalid input: points must be a numpy array"
         
@@ -302,11 +330,7 @@ class Quadrilateral(BaseLayoutElement):
      
     @property
     def coordinates(self):
-        x_1 = self.points[:,0].min()
-        y_1 = self.points[:,1].min()
-        x_2 = self.points[:,0].max()
-        y_2 = self.points[:,1].max()
-        return (x_1, y_1, x_2, y_2)
+        return _cvt_points_to_coordinates(self.points)
     
     @property
     def points(self):
@@ -357,7 +381,7 @@ class Quadrilateral(BaseLayoutElement):
         if safe_mode:
             points = _np.maximum(points, 0)
         
-        return self.__class__(points)
+        return self.set(points=points)
 
     def shift(self, shift_distance=0):
         
@@ -369,7 +393,7 @@ class Quadrilateral(BaseLayoutElement):
         
         points = self.points + _np.array(shift_mat)
         
-        return self.__class__(points)
+        return self.set(points=points)
         
     def scale(self, scale_factor=1):
         
@@ -381,7 +405,7 @@ class Quadrilateral(BaseLayoutElement):
         
         points = self.points * _np.array(scale_mat)    
 
-        return self.__class__(points)
+        return self.set(points=points)
 
     def crop_image(self, image):
         return _warpPerspective(image, self.perspective_matrix, (int(self.width), int(self.height)))
