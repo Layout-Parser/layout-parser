@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+import warnings
 import numpy as _np
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
@@ -125,13 +126,55 @@ class Interval(BaseLayoutElement):
     
     def is_in(self, other): pass
     
-    def pad(self): pass
-    
-    def shift(self): pass
-    
-    def scale(self): pass
-    
-    def crop_image(self): pass
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
+        
+        if self.axis == 'x':
+            start = self.start - left
+            end   = self.end   + right
+            if top or bottom:
+                warnings.warn(f"Invalid padding top/bottom for an x axis {self.__class__.__name__}")
+        else:
+            start = self.start - top
+            end   = self.end   + bottom
+            if left or right:
+                warnings.warn(f"Invalid padding right/left for a y axis {self.__class__.__name__}")
+                
+        if safe_mode:
+            start = max(0, start)
+        
+        return self.__class__(start, end, axis=self.axis, 
+                              img_height=self.img_height, img_width=self.img_width)
+
+    def shift(self, shift_distance): 
+        
+        if isinstance(shift_distance, Iterable):        
+            shift_distance = shift_distance[0] if self.axis == 'x' \
+                                else shift_distance[1]
+            warnings.warn(f"Input shift for multiple axes. Only use the distance for the {self.axis} axis")
+
+        start = self.start + shift_distance
+        end   = self.end   + shift_distance
+        return self.__class__(start, end, axis=self.axis, 
+                              img_height=self.img_height, img_width=self.img_width)
+        
+    def scale(self, scale_factor): 
+        
+        if isinstance(scale_factor, Iterable):        
+            scale_factor = scale_factor[0] if self.axis == 'x' \
+                                else scale_factor[1]
+            warnings.warn(f"Input scale for multiple axes. Only use the factor for the {self.axis} axis")
+            
+        start = self.start * scale_factor
+        end   = self.end   * scale_factor
+        return self.__class__(start, end, axis=self.axis, 
+                              img_height=self.img_height, img_width=self.img_width)
+
+    def crop_image(self, image): 
+        tmp = self.img_height, self.img_width
+        self.img_height, self.img_width = image.shape[:2]
+        x_1, y_1, x_2, y_2 = self.coordinates
+        self.img_height, self.img_width = tmp
+        return image[int(y_1):int(y_2), int(x_1):int(x_2)]
     
     def to_rectangle(self): 
         return Rectangle(*self.coordinates)

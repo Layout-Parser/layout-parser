@@ -3,11 +3,21 @@ import numpy as np
 
 def test_interval():
     
-    Interval(1, 2, axis='x')
-    Interval(1, 2, axis='y')
     i = Interval(1, 2, axis='y', img_height=30, img_width=400)
     i.to_rectangle()
     i.to_quadrilateral()
+    assert i.shift(1) == Interval(2, 3, axis='y', img_height=30, img_width=400)
+    
+    i = Interval(1, 2, axis='x')
+    assert i.shift([1,2]) == Interval(2, 3, axis='x')
+    assert i.scale([2,1]) == Interval(2, 4, axis='x')
+    assert i.pad(left=10, right=20) == Interval(0, 22)  # Test the safe_mode
+    assert i.pad(left=10, right=20, safe_mode=False) == Interval(-9, 22) 
+
+    img = np.random.randint(12, 24, (40,40))
+    img[:, 10:20] = 0
+    i = Interval(5, 11, axis='x')
+    assert np.unique(i.crop_image(img)[:, -1]) == np.array([0])
     
 def test_rectangle():
     
