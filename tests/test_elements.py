@@ -1,4 +1,4 @@
-from layoutparser.elements import Interval, Rectangle, Quadrilateral
+from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock
 import numpy as np
 
 def test_interval():
@@ -113,3 +113,19 @@ def test_quadrilateral_relations():
     assert q.relative_to(i).condition_on(i) == q
     assert q.relative_to(r).condition_on(r) == q
     assert q.relative_to(q).condition_on(q) == q
+
+def test_textblock():
+        
+    i = Interval(4, 5, axis='y')
+    q = Quadrilateral(np.array([[2,2],[6,2],[6,7],[2,5]]))
+    r = Rectangle(3, 3, 5, 6)
+    
+    t = TextBlock(i, id=1, type=2, text="12")
+    assert t.relative_to(q).condition_on(q).block == i.put_on_canvas(q).to_quadrilateral()
+    t = TextBlock(r, id=1, type=2, parent="a")
+    assert t.relative_to(i).condition_on(i).block == r
+    t = TextBlock(q, id=1, type=2, parent="a")
+    assert t.relative_to(r).condition_on(r).block == q
+    
+    # Ensure the operations did not change the object itself
+    assert t == TextBlock(q, id=1, type=2, parent="a")

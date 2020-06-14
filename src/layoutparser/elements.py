@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from copy import copy
-import warnings
+from copy import copy, copy
+import warnings, functools
 import numpy as _np
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
@@ -45,6 +45,16 @@ def _vertice_in_polygon(vertice, polygon_points):
     return all([_np.linalg.det([e1, e2])>=0 for e1, e2 in zip(edges, edges[1:])])
     # If the points are ordered clockwise, the det should <=0 
     
+def mixin_textblock_meta(func):
+    @functools.wraps(func)
+    def wrap(self, *args, **kwargs):
+        out = func(self, *args, **kwargs)
+        if isinstance(out, BaseCoordElement):
+            self = copy(self)
+            self.block = out
+            return self
+    return wrap
+
 class BaseLayoutElement():
     
     def set(self, inplace=False, **kwargs):
@@ -694,3 +704,56 @@ class Quadrilateral(BaseCoordElement):
         keys = ['points', 'width', 'height']
         info_str = ', '.join([f'{key}={getattr(self, key)}' for key in keys])
         return f"{self.__class__.__name__}({info_str})"
+        
+
+class TextBlock(BaseLayoutElement):
+    
+    def __init__(self, block, text="",
+                    id=None, type=None, parent=None, next=None):
+        
+        assert isinstance(block, BaseLayoutElement)
+        self.block = block
+        
+        self.text  = text
+        self.id    = id
+        self.type  = type
+        self.parent= parent
+        self.next  = next
+
+    @property
+    def height(self): return self.block.height
+    
+    @property
+    def width(self): return self.block.width
+    
+    @property
+    def coordinates(self): return self.block.coordinates
+    
+    @property
+    def points(self): return self.block.points
+
+    @mixin_textblock_meta
+    def condition_on(self, other):
+        return self.block.condition_on(other)
+    
+    @mixin_textblock_meta
+    def relative_to(self, other):
+        return self.block.relative_to(other)
+    
+    def is_in(self, **kwargs):
+        return self.block.is_in(**kwargs)
+    
+    @mixin_textblock_meta
+    def shift(self, **kwargs):
+        return self.block.shift(**kwargs)
+    
+    @mixin_textblock_meta
+    def pad(self, **kwargs):
+        return self.block.pad(**kwargs)
+    
+    @mixin_textblock_meta
+    def scale(self, **kwargs):
+        return self.block.scale(**kwargs)
+    
+    def crop_image(self, image):
+        return self.block.crop_image(image)
