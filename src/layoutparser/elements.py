@@ -22,6 +22,29 @@ def _cvt_points_to_coordinates(points):
     y_2 = points[:,1].max()
     return (x_1, y_1, x_2, y_2)
 
+def _perspective_transformation(M, points, is_inv=False):
+
+    if is_inv:
+        M = _np.linalg.inv(M)
+
+    src_mid = _np.hstack([points, _np.ones((points.shape[0], 1))]).T # 3x4
+    dst_mid = _np.matmul(M, src_mid)
+
+    dst = (dst_mid/dst_mid[-1]).T[:,:2] # 4x2
+
+    return dst
+
+def _vertice_in_polygon(vertice, polygon_points):
+    # The polygon_points are ordered clockwise
+
+    # The implementation is based on the algorithm from
+    # https://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/
+    
+    points = polygon_points - vertice # shift the coordinates origin to the vertice
+    edges = _np.append(points, points[0:1,:], axis=0)
+    return all([_np.linalg.det([e1, e2])>=0 for e1, e2 in zip(edges, edges[1:])])
+    # If the points are ordered clockwise, the det should <=0 
+    
 class BaseLayoutElement(ABC):
 
     #######################################################################
@@ -156,9 +179,91 @@ class Interval(BaseLayoutElement):
         
         return self.set(canvas_height=h, canvas_width=w)
 
-    def relative_to(self, other): pass
-    
-    def is_in(self, other): pass
+    def condition_on(self, other): 
+
+        if isinstance(other, Interval):
+            if other.axis == self.axis:
+                d = other.start
+                return self.__class__(self.start + d, self.end + d, self.axis) # Reset the canvas size in the absolute coordinates
+            else:
+                return copy(self)
+            
+        elif isinstance(other, Rectangle):
+            
+            return (self
+                        .put_on_canvas(other)
+                        .to_rectangle()
+                        .condition_on(other)
+                    )
+            
+        elif isinstance(other, Quadrilateral):
+            
+            return ( self
+                        .put_on_canvas(other)
+                        .to_quadrilateral()
+                        .condition_on(other)
+                    )
+            
+        else: 
+            raise Exception(f"Invalid input type {other.__class__} for other")
+            
+    def relative_to(self, other): 
+        
+        if isinstance(other, Interval):
+            if other.axis == self.axis:
+                d = other.start
+                return self.__class__(self.start - d, self.end - d, self.axis) # Reset the canvas size in the absolute coordinates
+            else:
+                return copy(self)
+            
+        elif isinstance(other, Rectangle):
+            
+            return (self
+                        .put_on_canvas(other)
+                        .to_rectangle()
+                        .relative_to(other)
+                    )
+            
+        elif isinstance(other, Quadrilateral):
+            
+            return ( self
+                        .put_on_canvas(other)
+                        .to_quadrilateral()
+                        .relative_to(other)
+                    )
+            
+        else: 
+            raise Exception(f"Invalid input type {other.__class__} for other")
+        
+    def is_in(self, other, soft_margin={}, center=False):
+        
+        other = other.pad(**soft_margin)
+        
+        if isinstance(other, Interval):
+            if self.axis != other.axis:
+                return False
+            else:
+                if not center:
+                    return other.start <= self.start <= self.end <= other.end
+                else:
+                    return other.start <= self.center <= other.end
+
+        elif isinstance(other, Rectangle) or isinstance(other, Quadrilateral):
+            x_1, y_1, x_2, y_2 = other.coordinates
+            
+            if center:
+                if self.axis == 'x':
+                    return x_1 <= self.center <= x_2
+                else:
+                    return y_1 <= self.center <= y_2      
+            else:
+                if self.axis == 'x':
+                    return x_1 <= self.start <= self.end <= x_2
+                else:
+                    return y_1 <= self.start <= self.end <= y_2 
+        
+        else: 
+            raise Exception(f"Invalid input type {other.__class__} for other")
     
     def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
         
@@ -240,12 +345,92 @@ class Rectangle(BaseLayoutElement):
     def center(self):
         return (self.x_1 + self.x_2)/2., (self.y_1 + self.y_2)/2.
     
-    def condition_on(self, other): pass
-    
-    def relative_to(self, other): pass
-    
-    def is_in(self, other): pass
-    
+    def condition_on(self, other): 
+        
+        if isinstance(other, Interval):
+            if other.axis=='x':
+                dx, dy = other.start, 0
+            else:
+                dx, dy = 0, other.start
+                
+            return self.__class__(self.x_1 + dx, self.y_1 + dy, 
+                                  self.x_2 + dx, self.y_2 + dy)
+            
+        elif isinstance(other, Rectangle):
+            dx, dy, _, _ = other.coordinates
+            
+            return self.__class__(self.x_1 + dx, self.y_1 + dy, 
+                                  self.x_2 + dx, self.y_2 + dy)
+            
+        elif isinstance(other, Quadrilateral):
+            transformed_points = _perspective_transformation(other.perspective_matrix,
+                                              self.points, is_inv=True)
+
+            return other.__class__(transformed_points, self.height, self.width)
+        
+        else:
+            raise Exception(f"Invalid input type {other.__class__} for other")
+            
+    def relative_to(self, other):
+        if isinstance(other, Interval):
+            if other.axis=='x':
+                dx, dy = other.start, 0
+            else:
+                dx, dy = 0, other.start
+                
+            return self.__class__(self.x_1 - dx, self.y_1 - dy, 
+                                  self.x_2 - dx, self.y_2 - dy)
+            
+        elif isinstance(other, Rectangle):
+            dx, dy, _, _ = other.coordinates
+            
+            return self.__class__(self.x_1 - dx, self.y_1 - dy, 
+                                  self.x_2 - dx, self.y_2 - dy)
+            
+        elif isinstance(other, Quadrilateral):
+            transformed_points = _perspective_transformation(other.perspective_matrix,
+                                              self.points, is_inv=False)
+
+            return other.__class__(transformed_points, self.height, self.width)
+        
+        else: 
+            raise Exception(f"Invalid input type {other.__class__} for other")
+
+    def is_in(self, other, soft_margin={}, center=False):
+        
+        other = other.pad(**soft_margin)
+        
+        if isinstance(other, Interval):
+            if not center:
+                if other.axis=='x':
+                    start, end = self.x_1, self.x_2
+                else:
+                    start, end = self.y_1, self.y_2
+                return other.start <= start <= end <= other.end
+            else:
+                c = self.center[0] if other.axis=='x' else self.center[1]
+                return other.start <= c <= other.end
+
+        elif isinstance(other, Rectangle):
+            x_interval = other.to_interval(axis='x')
+            y_interval = other.to_interval(axis='y')
+            return self.is_in(x_interval, center=center) and \
+                    self.is_in(y_interval, center=center)
+
+        elif isinstance(other, Quadrilateral):
+            
+            if not center:
+                # This is equivalent to determine all the points of the 
+                # rectangle is in the quadrilateral. 
+                is_vertice_in = [_vertice_in_polygon(vertice, other.points) for vertice in self.points]
+                return all(is_vertice_in)
+            else:
+                center = _np.array(self.center)
+                return _vertice_in_polygon(center, other.points)
+        
+        else: 
+            raise Exception(f"Invalid input type {other.__class__} for other")
+        
     def pad(self, left=0, right=0, top=0, bottom=0, 
                 safe_mode=True):
         
@@ -363,12 +548,85 @@ class Quadrilateral(BaseLayoutElement):
                     _np.vectorize(y_map.get)(points_ordering[:,1])
                 ]).T
     
-    def condition_on(self, other): pass
-    
-    def relative_to(self, other): pass
-    
-    def is_in(self, other): pass
-    
+    def condition_on(self, other):
+        
+        if isinstance(other, Interval):
+            
+            if other.axis == 'x':
+                return self.shift([other.start, 0])
+            else:
+                return self.shift([0, other.start])
+        
+        elif isinstance(other, Rectangle):
+            
+            return self.shift([other.x_1, other.y_1])
+        
+        elif isinstance(other, Quadrilateral):
+            
+            transformed_points = _perspective_transformation(other.perspective_matrix,
+                                              self.points, is_inv=True)
+            return self.__class__(transformed_points, self.height, self.width)
+        
+        else:
+            raise Exception(f"Invalid input type {other.__class__} for other")
+        
+    def relative_to(self, other): 
+        
+        if isinstance(other, Interval):
+            
+            if other.axis == 'x':
+                return self.shift([-other.start, 0])
+            else:
+                return self.shift([0, -other.start])
+        
+        elif isinstance(other, Rectangle):
+            
+            return self.shift([-other.x_1, -other.y_1])
+        
+        elif isinstance(other, Quadrilateral):
+            
+            transformed_points = _perspective_transformation(other.perspective_matrix,
+                                              self.points, is_inv=False)
+            return self.__class__(transformed_points, self.height, self.width)
+        
+        else:
+            raise Exception(f"Invalid input type {other.__class__} for other")
+        
+    def is_in(self, other, soft_margin={}, center=False):
+        
+        other = other.pad(**soft_margin)
+        
+        if isinstance(other, Interval):
+            if not center:
+                if other.axis=='x':
+                    start, end = self.coordinates[0], self.coordinates[2]
+                else:
+                    start, end = self.coordinates[1], self.coordinates[3]
+                return other.start <= start <= end <= other.end
+            else:
+                c = self.center[0] if other.axis=='x' else self.center[1]
+                return other.start <= c <= other.end
+
+        elif isinstance(other, Rectangle):
+            x_interval = other.to_interval(axis='x')
+            y_interval = other.to_interval(axis='y')
+            return self.is_in(x_interval, center=center) and \
+                    self.is_in(y_interval, center=center)
+
+        elif isinstance(other, Quadrilateral):
+            
+            if not center:
+                # This is equivalent to determine all the points of the 
+                # rectangle is in the quadrilateral. 
+                is_vertice_in = [_vertice_in_polygon(vertice, other.points) for vertice in self.points]
+                return all(is_vertice_in)
+            else:
+                center = _np.array(self.center)
+                return _vertice_in_polygon(center, other.points)
+        
+        else: 
+            raise Exception(f"Invalid input type {other.__class__} for other")
+        
     def pad(self, left=0, right=0, top=0, bottom=0, 
                 safe_mode=True):
         

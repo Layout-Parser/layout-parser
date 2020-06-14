@@ -51,3 +51,65 @@ def test_quadrilateral():
     img = np.random.randint(2, 24, (30, 20)).astype('uint8')
     img[2:5, 2:6] = 0
     assert np.unique(q.crop_image(img)) == np.array([0])
+    
+def test_interval_relations():
+    
+    i = Interval(4, 5, axis='y')
+    r = Rectangle(3, 3, 5, 6)
+    q = Quadrilateral(np.array([[2,2],[6,2],[6,7],[2,5]]))
+    
+    assert i.is_in(i)
+    assert i.is_in(r)
+    assert i.is_in(q)
+    
+    # convert to absolute then convert back to relative
+    assert i.condition_on(i).relative_to(i) == i
+    assert i.condition_on(r).relative_to(r) == i.put_on_canvas(r).to_rectangle()
+    assert i.condition_on(q).relative_to(q) == i.put_on_canvas(q).to_quadrilateral()
+    
+    # convert to relative then convert back to absolute
+    assert i.relative_to(i).condition_on(i) == i
+    assert i.relative_to(r).condition_on(r) == i.put_on_canvas(r).to_rectangle()
+    assert i.relative_to(q).condition_on(q) == i.put_on_canvas(q).to_quadrilateral()
+ 
+def test_rectangle_relations():
+    
+    i = Interval(4, 5, axis='y')
+    q = Quadrilateral(np.array([[2,2],[6,2],[6,7],[2,5]]))
+    r = Rectangle(3, 3, 5, 6)
+    
+    assert not r.is_in(q)
+    assert r.is_in(q, soft_margin={"bottom":1})
+    assert r.is_in(q.to_rectangle())
+    assert r.is_in(q.to_interval())
+    
+    # convert to absolute then convert back to relative
+    assert r.condition_on(i).relative_to(i) == r
+    assert r.condition_on(r).relative_to(r) == r
+    assert r.condition_on(q).relative_to(q) == r.to_quadrilateral()
+    
+    # convert to relative then convert back to absolute
+    assert r.relative_to(i).condition_on(i) == r
+    assert r.relative_to(r).condition_on(r) == r    
+    assert r.relative_to(q).condition_on(q) == r.to_quadrilateral()
+    
+def test_quadrilateral_relations():
+    
+    i = Interval(4, 5, axis='y')
+    q = Quadrilateral(np.array([[2,2],[6,2],[6,7],[2,5]]))
+    r = Rectangle(3, 3, 5, 6)
+    
+    assert not q.is_in(r)
+    assert q.is_in(i, soft_margin={"top":2, "bottom":2})
+    assert q.is_in(r, soft_margin={"left":1, "top":1, "right":1,"bottom":1})
+    assert q.is_in(q)
+    
+    # convert to absolute then convert back to relative
+    assert q.condition_on(i).relative_to(i) == q
+    assert q.condition_on(r).relative_to(r) == q
+    assert q.condition_on(q).relative_to(q) == q
+    
+    # convert to relative then convert back to absolute
+    assert q.relative_to(i).condition_on(i) == q
+    assert q.relative_to(r).condition_on(r) == q
+    assert q.relative_to(q).condition_on(q) == q
