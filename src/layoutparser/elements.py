@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from copy import copy, copy
+from copy import copy, deepcopy
+from inspect import getmembers, isfunction
 import warnings, functools
 import numpy as _np
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
@@ -54,6 +55,25 @@ def mixin_textblock_meta(func):
             self.block = out
             return self
     return wrap
+
+def inherit_docstrings(cls=None, *, base_class=None):
+    
+    # Refer to https://stackoverflow.com/a/17393254
+    if cls is None:
+        return functools.partial(inherit_docstrings, base_class=base_class)
+   
+    for name, func in getmembers(cls, isfunction):
+        if func.__doc__: continue
+        if base_class == None:
+            for parent in cls.__mro__[1:]:
+                if hasattr(parent, name):
+                    func.__doc__ = getattr(parent, name).__doc__
+                    break
+        else:
+            if hasattr(base_class, name):
+                func.__doc__ = getattr(base_class, name).__doc__
+    
+    return cls
 
 class BaseLayoutElement():
     
@@ -141,6 +161,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     def crop_image(self, image): pass
     
 
+@inherit_docstrings
 class Interval(BaseCoordElement):
 
     def __init__(self, start, end, axis='x',
@@ -330,6 +351,7 @@ class Interval(BaseCoordElement):
         return Quadrilateral(self.points)
     
 
+@inherit_docstrings
 class Rectangle(BaseCoordElement):
     
     def __init__(self, x_1, y_1, x_2, y_2):
@@ -505,6 +527,7 @@ class Rectangle(BaseCoordElement):
         return Quadrilateral(self.points)
 
 
+@inherit_docstrings
 class Quadrilateral(BaseCoordElement):
     
     def __init__(self, points, height=None, width=None):
@@ -706,6 +729,7 @@ class Quadrilateral(BaseCoordElement):
         return f"{self.__class__.__name__}({info_str})"
         
 
+@inherit_docstrings(base_class=BaseCoordElement)
 class TextBlock(BaseLayoutElement):
     
     def __init__(self, block, text="",
