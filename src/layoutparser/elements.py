@@ -45,8 +45,37 @@ def _vertice_in_polygon(vertice, polygon_points):
     return all([_np.linalg.det([e1, e2])>=0 for e1, e2 in zip(edges, edges[1:])])
     # If the points are ordered clockwise, the det should <=0 
     
-class BaseLayoutElement(ABC):
+class BaseLayoutElement():
+    
+    def set(self, inplace=False, **kwargs):
+        
+        obj = self if inplace else copy(self)
+        var_dict = vars(obj)
+        for key, val in kwargs.items():
+            if key in var_dict:
+                var_dict[key] = val
+            elif f"_{key}" in var_dict:
+                var_dict[f"_{key}"] = val
+            else:
+                raise ValueError(f"Unknown attribute name: {key}")
 
+        return obj
+    
+    def __repr__(self):
+
+        info_str = ', '.join([f'{key}={val}' for key, val in vars(self).items()])
+        return f"{self.__class__.__name__}({info_str})"
+
+    def __eq__(self, other):
+        
+        if other.__class__ is not self.__class__:
+            return False
+        
+        return vars(self) == vars(other)
+
+
+class BaseCoordElement(ABC, BaseLayoutElement):
+    
     #######################################################################
     #########################  Layout Properties  #########################
     #######################################################################
@@ -72,62 +101,37 @@ class BaseLayoutElement(ABC):
     #######################################################################
     
     @abstractmethod
-    def condition_on(self): pass
+    def condition_on(self, other): pass
     
     @abstractmethod
-    def relative_to(self): pass
+    def relative_to(self, other): pass
     
     @abstractmethod
-    def is_in(self): pass
+    def is_in(self, other, soft_margin={}, center=False): pass
     
     #######################################################################
     ############### Geometric Operations (pad, shift, scale) ##############
     #######################################################################
     
     @abstractmethod
-    def pad(self): pass
+    def pad(self, left=0, right=0, top=0, bottom=0, 
+                safe_mode=True): pass
     
     @abstractmethod
-    def shift(self): pass
+    def shift(self, shift_distance=0): pass
     
     @abstractmethod
-    def scale(self): pass
+    def scale(self, scale_factor=1): pass
     
     #######################################################################
     ################################# MISC ################################
     #######################################################################
     
     @abstractmethod
-    def crop_image(self): pass
+    def crop_image(self, image): pass
     
-    def set(self, inplace=False, **kwargs):
-        
-        obj = self if inplace else copy(self)
-        var_dict = vars(obj)
-        for key, val in kwargs.items():
-            if key in var_dict:
-                var_dict[key] = val
-            elif f"_{key}" in var_dict:
-                var_dict[f"_{key}"] = val
-            else:
-                raise ValueError(f"Unkonwn attribute name: {key}")
 
-        return obj
-    
-    def __repr__(self):
-
-        info_str = ', '.join([f'{key}={val}' for key, val in vars(self).items()])
-        return f"{self.__class__.__name__}({info_str})"
-
-    def __eq__(self, other):
-        
-        if other.__class__ is not self.__class__:
-            return False
-        
-        return vars(self) == vars(other)
-
-
-class Interval(BaseLayoutElement):
+class Interval(BaseCoordElement):
 
     def __init__(self, start, end, axis='x',
                     canvas_height=0, canvas_width=0):
@@ -316,7 +320,7 @@ class Interval(BaseLayoutElement):
         return Quadrilateral(self.points)
     
 
-class Rectangle(BaseLayoutElement):
+class Rectangle(BaseCoordElement):
     
     def __init__(self, x_1, y_1, x_2, y_2):
         
@@ -491,7 +495,7 @@ class Rectangle(BaseLayoutElement):
         return Quadrilateral(self.points)
 
 
-class Quadrilateral(BaseLayoutElement):
+class Quadrilateral(BaseCoordElement):
     
     def __init__(self, points, height=None, width=None):
         
