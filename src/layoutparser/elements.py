@@ -75,6 +75,15 @@ def inherit_docstrings(cls=None, *, base_class=None):
     
     return cls
 
+def support_textblock(func):
+    @functools.wraps(func)
+    def wrap(self, other, *args, **kwargs):
+        if isinstance(other, TextBlock):
+            other = other.block
+        out = func(self, other, *args, **kwargs)
+        return out
+    return wrap
+
 class BaseLayoutElement():
     
     def set(self, inplace=False, **kwargs):
@@ -214,6 +223,7 @@ class Interval(BaseCoordElement):
         
         return self.set(canvas_height=h, canvas_width=w)
 
+    @support_textblock
     def condition_on(self, other): 
 
         if isinstance(other, Interval):
@@ -242,6 +252,7 @@ class Interval(BaseCoordElement):
         else: 
             raise Exception(f"Invalid input type {other.__class__} for other")
             
+    @support_textblock                
     def relative_to(self, other): 
         
         if isinstance(other, Interval):
@@ -270,6 +281,7 @@ class Interval(BaseCoordElement):
         else: 
             raise Exception(f"Invalid input type {other.__class__} for other")
         
+    @support_textblock
     def is_in(self, other, soft_margin={}, center=False):
         
         other = other.pad(**soft_margin)
@@ -381,6 +393,7 @@ class Rectangle(BaseCoordElement):
     def center(self):
         return (self.x_1 + self.x_2)/2., (self.y_1 + self.y_2)/2.
     
+    @support_textblock
     def condition_on(self, other): 
         
         if isinstance(other, Interval):
@@ -407,6 +420,7 @@ class Rectangle(BaseCoordElement):
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
             
+    @support_textblock        
     def relative_to(self, other):
         if isinstance(other, Interval):
             if other.axis=='x':
@@ -432,6 +446,7 @@ class Rectangle(BaseCoordElement):
         else: 
             raise Exception(f"Invalid input type {other.__class__} for other")
 
+    @support_textblock
     def is_in(self, other, soft_margin={}, center=False):
         
         other = other.pad(**soft_margin)
@@ -585,6 +600,7 @@ class Quadrilateral(BaseCoordElement):
                     _np.vectorize(y_map.get)(points_ordering[:,1])
                 ]).T
     
+    @support_textblock
     def condition_on(self, other):
         
         if isinstance(other, Interval):
@@ -607,6 +623,7 @@ class Quadrilateral(BaseCoordElement):
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
         
+    @support_textblock    
     def relative_to(self, other): 
         
         if isinstance(other, Interval):
@@ -629,6 +646,7 @@ class Quadrilateral(BaseCoordElement):
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
         
+    @support_textblock    
     def is_in(self, other, soft_margin={}, center=False):
         
         other = other.pad(**soft_margin)
@@ -735,7 +753,7 @@ class TextBlock(BaseLayoutElement):
     def __init__(self, block, text="",
                     id=None, type=None, parent=None, next=None):
         
-        assert isinstance(block, BaseLayoutElement)
+        assert isinstance(block, BaseCoordElement)
         self.block = block
         
         self.text  = text
@@ -764,8 +782,8 @@ class TextBlock(BaseLayoutElement):
     def relative_to(self, other):
         return self.block.relative_to(other)
     
-    def is_in(self, **kwargs):
-        return self.block.is_in(**kwargs)
+    def is_in(self, other, **kwargs):
+        return self.block.is_in(other, **kwargs)
     
     @mixin_textblock_meta
     def shift(self, **kwargs):

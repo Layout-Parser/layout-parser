@@ -129,3 +129,7 @@ def test_textblock():
     
     # Ensure the operations did not change the object itself
     assert t == TextBlock(q, id=1, type=2, parent="a")
+    t1 = TextBlock(q, id=1, type=2, parent="a")
+    t2 = TextBlock(i, id=1, type=2, text="12")
+    t1.relative_to(t2)
+    assert t2.is_in(t1)
