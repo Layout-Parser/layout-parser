@@ -1,0 +1,6 @@
+numpy
+opencv-python
+docutils==0.16
+Sphinx==3.0.0
+recommonmark==0.6.0
+sphinx_rtd_theme

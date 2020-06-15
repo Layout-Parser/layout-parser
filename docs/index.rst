@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to Layout Parser's documentation!
-================================
+================================================================
 
 .. toctree::
    :maxdepth: 2
