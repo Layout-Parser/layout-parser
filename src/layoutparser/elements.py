@@ -172,7 +172,23 @@ class BaseCoordElement(ABC, BaseLayoutElement):
 
 @inherit_docstrings
 class Interval(BaseCoordElement):
-
+    """
+    This class describes the coordinate system of an interval, a block defined by a pair of start and end point 
+    on the designated axis and same length as the base canvas on the other axis.
+    
+    Args:
+        start (:obj:`numeric`): 
+            The coordinate of the start point on the designated axis.
+        end (:obj:`numeric`): 
+            The end coordinate on the same axis as start.
+        axis (:obj:`str`, optional`, defaults to 'x'): 
+            The designated axis that the end points belong to.
+        canvas_height (:obj:`numeric`, `optional`, defaults to 0): 
+            The height of the canvas that the interval is on.
+        canvas_width (:obj:`numeric`, `optional`, defaults to 0): 
+            The width of the canvas that the interval is on.
+    """
+    
     def __init__(self, start, end, axis='x',
                     canvas_height=0, canvas_width=0):
         
@@ -188,16 +204,40 @@ class Interval(BaseCoordElement):
     
     @property
     def height(self):
+        """
+        Calculates the height of the interval. If the interval is along the x-axis, the height will be the 
+        height of the canvas, otherwise, it will be the difference between the start and end point.
+
+        Returns:
+            :obj:`numeric`: Output the numeric value of the height.
+        """
+        
         if self.axis == 'x': return self.canvas_height
         else: return self.end - self.start
         
     @property
     def width(self):
+        """
+        Calculates the width of the interval. If the interval is along the y-axis, the width will be the 
+        width of the canvas, otherwise, it will be the difference between the start and end point.
+
+        Returns:
+            :obj:`numeric`: Output the numeric value of the width.
+        """
+        
         if self.axis == 'y': return self.canvas_width
         else: return self.end - self.start
 
     @property
     def coordinates(self):
+        """
+        This method considers an interval as a rectangle and calculates the coordinates of the upper left 
+        and lower right corners to define the interval.
+
+        Returns:
+            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+        """
+        
         if self.axis == 'x':
             coords = (self.start, 0, self.end, self.canvas_height)
         else:
@@ -206,17 +246,32 @@ class Interval(BaseCoordElement):
         return coords
     
     @property
-    def points(self):
+    def points(self):        
+        """
+        Returns the coordinates of all four corners of the interval in a clockwise fashion 
+        starting from the upper left. 
+        
+        Returns:
+            :obj:`Numpy array`: A Numpy array of size 4x2 containing the coordinates.
+        """
+        
         return _cvt_coordinates_to_points(self.coordinates)
     
     @property
     def center(self): 
+        """
+        Calculates the mid-point between the start and end point.
+
+        Returns:
+            :obj:`Tuple(numeric)`: Returns of coordinate of the center.
+        """
+        
         return (self.start + self.end) / 2.
 
     def put_on_canvas(self, canvas):
         if isinstance(canvas, _np.ndarray):
             h, w = canvas.shape[:2]
-        elif isinstance(canvas, BaseLayoutElement):
+        elif isinstance(canvas, BaseCoordElement):
             h, w = canvas.height, canvas.width
         else:
             raise NotImplementedError
@@ -365,6 +420,25 @@ class Interval(BaseCoordElement):
 
 @inherit_docstrings
 class Rectangle(BaseCoordElement):
+    """
+    This class describes the coordinate system of an axial rectangle box using two points as indicated below::
+    
+            (x_1, y_1) ----
+            |             |
+            |             |
+            |             |
+            ---- (x_2, y_2)
+
+    Args:
+        x_1 (:obj:`numeric`): 
+            x coordinate on the horizontal axis of the upper left corner of the rectangle.
+        y_1 (:obj:`numeric`): 
+            y coordinate on the vertical axis of the upper left corner of the rectangle.
+        x_2 (:obj:`numeric`): 
+            x coordinate on the horizontal axis of the lower right corner of the rectangle.
+        y_2 (:obj:`numeric`): 
+            y coordinate on the vertical axis of the lower right corner of the rectangle.
+    """
     
     def __init__(self, x_1, y_1, x_2, y_2):
         
@@ -375,22 +449,58 @@ class Rectangle(BaseCoordElement):
         
     @property
     def height(self):
+        """
+        Calculates the height of the rectangle.
+
+        Returns:
+            :obj:`numeric`: Output the numeric value of the height.
+        """
+        
         return self.y_2 - self.y_1
     
     @property
     def width(self):
+        """
+        Calculates the width of the rectangle.
+
+        Returns:
+            :obj:`numeric`: Output the numeric value of the width.
+        """
+        
         return self.x_2 - self.x_1
      
     @property
     def coordinates(self):
+        """
+        Returns the coordinates of the two points that define the rectangle.
+
+        Returns:
+            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+        """
+        
         return (self.x_1, self.y_1, self.x_2, self.y_2)
     
     @property
     def points(self):
+        """
+        Returns the coordinates of all four corners of the rectangle in a clockwise fashion 
+        starting from the upper left. 
+        
+        Returns:
+            :obj:`Numpy array`: A Numpy array of size 4x2 containing the coordinates.
+        """
+        
         return _cvt_coordinates_to_points(self.coordinates)
     
     @property
     def center(self):
+        """
+        Calculates the center of the rectangle.
+
+        Returns:
+            :obj:`Tuple(numeric)`: Returns of coordinate of the center.
+        """
+        
         return (self.x_1 + self.x_2)/2., (self.y_1 + self.y_2)/2.
     
     @support_textblock
@@ -502,7 +612,7 @@ class Rectangle(BaseCoordElement):
             shift_x = shift_distance
             shift_y = shift_distance
         else:
-            assert len(shift_distance) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            assert len(shift_distance) == 2, "shift_distance should have 2 elements, one for x dimension and one for y dimension"
             shift_x, shift_y = shift_distance
             
         x_1 = self.x_1 + shift_x
@@ -544,6 +654,28 @@ class Rectangle(BaseCoordElement):
 
 @inherit_docstrings
 class Quadrilateral(BaseCoordElement):
+    """
+    This class describes the coodinate system of a four-sided polygon. A quadrilateral is defined by 
+    the coordinates of its 4 corners in a clockwise order starting with the upper left corner (as shown below)::
+    
+        points[0] -...- points[1]
+        |                      |
+        .                      .
+        .                      .
+        .                      .
+        |                      |
+        points[3] -...- points[2]
+
+    Args:
+        points (:obj:`Numpy array`):
+            The array of 4 corner coordinates of size 4x2.
+        height (:obj:`numeric`, `optional`, defaults to `None`):
+            The height of the quadrilateral. This is to better support the perspective
+            transformation from the OpenCV library.
+        width (:obj:`numeric`, `optional`, defaults to `None`):
+            The width of the quadrilateral. Similarly as height, this is to better support the perspective
+            transformation from the OpenCV library.
+    """
     
     def __init__(self, points, height=None, width=None):
         
@@ -701,7 +833,7 @@ class Quadrilateral(BaseCoordElement):
         if not isinstance(shift_distance, Iterable):
             shift_mat = [shift_distance, shift_distance]
         else:
-            assert len(shift_distance) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            assert len(shift_distance) == 2, "shift_distance should have 2 elements, one for x dimension and one for y dimension"
             shift_mat = shift_distance
         
         points = self.points + _np.array(shift_mat)
@@ -749,6 +881,24 @@ class Quadrilateral(BaseCoordElement):
 
 @inherit_docstrings(base_class=BaseCoordElement)
 class TextBlock(BaseLayoutElement):
+    """
+    This class constructs content-related information of a layout element in addition to its coordinate definitions 
+    (i.e. Interval, Rectangle or Quadrilateral).
+
+    Args:
+        block (obj:`BaseCoordElement`): 
+            The shape-specific coordinate systems that the text block belongs to.
+        text (obj:`str`, `optional`, defaults to ""):
+            The ocr'ed text results within the boundaries of the text block.
+        id (obj:`int`, `optional`, defaults to `None`):
+            The id of the text block.
+        type (obj:`int`, `optional`, defaults to `None`):
+            The type of the text block.
+        parent (obj:`int`, `optional`, defaults to `None`):
+            The id of the parent object.
+        next (obj: `int`, `optional`, defaults to `None`):
+            The id of the next block.
+    """
     
     def __init__(self, block, text="",
                     id=None, type=None, parent=None, next=None):
