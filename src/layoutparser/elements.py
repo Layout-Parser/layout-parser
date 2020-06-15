@@ -799,3 +799,39 @@ class TextBlock(BaseLayoutElement):
     
     def crop_image(self, image):
         return self.block.crop_image(image)
+    
+
+class Layout(list):
+    
+    def relative_to(self, other):
+        return self.__class__([ele.relative_to(other) for ele in self])
+
+    def condition_on(self, other):
+        return self.__class__([ele.condition_on(other) for ele in self])
+    
+    def is_in(self, other):
+        return self.__class__([ele.is_in(other) for ele in self])
+    
+    def filter_by(self, other):
+        return self.__class__([ele for ele in self if ele.is_in(other)])
+    
+    @functools.wraps(BaseCoordElement.shift)
+    def shift(self, **kwargs):
+        return self.__class__([ele.shift(**kwargs) for ele in self])
+
+    @functools.wraps(BaseCoordElement.pad)
+    def pad(self, **kwargs):
+        return self.__class__([ele.pad(**kwargs) for ele in self])
+    
+    @functools.wraps(BaseCoordElement.scale)
+    def scale(self, **kwargs):
+        return self.__class__([ele.scale(**kwargs) for ele in self])
+    
+    def crop_image(self, image):
+        return [ele.crop_image(image) for ele in self]
+    
+    def get_texts(self):
+        return [ele.text for ele in self if hasattr(ele, 'text')]
+    
+    def get_info(self, attr_name):
+        return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]

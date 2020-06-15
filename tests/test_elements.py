@@ -1,4 +1,4 @@
-from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock
+from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock, Layout
 import numpy as np
 
 def test_interval():
@@ -133,3 +133,28 @@ def test_textblock():
     t2 = TextBlock(i, id=1, type=2, text="12")
     t1.relative_to(t2)
     assert t2.is_in(t1)
+
+def test_layout():
+    i = Interval(4, 5, axis='y')
+    q = Quadrilateral(np.array([[2,2],[6,2],[6,7],[2,5]]))
+    r = Rectangle(3, 3, 5, 6)
+    t = TextBlock(i, id=1, type=2, text="12")
+    
+    l = Layout([i, q, r])
+    l.get_texts()
+    l.condition_on(i)
+    l.relative_to(q)
+    l.filter_by(t)
+    l.is_in(r)
+    
+    l = Layout([
+        TextBlock(i, id=1, type=2, text="12"),
+        TextBlock(r, id=1, type=2, parent="a"),
+        TextBlock(q, id=1, type=2, next="a")
+    ])
+    l.get_texts()
+    l.get_info('next')
+    l.condition_on(i)
+    l.relative_to(q)
+    l.filter_by(t)
+    l.is_in(r)
