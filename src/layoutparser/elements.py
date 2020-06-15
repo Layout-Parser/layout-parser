@@ -7,6 +7,8 @@ import numpy as _np
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
 
+__all__ = ['Interval', 'Rectangle', 'Quadrilateral', 'TextBlock', 'Layout']
+
 def _cvt_coordinates_to_points(coords):
 
     x_1, y_1, x_2, y_2 = coords
