@@ -156,10 +156,38 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     
     @abstractmethod
     def pad(self, left=0, right=0, top=0, bottom=0, 
-                safe_mode=True): pass
+                safe_mode=True): 
+        """ Pad the layout element on the four sides of the polygon with the user-defined pixels. If 
+        safe_mode is set to True, the function will cut off the excess padding that falls on the negative 
+        side of the coordinates.
+
+        Args:
+            left (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the upper side of the polygon.
+            right (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the lower side of the polygon.
+            top (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the left side of the polygon.
+            bottom (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the right side of the polygon.
+            safe_mode (:obj:`bool`, `optional`, defaults to True): A bool value to toggle the safe_mode.
+        
+        Returns:
+            :obj:`BaseCoordElement`: The padded BaseCoordElement object.
+        """
+        
+        pass
     
     @abstractmethod
-    def shift(self, shift_distance=0): pass
+    def shift(self, shift_distance=0): 
+        """
+        Shift the layout element by user specified amounts on x and y axis respectively. If shift_distance is a
+        numeric value, the element will by shifted by the same specified amount on both x and y axis.
+
+        Args:
+            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): The number of pixels used to shift the element.
+
+        Returns:
+            :obj:`BaseCoordElement`: The shifted BaseCoordElement of the same shape-specific class.
+        """
+        
+        pass
     
     @abstractmethod
     def scale(self, scale_factor=1): pass
@@ -207,7 +235,7 @@ class Interval(BaseCoordElement):
     @property
     def height(self):
         """
-        Calculates the height of the interval. If the interval is along the x-axis, the height will be the 
+        Calculate the height of the interval. If the interval is along the x-axis, the height will be the 
         height of the canvas, otherwise, it will be the difference between the start and end point.
 
         Returns:
@@ -220,7 +248,7 @@ class Interval(BaseCoordElement):
     @property
     def width(self):
         """
-        Calculates the width of the interval. If the interval is along the y-axis, the width will be the 
+        Calculate the width of the interval. If the interval is along the y-axis, the width will be the 
         width of the canvas, otherwise, it will be the difference between the start and end point.
 
         Returns:
@@ -250,7 +278,7 @@ class Interval(BaseCoordElement):
     @property
     def points(self):        
         """
-        Returns the coordinates of all four corners of the interval in a clockwise fashion 
+        Return the coordinates of all four corners of the interval in a clockwise fashion 
         starting from the upper left. 
         
         Returns:
@@ -262,7 +290,7 @@ class Interval(BaseCoordElement):
     @property
     def center(self): 
         """
-        Calculates the mid-point between the start and end point.
+        Calculate the mid-point between the start and end point.
 
         Returns:
             :obj:`Tuple(numeric)`: Returns of coordinate of the center.
@@ -388,6 +416,15 @@ class Interval(BaseCoordElement):
         return self.set(start=start, end=end)
 
     def shift(self, shift_distance): 
+        """
+        Shift the interval by a user specified amount along the same axis that the interval is defined on.
+
+        Args:
+            shift_distance (:obj:`numeric`): The number of pixels used to shift the interval.
+
+        Returns:
+            :obj:`BaseCoordElement`: The shifted Interval object.
+        """
         
         if isinstance(shift_distance, Iterable):        
             shift_distance = shift_distance[0] if self.axis == 'x' \
@@ -452,7 +489,7 @@ class Rectangle(BaseCoordElement):
     @property
     def height(self):
         """
-        Calculates the height of the rectangle.
+        Calculate the height of the rectangle.
 
         Returns:
             :obj:`numeric`: Output the numeric value of the height.
@@ -463,7 +500,7 @@ class Rectangle(BaseCoordElement):
     @property
     def width(self):
         """
-        Calculates the width of the rectangle.
+        Calculate the width of the rectangle.
 
         Returns:
             :obj:`numeric`: Output the numeric value of the width.
@@ -474,7 +511,7 @@ class Rectangle(BaseCoordElement):
     @property
     def coordinates(self):
         """
-        Returns the coordinates of the two points that define the rectangle.
+        Return the coordinates of the two points that define the rectangle.
 
         Returns:
             :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
@@ -485,7 +522,7 @@ class Rectangle(BaseCoordElement):
     @property
     def points(self):
         """
-        Returns the coordinates of all four corners of the rectangle in a clockwise fashion 
+        Return the coordinates of all four corners of the rectangle in a clockwise fashion 
         starting from the upper left. 
         
         Returns:
@@ -497,7 +534,7 @@ class Rectangle(BaseCoordElement):
     @property
     def center(self):
         """
-        Calculates the center of the rectangle.
+        Calculate the center of the rectangle.
 
         Returns:
             :obj:`Tuple(numeric)`: Returns of coordinate of the center.
@@ -689,26 +726,63 @@ class Quadrilateral(BaseCoordElement):
         
     @property
     def height(self):
+        """
+        Return the user defined height, otherwise the height of its circumscribed rectangle.
+
+        Returns:
+            :obj:`numeric`: Output the numeric value of the height.
+        """
+        
         if self._height is not None:
             return self._height
         return self.points[:,1].max() - self.points[:,1].min()
     
     @property
     def width(self):
+        """
+        Return the user defined width, otherwise the width of its circumscribed rectangle.
+
+        Returns:
+            :obj:`numeric`: Output the numeric value of the width.
+        """ 
+              
         if self._width is not None:
             return self._width
         return self.points[:,0].max() - self.points[:,0].min()
      
     @property
     def coordinates(self):
+        """
+        Return the coordinates of the upper left and lower right corners points that 
+        define the circumscribed rectangle.
+
+        Returns
+            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+        """
+        
         return _cvt_points_to_coordinates(self.points)
     
     @property
     def points(self):
+        """
+        Return the coordinates of all four corners of the quadrilateral in a clockwise fashion 
+        starting from the upper left. 
+        
+        Returns:
+            :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
+        """
+        
         return self._points
     
     @property
     def center(self):
+        """
+        Calculate the center of the quadrilateral.
+
+        Returns:
+            :obj:`Tuple(numeric)`: Returns of coordinate of the center.
+        """
+        
         return tuple(self.points.mean(axis=0).tolist())
     
     @property
@@ -915,17 +989,50 @@ class TextBlock(BaseLayoutElement):
         self.next  = next
 
     @property
-    def height(self): return self.block.height
-    
-    @property
-    def width(self): return self.block.width
-    
-    @property
-    def coordinates(self): return self.block.coordinates
-    
-    @property
-    def points(self): return self.block.points
+    def height(self): 
+        """
+        Return the height of the shape-specific block.
 
+        Returns:
+            :obj:`numeric`: Output the numeric value of the height.
+        """
+        
+        return self.block.height
+        
+    @property
+    def width(self): 
+        """
+        Return the width of the shape-specific block.
+
+        Returns:
+            :obj:`numeric`: Output the numeric value of the width.
+        """
+        
+        return self.block.width
+        
+    @property
+    def coordinates(self): 
+        """
+        Return the coordinates of the two corner points that define the shape-specific block.
+
+        Returns:
+            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+        """
+        
+        return self.block.coordinates
+    
+    @property
+    def points(self): 
+        """
+        Return the coordinates of all four corners of the shape-specific block in a clockwise fashion 
+        starting from the upper left. 
+        
+        Returns:
+            :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
+        """
+        
+        return self.block.points
+        
     @mixin_textblock_meta
     def condition_on(self, other):
         return self.block.condition_on(other)
@@ -954,6 +1061,9 @@ class TextBlock(BaseLayoutElement):
     
 
 class Layout(list):
+    """ A handy class for handling a list of text blocks. All the class functions will be broadcasted to
+    each element block in the list.
+    """
     
     def relative_to(self, other):
         return self.__class__([ele.relative_to(other) for ele in self])
@@ -983,7 +1093,23 @@ class Layout(list):
         return [ele.crop_image(image) for ele in self]
     
     def get_texts(self):
+        """
+        Iterate through all the text blocks in the list and append their ocr'ed text results.
+
+        Returns:
+            :obj:`List[str]`: A list of text strings of the text blocks in the list of layout elements.
+        """
+        
         return [ele.text for ele in self if hasattr(ele, 'text')]
     
     def get_info(self, attr_name):
+        """Given user-provided attribute name, check all the elements in the list and return the corresponding
+        attribute values.
+
+        Args:
+            attr_name (:obj:`str`): The text string of certain attribute name.
+
+        Returns:
+            :obj:`List`: The list of the corresponding attribute value (if exist) of each element in the list. 
+        """
         return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]
