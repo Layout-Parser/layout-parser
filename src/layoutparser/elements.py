@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from copy import copy, deepcopy
 from inspect import getmembers, isfunction
 import warnings, functools
-import numpy as _np
+import numpy as np
 import pandas as pd
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
@@ -13,7 +13,7 @@ __all__ = ['Interval', 'Rectangle', 'Quadrilateral', 'TextBlock', 'Layout']
 def _cvt_coordinates_to_points(coords):
 
     x_1, y_1, x_2, y_2 = coords
-    return _np.array([[x_1, y_1], # Top Left
+    return np.array([[x_1, y_1], # Top Left
                    [x_2, y_1], # Top Right
                    [x_2, y_2], # Bottom Right
                    [x_1, y_2], # Bottom Left
@@ -29,10 +29,10 @@ def _cvt_points_to_coordinates(points):
 def _perspective_transformation(M, points, is_inv=False):
 
     if is_inv:
-        M = _np.linalg.inv(M)
+        M = np.linalg.inv(M)
 
-    src_mid = _np.hstack([points, _np.ones((points.shape[0], 1))]).T # 3x4
-    dst_mid = _np.matmul(M, src_mid)
+    src_mid = np.hstack([points, np.ones((points.shape[0], 1))]).T # 3x4
+    dst_mid = np.matmul(M, src_mid)
 
     dst = (dst_mid/dst_mid[-1]).T[:,:2] # 4x2
 
@@ -45,8 +45,8 @@ def _vertice_in_polygon(vertice, polygon_points):
     # https://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/
     
     points = polygon_points - vertice # shift the coordinates origin to the vertice
-    edges = _np.append(points, points[0:1,:], axis=0)
-    return all([_np.linalg.det([e1, e2])>=0 for e1, e2 in zip(edges, edges[1:])])
+    edges = np.append(points, points[0:1,:], axis=0)
+    return all([np.linalg.det([e1, e2])>=0 for e1, e2 in zip(edges, edges[1:])])
     # If the points are ordered clockwise, the det should <=0 
 
 def _parse_datatype_from_feature_names(feature_names):
@@ -322,7 +322,7 @@ class Interval(BaseCoordElement):
         return (self.start + self.end) / 2.
 
     def put_on_canvas(self, canvas):
-        if isinstance(canvas, _np.ndarray):
+        if isinstance(canvas, np.ndarray):
             h, w = canvas.shape[:2]
         elif isinstance(canvas, BaseCoordElement):
             h, w = canvas.height, canvas.width
@@ -665,7 +665,7 @@ class Rectangle(BaseCoordElement):
                 is_vertice_in = [_vertice_in_polygon(vertice, other.points) for vertice in self.points]
                 return all(is_vertice_in)
             else:
-                center = _np.array(self.center)
+                center = np.array(self.center)
                 return _vertice_in_polygon(center, other.points)
         
         else: 
@@ -768,7 +768,7 @@ class Quadrilateral(BaseCoordElement):
     
     def __init__(self, points, height=None, width=None):
         
-        assert isinstance(points, _np.ndarray), f" Invalid input: points must be a numpy array"
+        assert isinstance(points, np.ndarray), f" Invalid input: points must be a numpy array"
         
         self._points = points
         self._width  = width
@@ -853,9 +853,9 @@ class Quadrilateral(BaseCoordElement):
         points_ordering = self.points.argsort(axis=0).argsort(axis=0)
         # Ref: https://github.com/numpy/numpy/issues/8757#issuecomment-355126992
         
-        return _np.vstack([
-                    _np.vectorize(x_map.get)(points_ordering[:,0]),
-                    _np.vectorize(y_map.get)(points_ordering[:,1])
+        return np.vstack([
+                    np.vectorize(x_map.get)(points_ordering[:,0]),
+                    np.vectorize(y_map.get)(points_ordering[:,1])
                 ]).T
     
     @support_textblock
@@ -934,7 +934,7 @@ class Quadrilateral(BaseCoordElement):
                 is_vertice_in = [_vertice_in_polygon(vertice, other.points) for vertice in self.points]
                 return all(is_vertice_in)
             else:
-                center = _np.array(self.center)
+                center = np.array(self.center)
                 return _vertice_in_polygon(center, other.points)
         
         else: 
@@ -950,7 +950,7 @@ class Quadrilateral(BaseCoordElement):
         
         points = self.points + padding_mat
         if safe_mode:
-            points = _np.maximum(points, 0)
+            points = np.maximum(points, 0)
         
         return self.set(points=points)
 
@@ -962,7 +962,7 @@ class Quadrilateral(BaseCoordElement):
             assert len(shift_distance) == 2, "shift_distance should have 2 elements, one for x dimension and one for y dimension"
             shift_mat = shift_distance
         
-        points = self.points + _np.array(shift_mat)
+        points = self.points + np.array(shift_mat)
         
         return self.set(points=points)
         
@@ -974,7 +974,7 @@ class Quadrilateral(BaseCoordElement):
             assert len(scale_factor) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
             scale_mat = scale_factor
         
-        points = self.points * _np.array(scale_mat)    
+        points = self.points * np.array(scale_mat)    
 
         return self.set(points=points)
 
@@ -1007,7 +1007,7 @@ class Quadrilateral(BaseCoordElement):
     def __eq__(self, other):
         if other.__class__ is not self.__class__:
             return False
-        return _np.isclose(self.points, other.points).all()
+        return np.isclose(self.points, other.points).all()
     
     def __repr__(self):
         keys = ['points', 'width', 'height']
