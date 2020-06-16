@@ -1,5 +1,6 @@
 from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock, Layout
 import numpy as np
+import pandas as pd
 
 def test_interval():
     
@@ -158,3 +159,122 @@ def test_layout():
     l.relative_to(q)
     l.filter_by(t)
     l.is_in(r)
+    
+def test_df():
+    
+    df = pd.DataFrame(
+        columns=\
+            ["_identifier", "x_1", "y_1", "x_2", "y_2", "height", "width", "p11", "p12", "p21", "p22", "p31", "p32", "p41", "p42"],
+        data=[
+            ['_interval',   None,  10,    None,  12,     240,      None,   None,  None,  None,  None,  None,  None,  None,  None ],
+            ['_interval',   12,    None,  24,    None,   120,      50,     None,  None,  None,  None,  None,  None,  None,  None ],
+            ['_interval',   0,     10,    0,     12,     120,      50,     None,  None,  None,  None,  None,  None,  None,  None ], # for fillna with 0
+            ['_rectangle',  12,    32,    24,    55,     None,     None,   None,  None,  None,  None,  None,  None,  None,  None ],
+            ['_rectangle',  12,    32,    24,    55,     0,        0,      None,  None,  None,  None,  None,  None,  None,  None ],
+            ['_quadrilateral',None,None,  None,  None,   None,     None,   1,     2,     3,     2,     3,     6,     1,     4    ],
+            ['_quadrilateral',None,None,  None,  None,   0,        0,      1,     2,     3,     2,     3,     6,     1,     4    ],
+            ['_quadrilateral',0,   0,     0,     0,      0,        0,      1,     2,     3,     2,     3,     6,     1,     4    ],
+        ]
+    )
+    
+    layout = Layout.from_dataframe(df)
+    assert layout[0] == Interval(10, 12, 'y', canvas_height=240)
+    assert layout[2] == Interval(10, 12, 'y', canvas_height=120, canvas_width=50)
+    
+    assert layout[3] == Rectangle(x_1=12, y_1=32, x_2=24, y_2=55)
+    assert layout[3] == layout[4]
+
+    assert not layout[5] == Quadrilateral(np.arange(8).reshape(4,-1))
+    assert layout[6] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
+    
+    df = pd.DataFrame(
+        columns=\
+            ["_identifier", "x_1", "y_1", "x_2", "y_2", "height", "width", "p11", "p12", "p21", "p22", "p31", "p32", "p41", "p42", 'next', 'parent'],
+        data=[
+            ['_interval',   None,  10,    None,  12,     240,      None,   None,  None,  None,  None,  None,  None,  None,  None,  None,   None    ],
+            ['_interval',   12,    None,  24,    None,   120,      50,     None,  None,  None,  None,  None,  None,  None,  None,  None,   None    ],
+            ['_interval',   0,     10,    0,     12,     120,      50,     None,  None,  None,  None,  None,  None,  None,  None,  None,   24      ], 
+                # for fillna with 0
+            ['_rectangle',  12,    32,    24,    55,     None,     None,   None,  None,  None,  None,  None,  None,  None,  None,  None,   None    ],
+            ['_rectangle',  12,    32,    24,    55,     0,        0,      None,  None,  None,  None,  None,  None,  None,  None,  12,     None    ],
+            ['_quadrilateral',None,None,  None,  None,   None,     None,   1,     2,     3,     2,     3,     6,     1,     4,     None,   None    ],
+            ['_quadrilateral',None,None,  None,  None,   0,        0,      1,     2,     3,     2,     3,     6,     1,     4,     None,   None    ],
+            ['_textblock',  None,None,  None,  None,     0,        0,      1,     2,     3,     2,     3,     6,     1,     4,     None,   28      ],
+        ]
+    )
+    
+    layout = Layout.from_dataframe(df)
+    assert layout[0] == Interval(10, 12, 'y', canvas_height=240)
+    assert layout[2] == Interval(10, 12, 'y', canvas_height=120, canvas_width=50)
+    
+    assert layout[3] == Rectangle(x_1=12, y_1=32, x_2=24, y_2=55)
+    assert layout[3] == layout[4]
+    assert layout[6] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
+    
+    assert layout[-1].block == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
+    assert layout[-1].parent == 28
+    
+    
+    df = pd.DataFrame(
+        columns=\
+            ["x_1", "y_1", "x_2", "y_2", "height", "width", "p11", "p12", "p21", "p22", "p31", "p32", "p41", "p42", 'next', 'parent'],
+        data=[
+            [None,  10,    None,  12,     240,      None,   None,  None,  None,  None,  None,  None,  None,  None,  None,   None    ],
+            [12,    None,  24,    None,   120,      50,     None,  None,  None,  None,  None,  None,  None,  None,  None,   None    ],
+            [0,     10,    0,     12,     120,      50,     None,  None,  None,  None,  None,  None,  None,  None,  None,   24      ], 
+            # for fillna with 0
+            [12,    32,    24,    55,     None,     None,   None,  None,  None,  None,  None,  None,  None,  None,  None,   None    ],
+            [12,    32,    24,    55,     None,     None,   None,  None,  None,  None,  None,  None,  None,  None,  12,     None    ],
+            [None,  None,  None,  None,   None,     None,   1,     2,     3,     2,     3,     6,     1,     4,     None,   None    ],
+            [None,  None,  None,  None,   0,        0,      1,     2,     3,     2,     3,     6,     1,     4,     None,   None    ],
+            [None,  None,  None,  None,   0,        0,      1,     2,     3,     2,     3,     6,     1,     4,     None,   28      ],
+        ]
+    )
+    
+    layout = Layout.from_dataframe(df)
+    assert layout[0].block == Interval(10, 12, 'y', canvas_height=240)
+    assert layout[2].block == Interval(10, 12, 'y', canvas_height=120, canvas_width=50)
+    
+    assert layout[3].block == Rectangle(x_1=12, y_1=32, x_2=24, y_2=55)
+    assert not layout[3] == layout[4]
+    assert layout[6].block == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
+    
+    assert layout[-1].block == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
+    assert layout[-1].parent == 28
+    
+    df = pd.DataFrame(
+        columns=\
+            ["x_1", "y_1", "x_2", "y_2"],
+        data=[
+            [0,     10,    0,     12,  ],
+            [12,    32,    24,    55,  ],
+        ])
+    
+    layout = Layout.from_dataframe(df)
+    assert layout[1] == Rectangle(x_1=12, y_1=32, x_2=24, y_2=55)
+    
+    
+    df = pd.DataFrame(
+        columns=\
+            ["x_1", "y_1", "x_2", "y_2", "height", "width"],
+        data=[
+            [0,     10,    0,     12,    240,      520    ],
+            [12,    None,  24,    None,  240,      None   ],
+        ])
+    
+    layout = Layout.from_dataframe(df)
+    assert layout[1] == Interval(12, 24, 'x', canvas_height=240)
+    
+    
+    df = pd.DataFrame(
+        columns=\
+            ["p11", "p12", "p21", "p22", "p31", "p32", "p41", "p42", 'width', 'height'],
+        data=[
+            [1,     2,     3,     2,     3,     6,     1,     4,     None,   None    ],
+            [1,     2,     3,     2,     3,     6,     1,     4,     None,   None    ],
+            [1,     2,     3,     2,     3,     6,     1,     4,     None,   28      ],
+        ])
+    
+    layout = Layout.from_dataframe(df)
+    assert layout[1] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
+    assert layout[2] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]), height=28)

@@ -4,6 +4,7 @@ from copy import copy, deepcopy
 from inspect import getmembers, isfunction
 import warnings, functools
 import numpy as _np
+import pandas as pd
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
 
@@ -47,6 +48,25 @@ def _vertice_in_polygon(vertice, polygon_points):
     edges = _np.append(points, points[0:1,:], axis=0)
     return all([_np.linalg.det([e1, e2])>=0 for e1, e2 in zip(edges, edges[1:])])
     # If the points are ordered clockwise, the det should <=0 
+
+def _parse_datatype_from_feature_names(feature_names):
+    
+    type_feature_map = {
+        Interval      : set(Interval.feature_names),
+        Rectangle     : set(Rectangle.feature_names),
+        Quadrilateral : set(Quadrilateral.feature_names)
+    }
+    
+    for cls, fnames in type_feature_map.items():
+        if set(feature_names) == fnames:
+            return cls
+    
+    raise ValueError(
+        "\n "
+        "\n The input feature is incompatible with the designated format."
+        "\n Please check the tutorials for more details."
+        "\n "
+    )
     
 def mixin_textblock_meta(func):
     @functools.wraps(func)
@@ -218,6 +238,9 @@ class Interval(BaseCoordElement):
         canvas_width (:obj:`numeric`, `optional`, defaults to 0): 
             The width of the canvas that the interval is on.
     """
+    
+    name = "_interval"
+    feature_names = ["x_1", "y_1", "x_2", "y_2", "height", "width"]
     
     def __init__(self, start, end, axis='x',
                     canvas_height=0, canvas_width=0):
@@ -456,6 +479,20 @@ class Interval(BaseCoordElement):
     def to_quadrilateral(self):
         return Quadrilateral(self.points)
     
+    @classmethod
+    def from_series(cls, series):
+        series = series.dropna()
+        if series.get('x_1') and series.get('x_2'):
+            axis = 'x'
+            start, end = series.get('x_1'), series.get('x_2')
+        else:
+            axis = 'y'
+            start, end = series.get('y_1'), series.get('y_2')
+            
+        return cls(start, end, axis=axis,
+                   canvas_height = series.get('height') or 0, 
+                   canvas_width  = series.get('width')  or 0)
+
 
 @inherit_docstrings
 class Rectangle(BaseCoordElement):
@@ -478,6 +515,9 @@ class Rectangle(BaseCoordElement):
         y_2 (:obj:`numeric`): 
             y coordinate on the vertical axis of the lower right corner of the rectangle.
     """
+    
+    name = "_rectangle"
+    feature_names = ["x_1", "y_1", "x_2", "y_2"]
     
     def __init__(self, x_1, y_1, x_2, y_2):
         
@@ -690,6 +730,11 @@ class Rectangle(BaseCoordElement):
     def to_quadrilateral(self):
         return Quadrilateral(self.points)
 
+    @classmethod
+    def from_series(cls, series):
+        series = series.dropna()
+        return cls(*[series[fname] for fname in cls.feature_names])
+    
 
 @inherit_docstrings
 class Quadrilateral(BaseCoordElement):
@@ -715,6 +760,11 @@ class Quadrilateral(BaseCoordElement):
             The width of the quadrilateral. Similarly as height, this is to better support the perspective
             transformation from the OpenCV library.
     """
+    
+    name = "_quadrilateral"
+    feature_names = ["p11", "p12", "p21", "p22", 
+                     "p31", "p32", "p41", "p42",
+                     "height", "width"]
     
     def __init__(self, points, height=None, width=None):
         
@@ -943,7 +993,17 @@ class Quadrilateral(BaseCoordElement):
     
     def to_rectangle(self):
         return Rectangle(*self.coordinates)
-    
+
+    @classmethod
+    def from_series(cls, series):
+        series = series.dropna()
+        
+        points = pd.to_numeric(series[cls.feature_names[:8]]).values.reshape(4,-2)
+        
+        return cls(points = points, 
+                   height = series.get("height"),
+                   width  = series.get("width"))
+        
     def __eq__(self, other):
         if other.__class__ is not self.__class__:
             return False
@@ -975,6 +1035,9 @@ class TextBlock(BaseLayoutElement):
         next (:obj:`int`, `optional`, defaults to `None`):
             The id of the next block.
     """
+    
+    name = "_textblock"
+    feature_names = ["text", "id", "type", "parent", "next"]
     
     def __init__(self, block, text="",
                     id=None, type=None, parent=None, next=None):
@@ -1059,11 +1122,35 @@ class TextBlock(BaseLayoutElement):
     def crop_image(self, image):
         return self.block.crop_image(image)
     
+    @classmethod
+    def from_series(cls, series):
+        
+        
+        features = {fname: series.get(fname) for fname in cls.feature_names}
+        
+        if not series[Quadrilateral.feature_names[:8]].isna().all():
+            target_type = Quadrilateral
+        elif (not series[Rectangle.feature_names].isna().any()) and \
+                (series[['height', 'width']].isna().all()):
+            target_type = Rectangle
+        else:
+            target_type = Interval
+            
+        return cls(
+            block = target_type.from_series(series),
+            **features)
+
 
 class Layout(list):
     """ A handy class for handling a list of text blocks. All the class functions will be broadcasted to
     each element block in the list.
     """
+    
+    identifier_map = {
+        Interval.name:      Interval, 
+        Rectangle.name:     Rectangle,
+        Quadrilateral.name: Quadrilateral,
+        TextBlock.name:     TextBlock}
     
     def relative_to(self, other):
         return self.__class__([ele.relative_to(other) for ele in self])
@@ -1113,3 +1200,27 @@ class Layout(list):
             :obj:`List`: The list of the corresponding attribute value (if exist) of each element in the list. 
         """
         return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]
+    
+    @classmethod
+    def from_dataframe(cls, df):
+        
+        if "_identifier" in df.columns:
+            return cls(
+                [cls.identifier_map[series["_identifier"]].from_series(series.drop(["_identifier"]))
+                    for (_, series) in df.iterrows()]
+            )
+        
+        elif any(col in TextBlock.feature_names for col in df.columns):
+            
+            return cls(
+                [TextBlock.from_series(series)
+                    for (_, series) in df.iterrows()]
+            )
+        
+        else:
+            target_type = _parse_datatype_from_feature_names(df.columns)
+            
+            return cls(
+                [target_type.from_series(series)
+                    for (_, series) in df.iterrows()]
+            )            
