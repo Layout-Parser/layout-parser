@@ -254,7 +254,7 @@ class Interval(BaseCoordElement):
         starting from the upper left. 
         
         Returns:
-            :obj:`Numpy array`: A Numpy array of size 4x2 containing the coordinates.
+            :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
         """
         
         return _cvt_coordinates_to_points(self.coordinates)
@@ -489,7 +489,7 @@ class Rectangle(BaseCoordElement):
         starting from the upper left. 
         
         Returns:
-            :obj:`Numpy array`: A Numpy array of size 4x2 containing the coordinates.
+            :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
         """
         
         return _cvt_coordinates_to_points(self.coordinates)
@@ -888,17 +888,17 @@ class TextBlock(BaseLayoutElement):
     (i.e. Interval, Rectangle or Quadrilateral).
 
     Args:
-        block (obj:`BaseCoordElement`): 
+        block (:obj:`BaseCoordElement`): 
             The shape-specific coordinate systems that the text block belongs to.
-        text (obj:`str`, `optional`, defaults to ""):
+        text (:obj:`str`, `optional`, defaults to ""):
             The ocr'ed text results within the boundaries of the text block.
-        id (obj:`int`, `optional`, defaults to `None`):
+        id (:obj:`int`, `optional`, defaults to `None`):
             The id of the text block.
-        type (obj:`int`, `optional`, defaults to `None`):
+        type (:obj:`int`, `optional`, defaults to `None`):
             The type of the text block.
-        parent (obj:`int`, `optional`, defaults to `None`):
+        parent (:obj:`int`, `optional`, defaults to `None`):
             The id of the parent object.
-        next (obj: `int`, `optional`, defaults to `None`):
+        next (:obj:`int`, `optional`, defaults to `None`):
             The id of the next block.
     """
     
