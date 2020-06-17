@@ -134,6 +134,8 @@ def test_textblock():
     t2 = TextBlock(i, id=1, type=2, text="12")
     t1.relative_to(t2)
     assert t2.is_in(t1)
+    
+    t = TextBlock(q, score=0.2)
 
 def test_layout():
     i = Interval(4, 5, axis='y')

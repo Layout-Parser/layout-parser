@@ -1034,13 +1034,16 @@ class TextBlock(BaseLayoutElement):
             The id of the parent object.
         next (:obj:`int`, `optional`, defaults to `None`):
             The id of the next block.
+        score (:obj:`numeric`, defaults to `None`):
+            The prediction confidence of the block
     """
     
     name = "_textblock"
     feature_names = ["text", "id", "type", "parent", "next"]
     
     def __init__(self, block, text="",
-                    id=None, type=None, parent=None, next=None):
+                    id=None, type=None, parent=None, 
+                    next=None, score=None):
         
         assert isinstance(block, BaseCoordElement)
         self.block = block
@@ -1050,6 +1053,7 @@ class TextBlock(BaseLayoutElement):
         self.type  = type
         self.parent= parent
         self.next  = next
+        self.score = score
 
     @property
     def height(self): 
