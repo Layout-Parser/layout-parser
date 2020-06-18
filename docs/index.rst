@@ -18,6 +18,7 @@ Welcome to Layout Parser's documentation!
    :caption: API Reference
 
    api_doc/elements
+   api_doc/ocr
 
 Indices and tables
 ==================
