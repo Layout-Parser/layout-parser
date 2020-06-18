@@ -33,22 +33,21 @@ class BaseOCRAgent(ABC):
             :obj: list(dict): A list of dict indicate how the model is imported. 
                 
                 Example::
+                    
                     [{
                         "import_name": "_vision",
-                        "module_info":
-                        {
-                            "name":    ".vision",
-                            "package": "google.cloud",
-                        }
+                        "module_path": "google.cloud.vision"
                     }]
+                
+                    is equivalent to self._vision = importlib.import_module("google.cloud.vision")
         """
         pass
     
     @classmethod
     def _import_module(cls):
         for m in cls.MODULES:
-            if importlib.util.find_spec(**m["module_info"]):
-                setattr(cls, m["import_name"], importlib.import_module(**m["module_info"]))
+            if importlib.util.find_spec(m["module_path"]):
+                setattr(cls, m["import_name"], importlib.import_module(m["module_path"]))
             else:
                 raise ModuleNotFoundError(
                     f"\n "
@@ -60,7 +59,7 @@ class BaseOCRAgent(ABC):
     def __new__(cls, *args, **kwargs):
         
         cls._import_module()
-        return super().__new__(cls,  *args, **kwargs)
+        return super().__new__(cls)
     
     @abstractmethod
     def detect(self, image): pass
