@@ -1039,7 +1039,7 @@ class TextBlock(BaseLayoutElement):
     """
     
     name = "_textblock"
-    feature_names = ["text", "id", "type", "parent", "next"]
+    feature_names = ["text", "id", "type", "parent", "next", "score"]
     
     def __init__(self, block, text="",
                     id=None, type=None, parent=None, 
@@ -1131,11 +1131,12 @@ class TextBlock(BaseLayoutElement):
         
         
         features = {fname: series.get(fname) for fname in cls.feature_names}
-        
-        if not series[Quadrilateral.feature_names[:8]].isna().all():
+        series = series.dropna()
+        if set(Quadrilateral.feature_names[:8]).issubset(series.index):
             target_type = Quadrilateral
-        elif (not series[Rectangle.feature_names].isna().any()) and \
-                (series[['height', 'width']].isna().all()):
+        elif set(Interval.feature_names).issubset(series.index):
+            target_type = Interval
+        elif set(Rectangle.feature_names).issubset(series.index):
             target_type = Rectangle
         else:
             target_type = Interval
@@ -1210,7 +1211,7 @@ class Layout(list):
         
         if "_identifier" in df.columns:
             return cls(
-                [cls.identifier_map[series["_identifier"]].from_series(series.drop(["_identifier"]))
+                [cls.identifier_map[series["_identifier"]].from_series(series.drop(columns=["_identifier"]))
                     for (_, series) in df.iterrows()]
             )
         
