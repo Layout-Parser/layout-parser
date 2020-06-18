@@ -68,5 +68,6 @@ html_static_path = ['_static']
 # Additional Configurations 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 autodoc_member_order = 'bysource'
+autoclass_content = 'both'
 
 # [TODO] Solve the issue for functools.wrappers cause **kwargs in function declarations

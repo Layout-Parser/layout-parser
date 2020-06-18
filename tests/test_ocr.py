@@ -1,10 +1,12 @@
-from layoutparser.ocr import GCVAgent, GCVFeatureType
+from layoutparser.ocr import GCVAgent, GCVFeatureType, TesseractAgent, TesseractFeatureType
 import json, cv2, os
+
+image = cv2.imread("tests/source/test_gcv_image.jpg")
 
 def test_gcv_agent(test_detect=False):
     
     # Test loading the agent with designated credential
-    ocr_agent = GCVAgent.with_credential("tests/source/test_gcv_credential.json", language_hints = ['en'])
+    ocr_agent = GCVAgent.with_credential("tests/source/test_gcv_credential.json", languages = ['en'])
     
     # Test loading the saved response and parse the data 
     res = ocr_agent.load_response("tests/source/test_gcv_response.json")
@@ -19,7 +21,6 @@ def test_gcv_agent(test_detect=False):
     # Warning: there could be updates on the GCV side. So it would be good to not 
     # frequently test this part. 
     if test_detect:
-        image = cv2.imread("tests/source/test_gcv_image.jpg")
         res2 = ocr_agent.detect(image, return_response=True)
         
         assert res == res2
@@ -33,3 +34,13 @@ def test_gcv_agent(test_detect=False):
     # Finally, test the response storage and remove the file
     ocr_agent.save_response(res, "tests/source/.test_gcv_response.json")
     os.remove("tests/source/.test_gcv_response.json")
+   
+def test_tesseract():
+
+    ocr_agent = TesseractAgent(languages='eng')
+    res = ocr_agent.detect(image, return_response=True)
+    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PAGE)
+    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.BLOCK)
+    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PARA)
+    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.LINE)
+    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.WORD)

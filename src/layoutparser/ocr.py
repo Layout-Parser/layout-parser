@@ -1,9 +1,13 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
-import importlib, io, os, json
+import importlib, io, os, json, csv
 import numpy as np
+import pandas as pd
 from cv2 import imencode
 from .elements import *
+
+__all__ = ['GCVFeatureType',       'GCVAgent', 
+           'TesseractFeatureType', 'TesseractAgent']
 
 def _cvt_GCV_vertices_to_points(vertices):
     return np.array([[vertex.x, vertex.y] for vertex in vertices])
@@ -141,11 +145,26 @@ class GCVAgent(BaseOCRAgent):
     ]
     
     def __init__(self,
-                 ocr_image_decode_type='.png',
-                 language_hints=["ja", "zh"]):
+                 languages=None,
+                 ocr_image_decode_type='.png'):
+        """Create a Google Cloud Vision OCR Agent.  
 
+        Args:
+            languages (:obj:`list`, optional): 
+                You can specify the language code of the documents to detect to improve 
+                accuracy. The supported language and their code can be found on `this page
+                <https://cloud.google.com/vision/docs/languages>`_. 
+                Defaults to None.
+                
+            ocr_image_decode_type (:obj:`str`, optional): 
+                The format to convert the input image to before sending for GCV OCR. 
+                Defaults to `".png"`.
+                
+                    * `".png"` is suggested as it does not compress the image. 
+                    * But `".jpg"` could also be a good choice if the input image is very large. 
+        """
         self._client  = self._vision.ImageAnnotatorClient()
-        self._context = self._vision.types.ImageContext(language_hints=language_hints)
+        self._context = self._vision.types.ImageContext(language_hints=languages)
         self.ocr_image_decode_type = ocr_image_decode_type
     
     @classmethod
@@ -178,7 +197,7 @@ class GCVAgent(BaseOCRAgent):
                 Whether directly return the google cloud response. 
                 Defaults to `False`.
             return_only_text (:obj:`bool`, optional): 
-                Whether return only a text object. 
+                Whether return only the texts in the OCR results.  
                 Defaults to `False`.
             agg_output_level (:obj:`~GCVFeatureType`, optional): 
                 When set, aggregate the GCV output with respect to the 
@@ -309,3 +328,137 @@ class GCVAgent(BaseOCRAgent):
         with open(file_name, 'w') as f:
             json_file = json.loads(res)
             json.dump(json_file, f)
+            
+            
+class TesseractFeatureType(BaseOCRElementType):
+    """
+    The element types for Tesseract Detection API
+    """
+
+    PAGE = 0
+    BLOCK = 1
+    PARA = 2
+    LINE = 3
+    WORD = 4
+
+    @property
+    def attr_name(self):
+        name_cvt = {
+            TesseractFeatureType.PAGE: 'page_num',
+            TesseractFeatureType.BLOCK: 'block_num',
+            TesseractFeatureType.PARA: 'par_num',
+            TesseractFeatureType.LINE: 'line_num',
+            TesseractFeatureType.WORD: 'word_num'
+        }
+        return name_cvt[self]
+
+    @property
+    def group_levels(self):
+        levels = ['page_num', 'block_num', 'par_num', 'line_num', 'word_num']
+        return levels[:self+1]
+    
+
+class TesseractAgent(BaseOCRAgent):
+    """
+    A wrapper for `Tesseract <https://github.com/tesseract-ocr/tesseract>`_ Text
+    Detection APIs based on `PyTesseract <https://github.com/tesseract-ocr/tesseract>`_.
+    """
+    
+    DEPENDENCIES = ['pytesseract']
+    MODULES      = [
+        {
+            "import_name": "_pytesseract",
+            "module_path": "pytesseract"
+        }
+    ]
+    
+    def __init__(self, languages=None, **kwargs):
+        """Create a Tesseract OCR Agent.  
+
+        Args:
+            languages (:obj:`list` or :obj:`str`, optional): 
+                You can specify the language code(s) of the documents to detect to improve 
+                accuracy. The supported language and their code can be found on 
+                `its github repo <https://github.com/tesseract-ocr/langdata>`_. 
+                It supports two formats: 1) you can pass in the languages code as a string 
+                of format like `"eng+fra"`, or 2) you can pack them as a list of strings
+                `["eng", "fra"]`. 
+                Defaults to None.
+        """        
+        self.lang = languages if isinstance(languages, str) else '+'.join(languages)
+        self.configs = kwargs
+        
+    @classmethod
+    def with_tesseract_executable(cls, tesseract_cmd_path, **kwargs):
+        
+        cls._pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
+        return cls(**kwargs)
+
+    def _detect(self, img_content):
+        res = {}
+        res['text'] = self._pytesseract.image_to_string(img_content, lang=self.lang,**self.configs)
+        _data = self._pytesseract.image_to_data(img_content, lang=self.lang, **self.configs)
+        res['data'] = pd.read_csv(io.StringIO(_data), 
+                                  quoting=csv.QUOTE_NONE,  encoding='utf-8',
+                                  sep='\t')
+        return res
+
+    def detect(self, image,
+                return_response=False,
+                return_only_text=True,
+                agg_output_level=None):
+        """Send the input image for OCR.
+
+        Args:
+            image (:obj:`np.ndarray` or :obj:`str`):
+                The input image array or the name of the image file
+            return_response (:obj:`bool`, optional): 
+                Whether directly return all output (string and boxes 
+                info) from Tesseract.
+                Defaults to `False`.
+            return_only_text (:obj:`bool`, optional): 
+                Whether return only the texts in the OCR results. 
+                Defaults to `False`.
+            agg_output_level (:obj:`~TesseractFeatureType`, optional): 
+                When set, aggregate the GCV output with respect to the 
+                specified aggregation level. Defaults to `None`.
+        """
+        
+        res = self._detect(image)
+        
+        if return_response:
+            return res
+        
+        if return_only_text:
+            return res['text']
+        
+        if agg_output_level is not None:
+            return self.gather_data(res, agg_output_level)
+        
+        return res['text']
+    
+    @staticmethod
+    def gather_data(response, agg_level):
+        """
+        Gather the OCR'ed text, bounding boxes, and confidence
+        in a given aggeragation level.
+        """
+        assert isinstance(agg_level, TesseractFeatureType), f"Invalid agg_level {agg_level}"
+        res = response['data']
+        df = res[~res.text.isna()].\
+            groupby(agg_level.group_levels).\
+            apply(lambda gp: pd.Series([
+                              gp['left'].min(),
+                              gp['top'].min(),
+                              gp['width'].max(),
+                              gp['height'].max(),
+                              gp['conf'].mean(),
+                              gp['text'].str.cat(sep=' ')
+                             ])).\
+            reset_index(drop=True).\
+            reset_index().\
+            rename(columns={0:'x_1', 1:'y_1', 2:'w', 3:'h', 4:'score', 5:'text', 'index':'id'}).\
+            assign(x_2=lambda x:x.x_1 + x.w, y_2 = lambda x:x.y_1 + x.h, type=None).\
+            drop(columns=['w', 'h'])
+
+        return Layout.from_dataframe(df)
