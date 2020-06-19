@@ -19,6 +19,7 @@ Welcome to Layout Parser's documentation!
 
    api_doc/elements
    api_doc/ocr
+   api_doc/visualization
 
 Indices and tables
 ==================

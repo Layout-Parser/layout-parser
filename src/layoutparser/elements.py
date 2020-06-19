@@ -5,6 +5,7 @@ from inspect import getmembers, isfunction
 import warnings, functools
 import numpy as np
 import pandas as pd
+from PIL import Image
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
 
@@ -326,6 +327,8 @@ class Interval(BaseCoordElement):
             h, w = canvas.shape[:2]
         elif isinstance(canvas, BaseCoordElement):
             h, w = canvas.height, canvas.width
+        elif isinstance(canvas, Image.Image):
+            w, h = canvas.size
         else:
             raise NotImplementedError
         
