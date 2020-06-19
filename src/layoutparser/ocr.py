@@ -6,6 +6,7 @@ import pandas as pd
 from cv2 import imencode
 from .elements import *
 import warnings
+import pickle
 
 __all__ = ['GCVFeatureType',       'GCVAgent', 
            'TesseractFeatureType', 'TesseractAgent']
@@ -466,3 +467,15 @@ class TesseractAgent(BaseOCRAgent):
             drop(columns=['w', 'h'])
 
         return Layout.from_dataframe(df)
+
+    @staticmethod    
+    def load_response(filename):
+        with open(filename, 'rb') as fp:
+            res = pickle.load(fp)
+        return res
+
+    @staticmethod
+    def save_response(res, file_name):
+
+        with open(file_name, 'wb') as fp:
+            pickle.dump(res, fp, protocol=pickle.HIGHEST_PROTOCOL)

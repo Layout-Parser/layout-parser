@@ -35,12 +35,24 @@ def test_gcv_agent(test_detect=False):
     ocr_agent.save_response(res, "tests/source/.test_gcv_response.json")
     os.remove("tests/source/.test_gcv_response.json")
    
-def test_tesseract():
+def test_tesseract(test_detect=False):
 
     ocr_agent = TesseractAgent(languages='eng')
-    res = ocr_agent.detect(image, return_response=True)
-    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PAGE)
-    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.BLOCK)
-    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PARA)
-    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.LINE)
-    ocr_agent.gather_data(res, agg_level=TesseractFeatureType.WORD)
+    res = ocr_agent.load_response("tests/source/test_tesseract_response.pickle")
+    r0 = res['text']
+    r1 = ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PAGE) 
+    r2 = ocr_agent.gather_data(res, agg_level=TesseractFeatureType.BLOCK)
+    r3 = ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PARA) 
+    r4 = ocr_agent.gather_data(res, agg_level=TesseractFeatureType.LINE) 
+    r5 = ocr_agent.gather_data(res, agg_level=TesseractFeatureType.WORD) 
+    
+    # The results could be different is using another version of Tesseract Engine. 
+    # tesseract 4.1.1 is used for generating the pickle test file. 
+    if test_detect:
+        res = ocr_agent.detect(image, return_response=True)
+        assert r0 == res['text']
+        assert r1 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PAGE)
+        assert r2 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.BLOCK)
+        assert r3 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PARA)
+        assert r4 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.LINE)
+        assert r5 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.WORD)
