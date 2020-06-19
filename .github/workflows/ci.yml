@@ -32,7 +32,6 @@ jobs:
         
     - name: Test with pytest
       run: |
-        pip install pytest
         # Install additional requirements when running tests
         pip install -r dev-requirements.txt
         pytest
