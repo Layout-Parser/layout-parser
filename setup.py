@@ -14,5 +14,6 @@ setup(name         = "layoutparser",
         "numpy", 
         "opencv-python",
         "pandas"
-      ]
+      ],
+      include_package_data=True
       )

@@ -2,11 +2,11 @@ from PIL import Image, ImageFont, ImageDraw
 from .elements import *
 import numpy as np 
 import functools
-import os 
+import os, sys, warnings
 import layoutparser
 
 # We need to fix this ugly hack some time in the future
-_lib_path = os.path.dirname(os.path.abspath(layoutparser.__file__))
+_lib_path = os.path.dirname(sys.modules[layoutparser.__package__].__file__)
 _font_path = os.path.join(_lib_path, 'misc', 'NotoSerifCJKjp-Regular.otf')
 
 DEFAULT_BOX_WIDTH_RATIO = 0.005
