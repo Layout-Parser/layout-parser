@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from cv2 import imencode
 from .elements import *
+import warnings
 
 __all__ = ['GCVFeatureType',       'GCVAgent', 
            'TesseractFeatureType', 'TesseractAgent']
@@ -163,7 +164,10 @@ class GCVAgent(BaseOCRAgent):
                     * `".png"` is suggested as it does not compress the image. 
                     * But `".jpg"` could also be a good choice if the input image is very large. 
         """
-        self._client  = self._vision.ImageAnnotatorClient()
+        try:
+            self._client  = self._vision.ImageAnnotatorClient()
+        except:
+            warnings.warn("The GCV credential has not been set. You could not run the detect command.")
         self._context = self._vision.types.ImageContext(language_hints=languages)
         self.ocr_image_decode_type = ocr_image_decode_type
     

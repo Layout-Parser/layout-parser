@@ -6,7 +6,7 @@ image = cv2.imread("tests/source/test_gcv_image.jpg")
 def test_gcv_agent(test_detect=False):
     
     # Test loading the agent with designated credential
-    ocr_agent = GCVAgent.with_credential("tests/source/test_gcv_credential.json", languages = ['en'])
+    ocr_agent = GCVAgent()
     
     # Test loading the saved response and parse the data 
     res = ocr_agent.load_response("tests/source/test_gcv_response.json")
