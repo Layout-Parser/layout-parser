@@ -163,13 +163,63 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     #######################################################################
     
     @abstractmethod
-    def condition_on(self, other): pass
+    def condition_on(self, other): 
+        """
+        Given the current element in relative coordinates to another element which is in absolute coordinates,
+        generate a new element of the current element in absolute coordinates.
+
+        Args:
+            other (:obj:`BaseCoordElement`): 
+                The other layout element involved in the geometric operations.
+
+        Raises:
+            Exception: Raise error when the input type of the other element is invalid.
+
+        Returns:
+            :obj:`BaseCoordElement`: 
+                The BaseCoordElement object of the original element in the absolute coordinate system.
+        """
+        
+        pass
     
     @abstractmethod
-    def relative_to(self, other): pass
+    def relative_to(self, other):
+        """
+        Given the current element and another element both in absolute coordinates,
+        generate a new element of the current element in relative coordinates to the other element.
+
+        Args:
+            other (:obj:`BaseCoordElement`): The other layout element involved in the geometric operations.
+
+        Raises:
+            Exception: Raise error when the input type of the other element is invalid.
+
+        Returns:
+            :obj:`BaseCoordElement`: 
+                The BaseCoordElement object of the original element in the relative coordinate system.
+        """
+        
+        pass
     
     @abstractmethod
-    def is_in(self, other, soft_margin={}, center=False): pass
+    def is_in(self, other, soft_margin={}, center=False): 
+        """
+        Identify whether the current element is within another element. 
+
+        Args:
+            other (:obj:`BaseCoordElement`): 
+                The other layout element involved in the geometric operations.
+            soft_margin (:obj:`dict`, `optional`, defaults to `{}`): 
+                Enlarge the other element with wider margins to relax the restrictions.  
+            center (:obj:`bool`, `optional`, defaults to `False`): 
+                The toggle to determine whether the center (instead of the four corners) 
+                of the current element is in the other element.
+
+        Returns:
+            :obj:`bool`: Returns `True` if the current element is in the other element and `False` if not.
+        """
+        
+        pass
     
     #######################################################################
     ############### Geometric Operations (pad, shift, scale) ##############
@@ -198,11 +248,12 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     @abstractmethod
     def shift(self, shift_distance=0): 
         """
-        Shift the layout element by user specified amounts on x and y axis respectively. If shift_distance is a
+        Shift the layout element by user specified amounts on x and y axis respectively. If shift_distance is one
         numeric value, the element will by shifted by the same specified amount on both x and y axis.
 
         Args:
-            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): The number of pixels used to shift the element.
+            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): 
+                The number of pixels used to shift the element.
 
         Returns:
             :obj:`BaseCoordElement`: The shifted BaseCoordElement of the same shape-specific class.
@@ -211,14 +262,36 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         pass
     
     @abstractmethod
-    def scale(self, scale_factor=1): pass
-    
+    def scale(self, scale_factor=1): 
+        """
+        Scale the layout element by a user specified amount on x and y axis respectively. If scale_factor is one
+        numeric value, the element will by scaled by the same specified amount on both x and y axis.
+        
+        Args:
+            scale_factor (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): The amount for downscaling or upscaling the element.
+
+        Returns:
+            :obj:`BaseCoordElement`: The scaled BaseCoordElement of the same shape-specific class.
+        """
+        
+        pass
     #######################################################################
     ################################# MISC ################################
     #######################################################################
     
     @abstractmethod
-    def crop_image(self, image): pass
+    def crop_image(self, image): 
+        """
+        Crop the input image according to the coordinates of the element.
+
+        Args:
+            image (:obj:`Numpy array`): The array of the input image.
+            
+        Returns:
+            :obj:`Numpy array`: The array of the cropped image.
+        """
+        
+        pass
     
 
 @inherit_docstrings
@@ -289,7 +362,8 @@ class Interval(BaseCoordElement):
         and lower right corners to define the interval.
 
         Returns:
-            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+            :obj:`Tuple(numeric)`: 
+                Output the numeric values of the coordinates in a Tuple of size four. 
         """
         
         if self.axis == 'x':
@@ -323,6 +397,20 @@ class Interval(BaseCoordElement):
         return (self.start + self.end) / 2.
 
     def put_on_canvas(self, canvas):
+        """
+        Set the height and the width of the canvas that the interval is on.
+
+        Args:
+            canvas (:obj:`Numpy array` or :obj:`BaseCoordElement` or :obj:`PIL.Image.Image`): 
+                The base element that the interval is on. The numpy array should be the 
+                format of `[height, width]`.
+                
+        Returns:
+            :obj:`Interval`: 
+                A copy of the current Interval with its canvas height and width set to 
+                those of the input canvas.
+        """
+        
         if isinstance(canvas, np.ndarray):
             h, w = canvas.shape[:2]
         elif isinstance(canvas, BaseCoordElement):
@@ -336,7 +424,7 @@ class Interval(BaseCoordElement):
 
     @support_textblock
     def condition_on(self, other): 
-
+        
         if isinstance(other, Interval):
             if other.axis == self.axis:
                 d = other.start
@@ -462,6 +550,15 @@ class Interval(BaseCoordElement):
         return self.set(start=start, end=end)
         
     def scale(self, scale_factor): 
+        """
+        Scale the layout element by a user specified amount the same axis that the interval is defined on.
+        
+        Args:
+            scale_factor (:obj:`numeric`): The amount for downscaling or upscaling the element.
+
+        Returns:
+            :obj:`BaseCoordElement`: The scaled Interval object.
+        """
         
         if isinstance(scale_factor, Iterable):        
             scale_factor = scale_factor[0] if self.axis == 'x' \
@@ -477,9 +574,21 @@ class Interval(BaseCoordElement):
         return image[int(y_1):int(y_2), int(x_1):int(x_2)]
     
     def to_rectangle(self): 
+        """ 
+        Convert the Interval to a Rectangle element.
+
+        Returns:
+            :obj:`Rectangle`: The converted Rectangle object.
+        """
         return Rectangle(*self.coordinates)
     
     def to_quadrilateral(self):
+        """
+        Convert the Interval to a Quadrilateral element.
+
+        Returns:
+            :obj:`Quadrilateral`: The converted Quadrilateral object.
+        """
         return Quadrilateral(self.points)
     
     @classmethod
@@ -982,6 +1091,16 @@ class Quadrilateral(BaseCoordElement):
         return self.set(points=points)
 
     def crop_image(self, image):
+        """
+        Crop the input image using the points of the quadrilateral instance.
+
+        Args:
+            image (:obj:`Numpy array`): The array of the input image.
+            
+        Returns:
+            :obj:`Numpy array`: The array of the cropped image.
+        """
+        
         return _warpPerspective(image, self.perspective_matrix, (int(self.width), int(self.height)))
     
     def to_interval(self, axis='x', **kwargs):
@@ -1170,6 +1289,15 @@ class Layout(list):
         return self.__class__([ele.is_in(other) for ele in self])
     
     def filter_by(self, other):
+        """
+        Return a `Layout` object containing the elements that are in the `other` object.
+
+        Args:
+            other (:obj:`BaseCoordElement`)
+
+        Returns:
+            :obj:`Layout`
+        """
         return self.__class__([ele for ele in self if ele.is_in(other)])
     
     @functools.wraps(BaseCoordElement.shift)
@@ -1205,7 +1333,8 @@ class Layout(list):
             attr_name (:obj:`str`): The text string of certain attribute name.
 
         Returns:
-            :obj:`List`: The list of the corresponding attribute value (if exist) of each element in the list. 
+            :obj:`List`: 
+                The list of the corresponding attribute value (if exist) of each element in the list. 
         """
         return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]
     
