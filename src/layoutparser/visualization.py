@@ -103,7 +103,47 @@ def draw_box(canvas, layout,
                 id_font_path=None,
                 id_text_color=None,
                 id_text_background_color=None):
+    """Draw the layout region on the input canvas(image). 
 
+    Args:
+        canvas (:obj:`~np.ndarray` or :obj:`~PIL.Image.Image`): 
+            The canvas to draw the layout boxes. 
+        layout (:obj:`Layout` or :obj:`list`): 
+            The layout of the canvas to show. 
+        box_width (:obj:`int`, optional): 
+            Set to change the width of the drawn layout box boundary.
+            Defaults to None, when the boundary is automatically 
+            calculated as the the :const:`DEFAULT_BOX_WIDTH_RATIO` 
+            * the maximum of (height, width) of the canvas. 
+        color_map (dict, optional): 
+            A map from `block.type` to the colors, e.g., `{1: 'red'}`. 
+            Defaults to {}, when all the types are mapped to the 
+            :const:`DEFAULT_OUTLINE_COLOR`. 
+        show_element_id (bool, optional): 
+            Whether to display `block.id` on the top-left corner of 
+            the block. 
+            Defaults to False.
+        id_font_size (int, optional): 
+            Set to change the font size used for drawing `block.id`.
+            Defaults to None, when the size is set to 
+            :const:`DEFAULT_FONT_SIZE`. 
+        id_font_path (:obj:`str`, optional): 
+            Set to change the font used for drawing `block.id`.
+            Defaults to None, when the :const:`DEFAULT_FONT_OBJECT` is used. 
+        id_text_color (:obj:`str`, optional): 
+            Set to change the text color used for drawing `block.id`.
+            Defaults to None, when the color is set to 
+            :const:`DEFAULT_TEXT_COLOR`.
+        id_text_background_color (:obj:`str`, optional): 
+            Set to change the text region background used for drawing `block.id`.
+            Defaults to None, when the color is set to 
+            :const:`DEFAULT_TEXT_BACKGROUND`.
+    Returns:
+        :obj:`PIL.Image.Image`: 
+            A Image object containing the `layout` draw upon the input `canvas`. 
+    """
+    
+    
     draw = ImageDraw.Draw(canvas)
     
     if box_width is None:
@@ -160,7 +200,64 @@ def draw_text(canvas, layout,
                 with_layout        = False,
                 **kwargs
             ):
+    """Draw the (detected) text in the `layout` according to
+    their coordinates next to the input `canvas` (image) for better comparison. 
 
+    Args:
+        canvas (:obj:`~np.ndarray` or :obj:`~PIL.Image.Image`): 
+            The canvas to draw the layout boxes. 
+        layout (:obj:`Layout` or :obj:`list`): 
+            The layout of the canvas to show. 
+        arrangement (`{'lr', 'ud'}`, optional): 
+            The arrangement of the drawn text canvas and the original
+            image canvas: 
+            * `lr` - left and right 
+            * `ud` - up and down
+                
+            Defaults to 'lr'.
+        font_size (:obj:`str`, optional):
+            Set to change the size of the font used for 
+            drawing `block.text`.
+            Defaults to None, when the size is set to 
+            :const:`DEFAULT_FONT_SIZE`. 
+        font_path (:obj:`str`, optional): 
+            Set to change the font used for drawing `block.text`.
+            Defaults to None, when the :const:`DEFAULT_FONT_OBJECT` is used. 
+        text_color ([type], optional): 
+            Set to change the text color used for drawing `block.text`.
+            Defaults to None, when the color is set to 
+            :const:`DEFAULT_TEXT_COLOR`.
+        text_background_color ([type], optional): 
+            Set to change the text region background used for drawing 
+            `block.text`.
+            Defaults to None, when the color is set to 
+            :const:`DEFAULT_TEXT_BACKGROUND`.
+        vertical_text (bool, optional): 
+            Whether the text in a block should be drawn vertically. 
+            Defaults to False.
+        with_box_on_text (bool, optional): 
+            Whether to draw the layout box boundary of a text region 
+            on the text canvas.
+            Defaults to False.
+        text_box_width (:obj:`int`, optional):
+            Set to change the width of the drawn layout box boundary.
+            Defaults to None, when the boundary is automatically 
+            calculated as the the :const:`DEFAULT_BOX_WIDTH_RATIO` 
+            * the maximum of (height, width) of the canvas. 
+        text_box_color (:obj:`int`, optional):
+            Set to change the color of the drawn layout box boundary.
+            Defaults to None, when the color is set to 
+            :const:`DEFAULT_OUTLINE_COLOR`.
+        with_layout (bool, optional): 
+            Whether to draw the layout boxes on the input (image) canvas. 
+            Defaults to False.
+            When set to true, you can pass in the arguments in 
+            :obj:`draw_box` to change the style of the drawn layout boxes.
+            
+    Returns:
+        :obj:`PIL.Image.Image`: 
+            A Image object containing the drawn text from `layout`.
+    """
     if with_box_on_text:
         if text_box_width is None:
             text_box_width = _calculate_default_box_width(canvas)
