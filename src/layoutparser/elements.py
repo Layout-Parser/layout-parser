@@ -1234,16 +1234,16 @@ class TextBlock(BaseLayoutElement):
         return self.block.is_in(other, **kwargs)
     
     @mixin_textblock_meta
-    def shift(self, **kwargs):
-        return self.block.shift(**kwargs)
+    def shift(self, shift_distance):
+        return self.block.shift(shift_distance)
     
     @mixin_textblock_meta
     def pad(self, **kwargs):
         return self.block.pad(**kwargs)
     
     @mixin_textblock_meta
-    def scale(self, **kwargs):
-        return self.block.scale(**kwargs)
+    def scale(self, scale_factor):
+        return self.block.scale(scale_factor)
     
     def crop_image(self, image):
         return self.block.crop_image(image)
@@ -1301,16 +1301,16 @@ class Layout(list):
         return self.__class__([ele for ele in self if ele.is_in(other)])
     
     @functools.wraps(BaseCoordElement.shift)
-    def shift(self, **kwargs):
-        return self.__class__([ele.shift(**kwargs) for ele in self])
+    def shift(self, shift_distance):
+        return self.__class__([ele.shift(shift_distance) for ele in self])
 
     @functools.wraps(BaseCoordElement.pad)
     def pad(self, **kwargs):
         return self.__class__([ele.pad(**kwargs) for ele in self])
     
     @functools.wraps(BaseCoordElement.scale)
-    def scale(self, **kwargs):
-        return self.__class__([ele.scale(**kwargs) for ele in self])
+    def scale(self, scale_factor):
+        return self.__class__([ele.scale(scale_factor) for ele in self])
     
     def crop_image(self, image):
         return [ele.crop_image(image) for ele in self]

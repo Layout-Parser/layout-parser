@@ -162,6 +162,10 @@ def test_layout():
     l.filter_by(t)
     l.is_in(r)
     
+    l.scale(4)
+    l.shift(4)
+    l.pad(left=2)
+    
 def test_df():
     
     df = pd.DataFrame(
