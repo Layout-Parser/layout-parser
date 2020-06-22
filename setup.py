@@ -1,7 +1,15 @@
 from setuptools import setup, find_packages
+import os 
+
+# A trick from https://github.com/jina-ai/jina/blob/79b302c93b01689e82cf4b52f46522eb7497c404/setup.py#L20
+pkg_name = 'layoutparser'
+libinfo_py = os.path.join('src', pkg_name, '__init__.py')
+libinfo_content = open(libinfo_py, 'r', encoding='utf8').readlines()
+version_line = [l.strip() for l in libinfo_content if l.startswith('__version__')][0]
+exec(version_line)  # gives __version__
 
 setup(name         = "layoutparser",
-      version      = "0.0.1",
+      version      = __version__,
       author       = "Zejiang Shen Ruochen Zhang",
       license      = "Apache-2.0",
       url          = "https://github.com/Layout-Parser/layout-parser",
@@ -13,7 +21,12 @@ setup(name         = "layoutparser",
       install_requires=[
         "numpy", 
         "opencv-python",
-        "pandas"
+        "pandas",
+        "pillow"
       ],
+      extras_require={
+        "GCV": ['google-cloud-vision'], 
+        "Tesseract": ['pytesseract']
+      },
       include_package_data=True
       )
