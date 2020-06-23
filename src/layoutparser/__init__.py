@@ -13,3 +13,7 @@ from .ocr import (
     GCVFeatureType, GCVAgent, 
     TesseractFeatureType, TesseractAgent
 )
+
+from .models import (
+    Detectron2LayoutModel
+)

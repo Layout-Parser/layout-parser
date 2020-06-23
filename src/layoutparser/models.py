@@ -5,6 +5,8 @@ from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 from .elements import *
 
+__all__ = ['Detectron2LayoutModel']
+
 
 class BaseLayoutModel(ABC):
     
