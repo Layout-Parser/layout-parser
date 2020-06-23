@@ -4,6 +4,7 @@ import numpy as np
 import functools
 import os, sys, warnings
 import layoutparser
+from itertools import cycle
 
 # We need to fix this ugly hack some time in the future
 _lib_path = os.path.dirname(sys.modules[layoutparser.__package__].__file__)
@@ -11,6 +12,8 @@ _font_path = os.path.join(_lib_path, 'misc', 'NotoSerifCJKjp-Regular.otf')
 
 DEFAULT_BOX_WIDTH_RATIO = 0.005
 DEFAULT_OUTLINE_COLOR   = 'red'
+DEAFULT_COLOR_PALETTE   = "#f6bd60-#f7ede2-#f5cac3-#84a59d-#f28482"
+# From https://coolors.co/f6bd60-f7ede2-f5cac3-84a59d-f28482
 
 DEFAULT_FONT_PATH       = _font_path
 DEFAULT_FONT_SIZE       = 15
@@ -80,6 +83,9 @@ def _create_new_canvas(canvas, arrangement, text_background_color):
         raise ValueError(f"Invalid direction {arrangement}")
 
     return new_canvas    
+
+def _create_color_palette(types):
+    return {type:color for type, color in zip(types, cycle(DEAFULT_COLOR_PALETTE.split('-')))}
     
 def image_loader(func):
     @functools.wraps(func)
@@ -97,7 +103,7 @@ def image_loader(func):
 @image_loader
 def draw_box(canvas, layout, 
                 box_width=None,
-                color_map={},
+                color_map=None,
                 show_element_id=False,
                 id_font_size=None,
                 id_font_path=None,
@@ -117,8 +123,10 @@ def draw_box(canvas, layout,
             * the maximum of (height, width) of the canvas. 
         color_map (dict, optional): 
             A map from `block.type` to the colors, e.g., `{1: 'red'}`. 
-            Defaults to {}, when all the types are mapped to the 
-            :const:`DEFAULT_OUTLINE_COLOR`. 
+            You can set it to `{}` to use only the 
+            :const:`DEFAULT_OUTLINE_COLOR` for the outlines.
+            Defaults to None, when a color palette is is automatically 
+            created based on the input layout.
         show_element_id (bool, optional): 
             Whether to display `block.id` on the top-left corner of 
             the block. 
@@ -151,6 +159,10 @@ def draw_box(canvas, layout,
     
     if show_element_id:
         font_obj = _create_font_object(id_font_size, id_font_path)
+    
+    if color_map is None:
+        all_types = set([b.type for b in layout if hasattr(b, 'type')])
+        color_map = _create_color_palette(all_types)
     
     for idx, ele in enumerate(layout):
         
