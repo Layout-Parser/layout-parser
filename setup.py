@@ -22,7 +22,11 @@ setup(name         = "layoutparser",
         "numpy", 
         "opencv-python",
         "pandas",
-        "pillow"
+        "pillow",
+        "pyyaml>=5.1",
+        "torch==1.4",
+        "torchvision==0.5",
+        "detectron2 @ git+https://github.com/facebookresearch/detectron2.git@v0.1.3#egg=detectron2"
       ],
       extras_require={
         "GCV": ['google-cloud-vision'], 
