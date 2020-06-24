@@ -15,3 +15,17 @@
 ---
 
 Layout Parser is deep learning based tool for document image layout analysis tasks. 
+
+## Quick Start 
+
+1. Install the package
+    ```bash
+    pip install layoutparser
+
+    # Install Detectron2 for using DL Layout Detection Model
+    pip install 'git+https://github.com/facebookresearch/detectron2.git@v0.1.3#egg=detectron2' 
+
+    # Install the ocr components when necessary 
+    pip install layoutparser[ocr]      
+    ```
+

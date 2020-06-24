@@ -26,16 +26,13 @@ setup(name         = "layoutparser",
         "pyyaml>=5.1",
         "torch==1.4",
         "torchvision==0.5",
+        "pycocotools",
       ],
       extras_require={
         "ocr": [
           'google-cloud-vision',
           'pytesseract'
         ], 
-        "modeling": [
-          "pycocotools",
-          "detectron2 @ git+https://github.com/facebookresearch/detectron2.git@v0.1.3#egg=detectron2",
-        ]
       },
       include_package_data=True
       )
