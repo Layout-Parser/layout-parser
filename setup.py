@@ -28,9 +28,11 @@ setup(name         = "layoutparser",
         "torchvision==0.5",
       ],
       extras_require={
-        "GCV": ['google-cloud-vision'], 
-        "Tesseract": ['pytesseract'],
-        "DL": [
+        "ocr": [
+          'google-cloud-vision',
+          'pytesseract'
+        ], 
+        "modeling": [
           "pycocotools",
           "detectron2 @ git+https://github.com/facebookresearch/detectron2.git@v0.1.3#egg=detectron2",
         ]

@@ -21,7 +21,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install .
-        pip install .[DL]
+        pip install .[modeling]
         
     - name: Lint with flake8
       run: |
