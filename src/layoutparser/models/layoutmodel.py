@@ -17,7 +17,32 @@ class BaseLayoutModel(ABC):
 
 
 class Detectron2LayoutModel(BaseLayoutModel):
+    """Create a Detectron2-based Layout Detection Model
 
+    Args:
+        config_path (:obj:`str`): 
+            The path to the configuration file. 
+        model_path (:obj:`str`, None): 
+            The path to the saved weights of the model. 
+            If set, overwrite the weights in the configuration file. 
+            Defaults to `None`.
+        label_map (:obj:`dict`, optional): 
+            The map from the model prediction (ids) to real
+            word labels (strings). 
+            Defaults to `None`.
+        extra_config (:obj:`list`, optional): 
+            Extra configuration passed to the Detectron2 model 
+            configuration. The argument will be used in the `merge_from_list 
+            <https://detectron2.readthedocs.io/modules/config.html
+            #detectron2.config.CfgNode.merge_from_list>`_ function. 
+            Defaults to `[]`.
+    
+    Examples::
+        >>> import layoutparser as lp
+        >>> model = lp.models.Detectron2LayoutModel('lp://HJDataset/faster_rcnn_R_50_FPN_3x/config')
+        >>> model.detect(image)
+        
+    """
     def __init__(self, config_path,
                        model_path = None,
                        label_map  = None,
@@ -63,7 +88,14 @@ class Detectron2LayoutModel(BaseLayoutModel):
         self.model = DefaultPredictor(self.cfg)
 
     def detect(self, image):
+        """Detect the layout of a given image.
 
+        Args:
+            image (:obj:`np.ndarray`): The input image to detect.
+
+        Returns:
+            :obj:`~layoutparser.Layout`: The detected layout of the input image
+        """
         outputs = self.model(image)
         layout  = self.gather_output(outputs)
         return layout
