@@ -3,7 +3,9 @@ import os
 import torch
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
-from .elements import *
+from ..elements import *
+from fvcore.common.file_io import PathManager
+
 
 __all__ = ['Detectron2LayoutModel']
 
@@ -16,13 +18,14 @@ class BaseLayoutModel(ABC):
 
 class Detectron2LayoutModel(BaseLayoutModel):
 
-    def __init__(self, config_name,
+    def __init__(self, config_path,
                        model_path = None,
                        label_map  = None,
                        extra_config= []):
 
         cfg = get_cfg()
-        cfg.merge_from_file(config_name)
+        config_path = PathManager.get_local_path(config_path)
+        cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
         
         if model_path is not None:
