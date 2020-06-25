@@ -5,6 +5,7 @@ pandas
 docutils==0.16
 Sphinx==3.0.0
 recommonmark==0.6.0
+sphinx-markdown-tables
 sphinx_rtd_theme
 google-cloud-vision
 pytesseract

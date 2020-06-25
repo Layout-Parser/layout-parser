@@ -10,8 +10,8 @@ Welcome to Layout Parser's documentation!
    :maxdepth: 2
    :caption: Notes
 
-   installation 
-   quickstart
+   notes/quickstart
+   notes/modelzoo.md
 
 .. toctree::
    :maxdepth: 2
