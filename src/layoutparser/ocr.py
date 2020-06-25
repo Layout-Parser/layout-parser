@@ -284,7 +284,7 @@ class GCVAgent(BaseOCRAgent):
                 # Go down levels to fetch the texts
                 if cur_level == GCVFeatureType.SYMBOL:
                     texts.append(item.text)
-                elif cur_level == GCVFeatureType.WORD: 
+                elif cur_level == GCVFeatureType.WORD and agg_level != GCVFeatureType.SYMBOL: 
                     chars = []
                     iter_level(item, agg_level, text_blocks, chars, cur_level.child_level)
                     texts.append(''.join(chars))
