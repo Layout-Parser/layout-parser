@@ -1,4 +1,4 @@
-# Model Zoos
+# Model Zoo
 
 We provide a spectrum of pre-trained models on different datasets. 
 
