@@ -1285,10 +1285,10 @@ class Layout(list):
     def condition_on(self, other):
         return self.__class__([ele.condition_on(other) for ele in self])
     
-    def is_in(self, other):
-        return self.__class__([ele.is_in(other) for ele in self])
+    def is_in(self, other, **kwargs):
+        return self.__class__([ele.is_in(other, **kwargs) for ele in self])
     
-    def filter_by(self, other):
+    def filter_by(self, other, **kwargs):
         """
         Return a `Layout` object containing the elements that are in the `other` object.
 
@@ -1298,7 +1298,7 @@ class Layout(list):
         Returns:
             :obj:`Layout`
         """
-        return self.__class__([ele for ele in self if ele.is_in(other)])
+        return self.__class__([ele for ele in self if ele.is_in(other, **kwargs)])
     
     @functools.wraps(BaseCoordElement.shift)
     def shift(self, shift_distance):
