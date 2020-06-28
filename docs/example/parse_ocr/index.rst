@@ -8,7 +8,7 @@ APIs can be used for
    OCR engine
 2. Postprocessing of the textual results to create structured data
 
-.. code:: ipython3
+.. code:: python
 
     import layoutparser as lp 
     
@@ -27,7 +27,7 @@ Cloud Vision and Tesseract OCR engine. And we are going to provide more
 support in the future. In this toturial, we will use the Google Cloud
 Vision engine as an example.
 
-.. code:: ipython3
+.. code:: python
 
     ocr_agent = lp.GCVAgent.with_credential("<path/to/your/credential>",
                                            languages = ['en'])
@@ -39,7 +39,7 @@ OCRing. For a detailed explanation, please check
 The ``example-table`` is a scan with complicated table structures from
 https://stacks.cdc.gov/view/cdc/42482/.
 
-.. code:: ipython3
+.. code:: python
 
     image = cv2.imread('data/example-table.jpeg')
     plt.imshow(image);
@@ -59,7 +59,7 @@ we would like to directly analyze the response from GCV Engine. We can
 set the ``return_response`` to ``True``. This feature is also supported
 for other OCR Engines like ``TesseractOCRAgent``.
 
-.. code:: ipython3
+.. code:: python
 
     res = ocr_agent.detect(image, return_response=True)
     
@@ -90,7 +90,7 @@ response:
    There are 5 levels specified in ``GCVFeatureType``, namely: ``PAGE``,
    ``BLOCK``, ``PARA``, ``WORD``, ``SYMBOL``.
 
-.. code:: ipython3
+.. code:: python
 
     texts  = ocr_agent.gather_text_annotations(res) 
         # collect all the texts without coordinates
@@ -113,7 +113,7 @@ that:
 2. on the text canvas (left), it also draws a red bounding box for each
    text region.
 
-.. code:: ipython3
+.. code:: python
 
     lp.draw_text(image, layout, font_size=12, with_box_on_text=True,
                  text_box_width=1)
@@ -137,7 +137,7 @@ Note: As the OCR engine usually does not provide advanced functions like
 table detection, the coordinates are found manually by using some image
 inspecting tools like GIMP.
 
-.. code:: ipython3
+.. code:: python
 
     filtered_residence = layout.filter_by(
         lp.Rectangle(x_1=132, y_1=300, x_2=264, y_2=840)
@@ -157,7 +157,7 @@ outputs, the ``layout.filter_by`` function also supports a
 ``soft_margin`` argument to handle this issue and generate more robust
 outputs.
 
-.. code:: ipython3
+.. code:: python
 
     filter_lotno = layout.filter_by(
         lp.Rectangle(x_1=810, y_1=300, x_2=910, y_2=840),
@@ -178,7 +178,7 @@ Group Rows based on hard-coded parameteres
 As there are 13 rows, we can iterate the rows and fetech the row-based
 information:
 
-.. code:: ipython3
+.. code:: python
 
     y_0 = 307
     n_rows = 13
@@ -199,7 +199,7 @@ information:
         
         row.append([''.join(residence_row), ''.join(lotno_row)])
 
-.. code:: ipython3
+.. code:: python
 
     row
 
@@ -227,7 +227,7 @@ information:
 An Alternative Method - Adaptive Grouping lines based on distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: ipython3
+.. code:: python
 
     blocks = filter_lotno
     
@@ -257,7 +257,7 @@ visualization, we can conclude:
 -  For larger distances, they are generated from texts pairs of
    different rows
 
-.. code:: ipython3
+.. code:: python
 
     distance_th = 0
     
@@ -276,7 +276,7 @@ visualization, we can conclude:
 
 
 
-.. code:: ipython3
+.. code:: python
 
     # Group the blocks by the block_group mask 
     grouped_blocks = [[] for i in range(max(block_group)+1)]
@@ -285,7 +285,7 @@ visualization, we can conclude:
 
 Finally let’s create a function for them
 
-.. code:: ipython3
+.. code:: python
 
     def group_blocks_by_distance(blocks, distance_th):
     
@@ -301,7 +301,7 @@ Finally let’s create a function for them
             
         return grouped_blocks
 
-.. code:: ipython3
+.. code:: python
 
     A = group_blocks_by_distance(filtered_residence, 5)
     B = group_blocks_by_distance(filter_lotno, 10) 
@@ -353,7 +353,7 @@ because the extra row ``co`` disrupted the row segmentation algorithm.
 Save the results as a table
 ---------------------------
 
-.. code:: ipython3
+.. code:: python
 
     df = pd.DataFrame(row, columns=['residence', 'lot no'])
     df
@@ -457,6 +457,6 @@ Save the results as a table
 
 
 
-.. code:: ipython3
+.. code:: python
 
     df.to_csv('./data/ocred-example-table.csv', index=None)
