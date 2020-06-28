@@ -18,6 +18,7 @@ Welcome to Layout Parser's documentation!
    :caption: Examples
 
    example/parse_ocr/index
+   example/deep_layout_parsing/index
 
 .. toctree::
    :maxdepth: 2
