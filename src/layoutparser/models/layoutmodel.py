@@ -74,7 +74,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
             x_1, y_1, x_2, y_2 = box
 
             if self.label_map is not None:
-                label = self.label_map[label]
+                label = self.label_map.get(label, label)
 
             cur_block = TextBlock(
                     Rectangle(x_1, y_1, x_2, y_2),
