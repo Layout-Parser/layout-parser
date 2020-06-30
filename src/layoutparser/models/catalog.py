@@ -5,14 +5,28 @@ MODEL_CATALOG = {
         'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/6icw6at8m28a2ho/model_final.pth?dl=1',
         'mask_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/893paxpy5suvlx9/model_final.pth?dl=1',
         'retinanet_R_50_FPN_3x': 'https://www.dropbox.com/s/yxsloxu3djt456i/model_final.pth?dl=1'
+    },
+    "PubLayNet": {
+        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/dgy9c10wykk4lq4/model_final.pth?dl=1",
+        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/d9fc9tahfzyl6df/model_final.pth?dl=1"
+    },
+    "PrimaLayout": {
+        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/vfipiglnkyvgw2e/model_final.pth?dl=1"
     }
 }
 
 CONFIG_CATALOG = {
     'HJDataset': {
         'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/j4yseny2u0hn22r/config.yml?dl=1',
-        'mask_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/4jmr3xanmxmjcf8/config.yml?dl=0',
-        'retinanet_R_50_FPN_3x': 'https://www.dropbox.com/s/z8a8ywozuyc5c2x/config.yml?dl=0'
+        'mask_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/4jmr3xanmxmjcf8/config.yml?dl=1',
+        'retinanet_R_50_FPN_3x': 'https://www.dropbox.com/s/z8a8ywozuyc5c2x/config.yml?dl=1'
+    },
+    "PubLayNet": {
+        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/f3b12qc4hc0yh4m/config.yml?dl=1",
+        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/u9wbsfwz4y0ziki/config.yml?dl=1"
+    },
+    "PrimaLayout": {
+        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/thdqhkvdihtr8yb/config.yml?dl=1"
     }
 }
 
