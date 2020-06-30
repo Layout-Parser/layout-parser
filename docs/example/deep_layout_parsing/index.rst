@@ -4,12 +4,10 @@ Deep Layout Parsing
 In this tutorial, we will show how to use the ``layoutparser`` API to
 
 1. Load Deep Learning Layout Detection models and predict the layout of
-   the input image
+   the paper image
 2. Use the coordinate system to parse the output
 
-The test images are from the
-`HJDataset <https://dell-research-harvard.github.io/HJDataset/>`__,
-which contains noisy historical scans with complex layouts.
+The ``paper-image`` is from https://arxiv.org/abs/2004.08686.
 
 .. code:: python
 
@@ -24,31 +22,34 @@ Use Layout Models to detect complex layout
 
 .. code:: python
 
-    image = cv2.imread("data/HJData-test-image.jpg")
+    image = cv2.imread("data/paper-image.jpg")
     image = image[..., ::-1] 
         # Convert the image from BGR (cv2 default loading style)
         # to RGB
 
 .. code:: python
 
-    model = lp.Detectron2LayoutModel('lp://HJDataset/faster_rcnn_R_50_FPN_3x/config',
-                                     extra_config=["TEST.DETECTIONS_PER_IMAGE", "120"])
+    model = lp.Detectron2LayoutModel('lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config', 
+                                     extra_config=["MODEL.ROI_HEADS.SCORE_THRESH_TEST", 0.8],
+                                     label_map={0: "Text", 1: "Title", 2: "List", 3:"Table", 4:"Figure"})
         # Load the deep layout model from the layoutparser API 
         # For all the supported model, please check the Model 
         # Zoo Page: https://layout-parser.readthedocs.io/en/latest/notes/modelzoo.html
-    
+
+.. code:: python
+
     layout = model.detect(image)
         # Detect the layout of the input image
 
 .. code:: python
 
-    lp.draw_box(image, layout, box_width=6)
+    lp.draw_box(image, layout, box_width=3)
         # Show the detected layout of the input image
 
 
 
 
-.. image:: output_6_0.png
+.. image:: output_7_0.png
 
 
 
@@ -80,7 +81,7 @@ from list and supports handy methods for layout processing.
 
 .. parsed-literal::
 
-    TextBlock(block=Rectangle(x_1=182.01585388183594, y_1=777.922607421875, x_2=2053.8076171875, y_2=1318.0374755859375), text=, id=None, type=2, parent=None, next=None, score=0.9999566078186035)
+    TextBlock(block=Rectangle(x_1=646.4182739257812, y_1=1420.1715087890625, x_2=1132.8687744140625, y_2=1479.7222900390625), text=, id=None, type=Text, parent=None, next=None, score=0.9996440410614014)
 
 
 
@@ -93,28 +94,139 @@ information can be found at the
 Use the coordinate system to process the detected layout
 --------------------------------------------------------
 
-.. code:: python
-
-    row_blocks = [b for b in layout if b.type == 2] 
-        # 2 is the class for the row boxes 
-    row_block  = row_blocks[0]
-        # Choose the first row block as an example
-    row_image  = row_block.crop_image(image)
-        # Crop out the row image 
-    row_layout = layout.\
-                    filter_by(row_block, center=True).\
-                    relative_to(row_block)
-        # In layout, find all the blocks in the row region, 
-        # and transform their coordinates into relative 
-        # coordinates to the row box
+Firstly we filter text region of specific type:
 
 .. code:: python
 
-    lp.draw_box(row_image, row_layout, box_width=3)
+    text_blocks = lp.Layout([b for b in layout if b.type=='Text'])
+    figure_blocks = lp.Layout([b for b in layout if b.type=='Figure'])
+
+As there could be text region detected inside the figure region, we just
+drop them:
+
+.. code:: python
+
+    text_blocks = lp.Layout([b for b in text_blocks \
+                       if not any(b.is_in(b_fig) for b_fig in figure_blocks)])
+
+Finally sort the text regions and assign ids:
+
+.. code:: python
+
+    h, w = image.shape[:2]
+    
+    left_interval = lp.Interval(0, w/2*1.05, axis='x').put_on_canvas(image)
+    
+    left_blocks = text_blocks.filter_by(left_interval, center=True)
+    left_blocks.sort(key = lambda b:b.coordinates[1])
+    
+    right_blocks = [b for b in text_blocks if b not in left_blocks]
+    right_blocks.sort(key = lambda b:b.coordinates[1])
+    
+    # And finally combine the two list and add the index
+    # according to the order
+    text_blocks = lp.Layout([b.set(id = idx) for idx, b in enumerate(left_blocks + right_blocks)])
+
+Visualize the cleaned text blocks:
+
+.. code:: python
+
+    lp.draw_box(image, text_blocks,
+                box_width=3, 
+                show_element_id=True)
 
 
 
 
-.. image:: output_14_0.png
+.. image:: output_21_0.png
 
+
+
+Fetech the text inside each text region
+---------------------------------------
+
+We can also combine with the OCR functionality in ``layoutparser`` to
+fetech the text in the document.
+
+.. code:: python
+
+    ocr_agent = lp.TesseractAgent(languages='eng') 
+        # Initialize the tesseract ocr engine. You might need 
+        # to install the OCR components in layoutparser:
+        # pip install layoutparser[ocr]
+
+.. code:: python
+
+    for block in text_blocks:
+        segment_image = (block
+                           .pad(left=5, right=5, top=5, bottom=5)
+                           .crop_image(image))
+            # add padding in each image segment can help
+            # improve robustness 
+            
+        text = ocr_agent.detect(segment_image)
+        block.set(text=text, inplace=True)
+
+.. code:: python
+
+    for txt in text_blocks.get_texts():
+        print(txt, end='\n---\n')
+
+
+.. parsed-literal::
+
+    Figure 7: Annotation Examples in HJDataset. (a) and (b) show two examples for the labeling of main pages. The boxes
+    are colored differently to reflect the layout element categories. Illustrated in (c), the items in each index page row are
+    categorized as title blocks, and the annotations are denser.
+    ---
+    tion over union (IOU) level [0.50:0.95]’, on the test data. In
+    general, the high mAP values indicate accurate detection of
+    the layout elements. The Faster R-CNN and Mask R-CNN
+    achieve comparable results, better than RetinaNet. Notice-
+    ably, the detections for small blocks like title are less pre-
+    cise, and the accuracy drops sharply for the title category. In
+    Figure 8, (a) and (b) illustrate the accurate prediction results
+    of the Faster R-CNN model.
+    ---
+    We also examine how our dataset can help with
+    world document digitization application. When digitizing
+    new publications, researchers usually do not generate large
+    scale ground truth data to train their layout analysis models.
+    If they are able to adapt our dataset, or models trained on
+    our dataset, to develop models on their data, they can build
+    their pipelines more efficiently and develop more accurate
+    models. To this end, we conduct two experiments. First we
+    examine how layout analysis models trained on the main
+    pages can be used for understanding index pages. More-
+    over, we study how the pre-trained models perform on other
+    historical Japanese documents.
+    ---
+    Table 4 compares the performance of five Faster R-CNN
+    models that are trained differently on index pages. If the
+    model loads pre-trained weights from HJDataset, it includes
+    information learned from main pages. Models trained over
+    ---
+    ?This is a core metric developed for the COCO competition [| 2] for
+    evaluating the object detection quality.
+    ---
+    all the training data can be viewed as the benchmarks, while
+    training with few samples (five in this case) are consid-
+    ered to mimic real-world scenarios. Given different train-
+    ing data, models pre-trained on HJDataset perform signifi-
+    cantly better than those initialized with COCO weights. In-
+    tuitively, models trained on more data perform better than
+    those with fewer samples. We also directly use the model
+    trained on main to predict index pages without fine-
+    tuning. The low zero-shot prediction accuracy indicates the
+    dissimilarity between index and main pages. The large
+    increase in mAP from 0.344 to 0.471 after the model is
+    ---
+    Table 3: Detection mAP @ IOU [0.50:0.95] of different
+    models for each category on the test set. All values are given
+    as percentages.
+    ---
+    * For training Mask R-CNN, the segmentation masks are the quadri-
+    lateral regions for each block. Compared to the rectangular bounding
+    boxes, they delineate the text region more accurately.
+    ---
 
