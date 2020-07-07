@@ -30,5 +30,5 @@ model.detect(image)
 | Dataset                                                      | Label Map                                                    |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [HJDataset](https://dell-research-harvard.github.io/HJDataset/) | `{1:"Page Frame", 2:"Row", 3:"Title Region", 4:"Text Region", 5:"Title", 6:"Subtitle", 7:"Other"}` |
-| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | `{1: "Text", 2: "Title", 3: "List", 4:"Table", 5:"Figure"}`     |
-| [PrimaLayout](https://www.primaresearch.org/dataset/)        | `{1:"TextRegion", 2:"ImageRegion", 3:"TableRegion", 4:"MathsRegion", 5:"SeparatorRegion", 6:"OtherRegion"}` |
+| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | `{0: "Text", 1: "Title", 2: "List", 3:"Table", 4:"Figure"}`     |
+| [PrimaLayout](https://www.primaresearch.org/dataset/)        | `{0:"TextRegion", 1:"ImageRegion", 2:"TableRegion", 3:"MathsRegion", 4:"SeparatorRegion", 5:"OtherRegion"}` |
