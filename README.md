@@ -39,13 +39,17 @@ We provide a series of examples for to help you start using the layout parser li
 2. [Deep Layout Parsing Example](https://github.com/Layout-Parser/layout-parser/blob/master/examples/Deep%20Layout%20Parsing.ipynb): With the help of Deep Learning, `layoutparser` supports the analysis very complex documents and processing of the hierarchical structure in the layouts. 
 
 
-## DL Assisted Layout Prediction 
+## DL Assisted Layout Prediction Example 
+
+![Example Usage](.github/example.png)
+
+*The images shown in the figure above are: a screenshot of [this paper](https://arxiv.org/abs/2004.08686), an image from the [PRIMA Layout Analysis Dataset](https://www.primaresearch.org/dataset/), a screenshot of the [WSJ website](http://wsj.com), and an image from the [HJDataset](https://dell-research-harvard.github.io/HJDataset/).*
 
 With only 4 lines of code in `layoutparse`, you can unlock the information from complex documents that existing tools could not provide. You can either choose a deep learning model from the [ModelZoo](https://github.com/Layout-Parser/layout-parser/blob/master/docs/notes/modelzoo.md), or load the model that you trained on your own. And use the following code to predict the layout as well as visualize it: 
 
 ```python
 >>> import layoutparser as lp
->>> model = lp.Detectron2LayoutModel('lp://HJDataset/faster_rcnn_R_50_FPN_3x/config')
+>>> model = lp.Detectron2LayoutModel('lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config')
 >>> layout = model.detect(image) # You need to load the image somewhere else, e.g., image = cv2.imread(...)
->>> lp.draw_box(image, layout, box_width=3)
+>>> lp.draw_box(image, layout,) # With extra configurations
 ```
