@@ -53,3 +53,16 @@ With only 4 lines of code in `layoutparse`, you can unlock the information from 
 >>> layout = model.detect(image) # You need to load the image somewhere else, e.g., image = cv2.imread(...)
 >>> lp.draw_box(image, layout,) # With extra configurations
 ```
+
+## Citing `layoutparser`
+
+If you find `layoutparser` helpful to your work, please consider citing our tool using the following BibTeX entry.
+
+```
+@misc{shen2020layoutparser,
+  author = {Zejiang Shen and Ruochen Zhang and Melissa Dell},
+  title = {LayoutParser},
+  howpublished = {\url{https://github.com/Layout-Parser/layout-parser}},
+  year = {2020}
+}
+```
