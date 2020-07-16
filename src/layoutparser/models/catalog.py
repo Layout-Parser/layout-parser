@@ -11,7 +11,7 @@ MODEL_CATALOG = {
         "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/d9fc9tahfzyl6df/model_final.pth?dl=1"
     },
     "PrimaLayout": {
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/vfipiglnkyvgw2e/model_final.pth?dl=1"
+        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/h7th27jfv19rxiy/model_final.pth?dl=1"
     }
 }
 
@@ -26,7 +26,7 @@ CONFIG_CATALOG = {
         "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/u9wbsfwz4y0ziki/config.yml?dl=1"
     },
     "PrimaLayout": {
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/thdqhkvdihtr8yb/config.yml?dl=1"
+        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/yc92x97k50abynt/config.yaml?dl=1"
     }
 }
 
