@@ -16,11 +16,7 @@ def test_Detectron2Model(is_large_scale=False):
     if is_large_scale:
         
         for config in ALL_CONFIGS:  
-            model = Detectron2LayoutModel(
-                config,
-                extra_config=["MODEL.ROI_HEADS.SCORE_THRESH_TEST", 0.8],
-                label_map={0: "Text", 1: "Title", 2: "List", 3:"Table", 4:"Figure"}
-            )
+            model = Detectron2LayoutModel(config)
             
             image = cv2.imread("tests/source/test_gcv_image.jpg")
             layout = model.detect(image)
