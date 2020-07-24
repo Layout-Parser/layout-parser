@@ -8,13 +8,15 @@ def test_interval():
     i.to_rectangle()
     i.to_quadrilateral()
     assert i.shift(1) == Interval(2, 3, axis='y', canvas_height=30, canvas_width=400)
+    assert i.area == 1*400
     
     i = Interval(1, 2, axis='x')
     assert i.shift([1,2]) == Interval(2, 3, axis='x')
     assert i.scale([2,1]) == Interval(2, 4, axis='x')
     assert i.pad(left=10, right=20) == Interval(0, 22)  # Test the safe_mode
     assert i.pad(left=10, right=20, safe_mode=False) == Interval(-9, 22) 
-
+    assert i.area == 0
+    
     img = np.random.randint(12, 24, (40,40))
     img[:, 10:20] = 0
     i = Interval(5, 11, axis='x')
@@ -30,6 +32,7 @@ def test_rectangle():
     assert r.shift(1) == Rectangle(2, 3, 4, 5)
     assert r.scale([3,2]) == Rectangle(3, 4, 9, 8)
     assert r.scale(2) == Rectangle(2, 4, 6, 8)
+    assert r.area == 4
     
     img = np.random.randint(12, 24, (40,40))
     r.crop_image(img).shape == (2, 2)
@@ -52,6 +55,9 @@ def test_quadrilateral():
     img = np.random.randint(2, 24, (30, 20)).astype('uint8')
     img[2:5, 2:6] = 0
     assert np.unique(q.crop_image(img)) == np.array([0])
+    
+    q = Quadrilateral(np.array([[-2, 0], [0, 2], [2, 0], [0, -2]]))
+    assert q.area == 8.
     
 def test_interval_relations():
     
@@ -123,10 +129,13 @@ def test_textblock():
     
     t = TextBlock(i, id=1, type=2, text="12")
     assert t.relative_to(q).condition_on(q).block == i.put_on_canvas(q).to_quadrilateral()
+    t.area
     t = TextBlock(r, id=1, type=2, parent="a")
     assert t.relative_to(i).condition_on(i).block == r
+    t.area
     t = TextBlock(q, id=1, type=2, parent="a")
     assert t.relative_to(r).condition_on(r).block == q
+    t.area
     
     # Ensure the operations did not change the object itself
     assert t == TextBlock(q, id=1, type=2, parent="a")

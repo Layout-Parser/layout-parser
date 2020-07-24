@@ -68,6 +68,21 @@ def _parse_datatype_from_feature_names(feature_names):
         "\n Please check the tutorials for more details."
         "\n "
     )
+
+def _polygon_area(xs, ys):
+    """Calculate the area of polygons using 
+    `Shoelace Formula <https://en.wikipedia.org/wiki/Shoelace_formula>`_.
+
+    Args:
+        xs (`np.ndarray`): The x coordinates of the points
+        ys (`np.ndarray`): The y coordinates of the points
+    """
+    
+    # Refer to: https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+    # The formula is equivalent to the original one indicated in the wikipedia
+    # page.
+    
+    return 0.5*np.abs( np.dot(xs,np.roll(ys,1)) - np.dot(ys,np.roll(xs,1)) )
     
 def mixin_textblock_meta(func):
     @functools.wraps(func)
@@ -157,6 +172,10 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     @property
     @abstractmethod
     def points(self): pass
+    
+    @property
+    @abstractmethod
+    def area(self): pass
     
     #######################################################################
     ### Geometric Relations (relative to, condition on, and is in)  ### 
@@ -396,6 +415,16 @@ class Interval(BaseCoordElement):
         
         return (self.start + self.end) / 2.
 
+    @property
+    def area(self):
+        """Return the area of the covered region of the interval. 
+        The area is bounded to the canvas. If the interval is put
+        on a canvas, the area equals to interval width * canvas height 
+        (axis='x') or interval height * canvas width (axis='y'). 
+        Otherwise, the area is zero.
+        """
+        return self.height * self.width
+    
     def put_on_canvas(self, canvas):
         """
         Set the height and the width of the canvas that the interval is on.
@@ -694,6 +723,13 @@ class Rectangle(BaseCoordElement):
         
         return (self.x_1 + self.x_2)/2., (self.y_1 + self.y_2)/2.
     
+    @property
+    def area(self):
+        """
+        Return the area of the rectangle.
+        """
+        return self.width * self.height
+
     @support_textblock
     def condition_on(self, other): 
         
@@ -946,6 +982,13 @@ class Quadrilateral(BaseCoordElement):
         """
         
         return tuple(self.points.mean(axis=0).tolist())
+    
+    @property
+    def area(self):
+        """
+        Return the area of the quadrilateral.
+        """
+        return _polygon_area(self.points[:,0], self.points[:,1])
     
     @property
     def mapped_rectangle_points(self):
@@ -1221,7 +1264,14 @@ class TextBlock(BaseLayoutElement):
         """
         
         return self.block.points
-        
+    
+    @property
+    def area(self):
+        """
+        Return the area of associated block.
+        """
+        return self.block.area
+    
     @mixin_textblock_meta
     def condition_on(self, other):
         return self.block.condition_on(other)
