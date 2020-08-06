@@ -92,7 +92,8 @@ def image_loader(func):
     def wrap(canvas, layout, *args, **kwargs):
         
         if isinstance(canvas, Image.Image):
-            canvas = canvas
+            if canvas.mode != 'RGB':
+                canvas = canvas.convert('RGB')
         elif isinstance(canvas, np.ndarray):
             canvas = Image.fromarray(canvas)
         out = func(canvas, layout, *args, **kwargs)

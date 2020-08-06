@@ -5,7 +5,8 @@ from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 from ..elements import *
 from fvcore.common.file_io import PathManager
-
+from PIL import Image
+import numpy as np
 
 __all__ = ['Detectron2LayoutModel']
 
@@ -91,11 +92,18 @@ class Detectron2LayoutModel(BaseLayoutModel):
         """Detect the layout of a given image.
 
         Args:
-            image (:obj:`np.ndarray`): The input image to detect.
+            image (:obj:`np.ndarray` or `PIL.Image`): The input image to detect.
 
         Returns:
             :obj:`~layoutparser.Layout`: The detected layout of the input image
         """
+        
+        # Convert PIL Image Input        
+        if isinstance(image, Image.Image):
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            image = np.array(image)
+
         outputs = self.model(image)
         layout  = self.gather_output(outputs)
         return layout
