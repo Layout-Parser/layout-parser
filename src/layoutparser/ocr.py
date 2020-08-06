@@ -381,7 +381,7 @@ class TesseractAgent(BaseOCRAgent):
         }
     ]
     
-    def __init__(self, languages=None, **kwargs):
+    def __init__(self, languages='eng', **kwargs):
         """Create a Tesseract OCR Agent.  
 
         Args:
@@ -392,7 +392,7 @@ class TesseractAgent(BaseOCRAgent):
                 It supports two formats: 1) you can pass in the languages code as a string 
                 of format like `"eng+fra"`, or 2) you can pack them as a list of strings
                 `["eng", "fra"]`. 
-                Defaults to None.
+                Defaults to 'eng'.
         """        
         self.lang = languages if isinstance(languages, str) else '+'.join(languages)
         self.configs = kwargs
