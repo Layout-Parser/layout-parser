@@ -23,7 +23,9 @@ Use pip or conda to install the library:
 pip install layoutparser
 
 # Install Detectron2 for using DL Layout Detection Model
-pip install 'git+https://github.com/facebookresearch/detectron2.git@v0.1.3#egg=detectron2' 
+# Please make sure the PyTorch version is compatible with
+# the installed Detectron2 version. 
+pip install 'git+https://github.com/facebookresearch/detectron2.git#egg=detectron2' 
 
 # Install the ocr components when necessary 
 pip install layoutparser[ocr]      

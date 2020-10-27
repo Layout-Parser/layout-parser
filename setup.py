@@ -24,13 +24,13 @@ setup(name         = "layoutparser",
         "pandas",
         "pillow",
         "pyyaml>=5.1",
-        "torch==1.4",
-        "torchvision==0.5",
+        "torch",
+        "torchvision",
         "pycocotools",
       ],
       extras_require={
         "ocr": [
-          'google-cloud-vision',
+          'google-cloud-vision==1',
           'pytesseract'
         ], 
       },
