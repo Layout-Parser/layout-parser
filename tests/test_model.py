@@ -8,6 +8,7 @@ ALL_CONFIGS = [
         'lp://HJDataset/retinanet_R_50_FPN_3x/config',
         'lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config',
         'lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config',
+        'lp://PubLayNet/mask_rcnn_X_101_32x8d_FPN_3x/config',
     ]
 
 

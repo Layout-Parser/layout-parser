@@ -23,7 +23,10 @@ model.detect(image)
 | [HJDataset](https://dell-research-harvard.github.io/HJDataset/) | [retinanet_R_50_FPN_3x](https://www.dropbox.com/s/z8a8ywozuyc5c2x/config.yml?dl=1) | lp://HJDataset/retinanet_R_50_FPN_3x/config   |                                                              |
 | [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/f3b12qc4hc0yh4m/config.yml?dl=1) | lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config |                                                              |
 | [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/u9wbsfwz4y0ziki/config.yml?dl=1) | lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config   |                                                              |
+| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [mask_rcnn_X_101_32x8d_FPN_3x](https://www.dropbox.com/s/nau5ut6zgthunil/config.yaml?dl=1) | lp://PubLayNet/mask_rcnn_X_101_32x8d_FPN_3x/config | 88.98 [eval.csv](https://www.dropbox.com/s/15ytg3fzmc6l59x/eval.csv?dl=0) |
 | [PrimaLayout](https://www.primaresearch.org/dataset/)        | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/yc92x97k50abynt/config.yaml?dl=1) | lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config | 69.35 [eval.csv](https://www.dropbox.com/s/9uuql57uedvb9mo/eval.csv?dl=0) |
+
+* For PubLayNet models, we suggest using `mask_rcnn_X_101_32x8d_FPN_3x` model as it's trained on the whole training set, while others are only trained on the validation set (the size is only around 1/50). You could expect a 15% AP improvement using the `mask_rcnn_X_101_32x8d_FPN_3x` model.
 
 ## Model `label_map`
 
