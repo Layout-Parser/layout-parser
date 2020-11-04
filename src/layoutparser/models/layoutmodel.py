@@ -12,7 +12,7 @@ __all__ = ['Detectron2LayoutModel']
 
 
 class BaseLayoutModel(ABC):
-    
+
     @abstractmethod
     def detect(self): pass
 
@@ -37,28 +37,29 @@ class Detectron2LayoutModel(BaseLayoutModel):
             <https://detectron2.readthedocs.io/modules/config.html
             #detectron2.config.CfgNode.merge_from_list>`_ function. 
             Defaults to `[]`.
-    
+
     Examples::
         >>> import layoutparser as lp
         >>> model = lp.models.Detectron2LayoutModel('lp://HJDataset/faster_rcnn_R_50_FPN_3x/config')
         >>> model.detect(image)
-        
+
     """
+
     def __init__(self, config_path,
-                       model_path = None,
-                       label_map  = None,
-                       extra_config= []):
+                 model_path=None,
+                 label_map=None,
+                 extra_config=[]):
 
         cfg = get_cfg()
         config_path = PathManager.get_local_path(config_path)
         cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
-        
+
         if model_path is not None:
-            cfg.MODEL.WEIGHTS = model_path            
+            cfg.MODEL.WEIGHTS = model_path
         cfg.MODEL.DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.cfg = cfg
-        
+
         self.label_map = label_map
         self._create_model()
 
@@ -68,7 +69,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
 
         layout = Layout()
         scores = instance_pred.scores.tolist()
-        boxes  = instance_pred.pred_boxes.tensor.tolist()
+        boxes = instance_pred.pred_boxes.tensor.tolist()
         labels = instance_pred.pred_classes.tolist()
 
         for score, box, label in zip(scores, boxes, labels):
@@ -78,9 +79,9 @@ class Detectron2LayoutModel(BaseLayoutModel):
                 label = self.label_map.get(label, label)
 
             cur_block = TextBlock(
-                    Rectangle(x_1, y_1, x_2, y_2),
-                    type=label, 
-                    score=score)
+                Rectangle(x_1, y_1, x_2, y_2),
+                type=label,
+                score=score)
             layout.append(cur_block)
 
         return layout
@@ -97,13 +98,13 @@ class Detectron2LayoutModel(BaseLayoutModel):
         Returns:
             :obj:`~layoutparser.Layout`: The detected layout of the input image
         """
-        
-        # Convert PIL Image Input        
+
+        # Convert PIL Image Input
         if isinstance(image, Image.Image):
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             image = np.array(image)
 
         outputs = self.model(image)
-        layout  = self.gather_output(outputs)
+        layout = self.gather_output(outputs)
         return layout

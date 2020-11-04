@@ -32,10 +32,12 @@ CONFIG_CATALOG = {
     }
 }
 
+
 class DropboxHandler(HTTPURLHandler):
     """
     Supports download and file check for dropbox links
     """
+
     def _get_supported_prefixes(self):
         return ["https://www.dropbox.com"]
 
@@ -47,7 +49,7 @@ class LayoutParserHandler(PathHandler):
     """
     Resolve anything that's in LayoutParser model zoo.
     """
-    
+
     PREFIX = "lp://"
 
     def _get_supported_prefixes(self):
@@ -56,7 +58,7 @@ class LayoutParserHandler(PathHandler):
     def _get_local_path(self, path):
         model_name = path[len(self.PREFIX):]
         dataset_name, *model_name, data_type = model_name.split('/')
-        
+
         if data_type == 'weight':
             model_url = MODEL_CATALOG[dataset_name]['/'.join(model_name)]
         elif data_type == 'config':
