@@ -9,6 +9,7 @@ ALL_CONFIGS = [
         'lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config',
         'lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config',
         'lp://PubLayNet/mask_rcnn_X_101_32x8d_FPN_3x/config',
+        'lp://NewspaperNavigator/faster_rcnn_R_50_FPN_3x/config',
     ]
 
 

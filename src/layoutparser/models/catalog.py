@@ -13,6 +13,9 @@ MODEL_CATALOG = {
     },
     "PrimaLayout": {
         "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/h7th27jfv19rxiy/model_final.pth?dl=1"
+    },
+    "NewspaperNavigator": {
+        'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/6ewh6g8rqt2ev3a/model_final.pth?dl=1',
     }
 }
 
@@ -29,6 +32,9 @@ CONFIG_CATALOG = {
     },
     "PrimaLayout": {
         "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/yc92x97k50abynt/config.yaml?dl=1"
+    },
+    "NewspaperNavigator": {
+        'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/wnido8pk4oubyzr/config.yml?dl=1',
     }
 }
 

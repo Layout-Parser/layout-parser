@@ -25,6 +25,7 @@ model.detect(image)
 | [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/u9wbsfwz4y0ziki/config.yml?dl=1) | lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config   |                                                              |
 | [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [mask_rcnn_X_101_32x8d_FPN_3x](https://www.dropbox.com/s/nau5ut6zgthunil/config.yaml?dl=1) | lp://PubLayNet/mask_rcnn_X_101_32x8d_FPN_3x/config | 88.98 [eval.csv](https://www.dropbox.com/s/15ytg3fzmc6l59x/eval.csv?dl=0) |
 | [PrimaLayout](https://www.primaresearch.org/dataset/)        | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/yc92x97k50abynt/config.yaml?dl=1) | lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config | 69.35 [eval.csv](https://www.dropbox.com/s/9uuql57uedvb9mo/eval.csv?dl=0) |
+| [NewspaperNavigator](https://news-navigator.labs.loc.gov/)       | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/wnido8pk4oubyzr/config.yml?dl=1) | lp://NewspaperNavigator/faster_rcnn_R_50_FPN_3x/config |                                                              |
 
 * For PubLayNet models, we suggest using `mask_rcnn_X_101_32x8d_FPN_3x` model as it's trained on the whole training set, while others are only trained on the validation set (the size is only around 1/50). You could expect a 15% AP improvement using the `mask_rcnn_X_101_32x8d_FPN_3x` model.
 
@@ -35,3 +36,4 @@ model.detect(image)
 | [HJDataset](https://dell-research-harvard.github.io/HJDataset/) | `{1:"Page Frame", 2:"Row", 3:"Title Region", 4:"Text Region", 5:"Title", 6:"Subtitle", 7:"Other"}` |
 | [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | `{0: "Text", 1: "Title", 2: "List", 3:"Table", 4:"Figure"}`     |
 | [PrimaLayout](https://www.primaresearch.org/dataset/)        | `{1:"TextRegion", 2:"ImageRegion", 3:"TableRegion", 4:"MathsRegion", 5:"SeparatorRegion", 6:"OtherRegion"}` |
+| [NewspaperNavigator](https://news-navigator.labs.loc.gov/)        | `{0: "Photograph", 1: "Illustration", 2: "Map", 3: "Comics/Cartoon", 4: "Editorial Cartoon", 5: "Headline", 6: "Advertisement"}` |
