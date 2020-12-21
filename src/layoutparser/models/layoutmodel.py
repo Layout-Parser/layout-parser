@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 import os
-import torch
-from detectron2.config import get_cfg
-from detectron2.engine import DefaultPredictor
-from ..elements import *
-from fvcore.common.file_io import PathManager
+import importlib
+
 from PIL import Image
 import numpy as np
+import torch
+from fvcore.common.file_io import PathManager
+#TODO: Update to iopath in the next major release 
+
+from ..elements import *
 
 __all__ = ["Detectron2LayoutModel"]
 
@@ -15,6 +17,41 @@ class BaseLayoutModel(ABC):
     @abstractmethod
     def detect(self):
         pass
+
+    # Add lazy loading mechanisms for layout models, refer to
+    # layoutparser.ocr.BaseOCRAgent
+    # TODO: Build a metaclass for lazy module loader
+    @property
+    @abstractmethod
+    def DEPENDENCIES(self):
+        """DEPENDENCIES lists all necessary dependencies for the class."""
+        pass
+
+    @property
+    @abstractmethod
+    def MODULES(self):
+        """MODULES instructs how to import these necessary libraries."""
+        pass
+
+    @classmethod
+    def _import_module(cls):
+        for m in cls.MODULES:
+            if importlib.util.find_spec(m["module_path"]):
+                setattr(
+                    cls, m["import_name"], importlib.import_module(m["module_path"])
+                )
+            else:
+                raise ModuleNotFoundError(
+                    f"\n "
+                    f"\nPlease install the following libraries to support the class {cls.__name__}:"
+                    f"\n    pip install {' '.join(cls.DEPENDENCIES)}"
+                    f"\n "
+                )
+
+    def __new__(cls, *args, **kwargs):
+
+        cls._import_module()
+        return super().__new__(cls)
 
 
 class Detectron2LayoutModel(BaseLayoutModel):
@@ -45,9 +82,18 @@ class Detectron2LayoutModel(BaseLayoutModel):
 
     """
 
+    DEPENDENCIES = ["detectron2"]
+    MODULES = [
+        {
+            "import_name": "_engine",
+            "module_path": "detectron2.engine",
+        },
+        {"import_name": "_config", "module_path": "detectron2.config"},
+    ]
+
     def __init__(self, config_path, model_path=None, label_map=None, extra_config=[]):
 
-        cfg = get_cfg()
+        cfg = self._config.get_cfg()
         config_path = PathManager.get_local_path(config_path)
         cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
@@ -83,7 +129,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
         return layout
 
     def _create_model(self):
-        self.model = DefaultPredictor(self.cfg)
+        self.model = self._engine.DefaultPredictor(self.cfg)
 
     def detect(self, image):
         """Detect the layout of a given image.
