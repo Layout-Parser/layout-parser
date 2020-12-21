@@ -104,6 +104,7 @@ def image_loader(func):
         if isinstance(canvas, Image.Image):
             if canvas.mode != 'RGB':
                 canvas = canvas.convert('RGB')
+            canvas = canvas.copy()
         elif isinstance(canvas, np.ndarray):
             canvas = Image.fromarray(canvas)
         out = func(canvas, layout, *args, **kwargs)

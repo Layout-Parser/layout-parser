@@ -26,7 +26,7 @@ setup(name         = "layoutparser",
         "pyyaml>=5.1",
         "torch",
         "torchvision",
-        "pycocotools",
+        "pycocotools==2.0.1",
         "fvcore",
       ],
       extras_require={
