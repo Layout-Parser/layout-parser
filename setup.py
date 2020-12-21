@@ -27,7 +27,7 @@ setup(name         = "layoutparser",
         "torch",
         "torchvision",
         "pycocotools==2.0.1",
-        "fvcore",
+        "fvcore==0.1.1.post20200623",
       ],
       extras_require={
         "ocr": [
