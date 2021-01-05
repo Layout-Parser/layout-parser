@@ -14,7 +14,7 @@
 
 ---
 
-Layout Parser is deep learning based tool for document image layout analysis tasks. 
+Layout Parser is a deep learning based tool for document image layout analysis tasks. 
 
 ## Installation 
 
