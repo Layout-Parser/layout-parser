@@ -311,8 +311,6 @@ def test_to_dict():
     
     i2 = TextBlock(i, "")
     i_dict["text"] = ""
-    for f in ['id', 'type', 'parent', 'next', 'score']:
-        i_dict[f] = None
     assert i2.to_dict() == i_dict
     
     r = Rectangle(1,2,3,4)
@@ -325,12 +323,20 @@ def test_to_dict():
             "y_2": 4
         }
     }
-    
     assert r.to_dict() == r_dict
-
+    
+    r2 = TextBlock(r, id=24)
+    r_dict["id"] = 24
+    assert r2.to_dict() == r_dict
+    
     q = Quadrilateral(np.arange(8).reshape(4,2), 200, 400)
     q_dict = {'block_type': 'quadrilateral', 
               'block_attr': 
                   {'points': [0, 1, 2, 3, 4, 5, 6, 7], 'height': 200, 'width': 400}
     }
     assert q.to_dict() == q_dict
+    
+    q2 = TextBlock(q, text="test", parent=45)
+    q_dict["text"] = "test"
+    q_dict["parent"] = 45
+    assert q2.to_dict() == q_dict

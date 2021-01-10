@@ -1424,13 +1424,15 @@ class TextBlock(BaseLayoutElement):
                 "block_type": <name of self.block>,
                 "block_attr": {
                     <attributes of self.block combined with 
-                    self._features>
+                    non-empty self._features>
                 }
             }
         """
         base_dict = self.block.to_dict()
         for f in self._features:
-            base_dict[f] = getattr(self, f)
+            val = getattr(self, f)
+            if val is not None:
+                base_dict[f] = getattr(self, f)
         return base_dict
         
 class Layout(list):
