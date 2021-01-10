@@ -363,6 +363,19 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             }
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "BaseCoordElement":
+        """Initialize an instance based on the dictionary representation
+
+        Args:
+            data (:obj:`dict`): The dictionary representation of the object
+        """
+        
+        assert cls._name == data['block_type'], f"Incompatible block types {data['block_type']}"
+        
+        return cls(**{f:data['block_attr'][f] for f in cls._features})
+    
+        
 @inherit_docstrings
 class Interval(BaseCoordElement):
     """
@@ -1291,6 +1304,9 @@ class Quadrilateral(BaseCoordElement):
             }
         }
 
+ALL_BASECOORD_ELEMENTS = [Interval, Rectangle, Quadrilateral]
+
+BASECOORD_ELEMENT_NAMEMAP = {ele._name:ele for ele in ALL_BASECOORD_ELEMENTS}
 
 @inherit_docstrings(base_class=BaseCoordElement)
 class TextBlock(BaseLayoutElement):
@@ -1445,6 +1461,22 @@ class TextBlock(BaseLayoutElement):
             if val is not None:
                 base_dict[f] = getattr(self, f)
         return base_dict
+    
+    @classmethod
+    def from_dict(cls, data:Dict[str, Any]) -> "TextBlock":
+        """Initialize the textblock based on the dictionary representation.
+        It generate the block based on the `block_type` and `block_attr`,
+        and loads the textblock specific features from the dict. 
+
+        Args:
+            data (:obj:`dict`): The dictionary representation of the object
+        """
+        assert data['block_type'] in BASECOORD_ELEMENT_NAMEMAP, f"Invalid block_type {data['block_type']}"
+        
+        block = BASECOORD_ELEMENT_NAMEMAP[data['block_type']].from_dict(data)
+        
+        return cls(block, **{f:data.get(f,None) for f in cls._features})
+    
         
 class Layout(list):
     """ A handy class for handling a list of text blocks. All the class functions will be broadcasted to

@@ -305,7 +305,7 @@ def test_df():
     assert layout[1] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
     assert layout[2] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]), height=28)
     
-def test_to_dict():
+def test_dict_io():
     
     i = Interval(1,2,'y', canvas_height=5)
     i_dict = {
@@ -319,10 +319,12 @@ def test_to_dict():
         }
     }
     assert i.to_dict() == i_dict
+    assert i == Interval.from_dict(i_dict)
     
     i2 = TextBlock(i, "")
     i_dict["text"] = ""
     assert i2.to_dict() == i_dict
+    assert i2 == TextBlock.from_dict(i_dict)
     
     r = Rectangle(1,2,3,4)
     r_dict = {
@@ -335,10 +337,12 @@ def test_to_dict():
         }
     }
     assert r.to_dict() == r_dict
+    assert r == Rectangle.from_dict(r_dict)
     
     r2 = TextBlock(r, id=24)
     r_dict["id"] = 24
     assert r2.to_dict() == r_dict
+    assert r2 == TextBlock.from_dict(r_dict)
     
     q = Quadrilateral(np.arange(8).reshape(4,2), 200, 400)
     q_dict = {'block_type': 'quadrilateral', 
@@ -346,8 +350,10 @@ def test_to_dict():
                   {'points': [0, 1, 2, 3, 4, 5, 6, 7], 'height': 200, 'width': 400}
     }
     assert q.to_dict() == q_dict
+    assert q == Quadrilateral.from_dict(q_dict)
     
     q2 = TextBlock(q, text="test", parent=45)
     q_dict["text"] = "test"
     q_dict["parent"] = 45
     assert q2.to_dict() == q_dict
+    assert q2 == TextBlock.from_dict(q_dict)
