@@ -1,6 +1,8 @@
-from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock, Layout
+import pytest
 import numpy as np
 import pandas as pd
+
+from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock, Layout
 
 def test_interval():
     
@@ -58,6 +60,15 @@ def test_quadrilateral():
     
     q = Quadrilateral(np.array([[-2, 0], [0, 2], [2, 0], [0, -2]]))
     assert q.area == 8.
+    
+    q = Quadrilateral([1,2,3,4,5,6,7,8])
+    assert (q.points == np.array([[1,2],[3,4],[5,6],[7,8]])).all()
+    
+    with pytest.raises(ValueError):
+        Quadrilateral([1,2,3,4,5,6,7]) # Incompatible list length
+    
+    with pytest.raises(ValueError):
+        Quadrilateral(np.array([[2, 2], [6, 2], [6,5]])) # Incompatible ndarray shape
     
 def test_interval_relations():
     
