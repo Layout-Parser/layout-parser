@@ -13,8 +13,8 @@ def test_interval():
     i = Interval(1, 2, axis='x')
     assert i.shift([1,2]) == Interval(2, 3, axis='x')
     assert i.scale([2,1]) == Interval(2, 4, axis='x')
-    assert i.pad(left=10, right=20) == Interval(0, 22)  # Test the safe_mode
-    assert i.pad(left=10, right=20, safe_mode=False) == Interval(-9, 22) 
+    assert i.pad(left=10, right=20) == Interval(0, 22, axis='x')  # Test the safe_mode
+    assert i.pad(left=10, right=20, safe_mode=False) == Interval(-9, 22, axis='x') 
     assert i.area == 0
     
     img = np.random.randint(12, 24, (40,40))
@@ -25,7 +25,7 @@ def test_interval():
 def test_rectangle():
     
     r = Rectangle(1, 2, 3, 4)
-    r.to_interval()
+    r.to_interval(axis='x')
     r.to_quadrilateral()
     assert r.pad(left=1, right=5, top=2, bottom=4) == Rectangle(0, 0, 8, 8)
     assert r.shift([1,2]) == Rectangle(2, 4, 4, 6)
@@ -293,3 +293,44 @@ def test_df():
     layout = Layout.from_dataframe(df)
     assert layout[1] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]))
     assert layout[2] == Quadrilateral(np.array([[1,2], [3,2], [3,6], [1,4]]), height=28)
+    
+def test_to_dict():
+    
+    i = Interval(1,2,'y', canvas_height=5)
+    i_dict = {
+        "block_type": "interval",
+        "block_attr": {
+            "start": 1,
+            "end": 2,
+            "axis": "y",
+            "canvas_height": 5,
+            "canvas_width": 0
+        }
+    }
+    assert i.to_dict() == i_dict
+    
+    i2 = TextBlock(i, "")
+    i_dict["text"] = ""
+    for f in ['id', 'type', 'parent', 'next', 'score']:
+        i_dict[f] = None
+    assert i2.to_dict() == i_dict
+    
+    r = Rectangle(1,2,3,4)
+    r_dict = {
+        "block_type": "rectangle",
+        "block_attr": {
+            "x_1": 1,
+            "y_1": 2,
+            "x_2": 3,
+            "y_2": 4
+        }
+    }
+    
+    assert r.to_dict() == r_dict
+
+    q = Quadrilateral(np.arange(8).reshape(4,2), 200, 400)
+    q_dict = {'block_type': 'quadrilateral', 
+              'block_attr': 
+                  {'points': [0, 1, 2, 3, 4, 5, 6, 7], 'height': 200, 'width': 400}
+    }
+    assert q.to_dict() == q_dict
