@@ -1,9 +1,11 @@
+from typing import List, Union, Dict, Dict, Any
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from copy import copy, deepcopy
 from inspect import getmembers, isfunction
 import warnings
 import functools
+
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -166,6 +168,18 @@ class BaseLayoutElement():
 
 class BaseCoordElement(ABC, BaseLayoutElement):
 
+    @property
+    @abstractmethod
+    def _name(self) -> str: 
+        """The name of the class"""
+        pass
+
+    @property
+    @abstractmethod
+    def _features(self) -> List[str]:
+        """A list of features names used for initializing the class object"""
+        pass
+
     #######################################################################
     #########################  Layout Properties  #########################
     #######################################################################
@@ -191,7 +205,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     def area(self): pass
 
     #######################################################################
-    ### Geometric Relations (relative to, condition on, and is in)  ###
+    ###   Geometric Relations (relative to, condition on, and is in)    ###
     #######################################################################
 
     @abstractmethod
@@ -307,6 +321,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         """
 
         pass
+
     #######################################################################
     ################################# MISC ################################
     #######################################################################
@@ -324,7 +339,29 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         """
 
         pass
+    
+    #######################################################################
+    ########################## Import and Export ##########################
+    #######################################################################
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Generate a dictionary representation of the current object: 
+            {
+                "block_type": <"interval", "rectangle", "quadrilateral"> ,
+                "block_attr": {
+                    "name": value, 
+                    ...
+                }
+            }
+        """
 
+        return {
+            "block_type": self._name, 
+            "block_attr": {
+                key: getattr(self, key) for key in self._features
+            }
+        }
 
 @inherit_docstrings
 class Interval(BaseCoordElement):
@@ -337,19 +374,20 @@ class Interval(BaseCoordElement):
             The coordinate of the start point on the designated axis.
         end (:obj:`numeric`): 
             The end coordinate on the same axis as start.
-        axis (:obj:`str`, optional`, defaults to 'x'): 
+        axis (:obj:`str`): 
             The designated axis that the end points belong to.
         canvas_height (:obj:`numeric`, `optional`, defaults to 0): 
             The height of the canvas that the interval is on.
         canvas_width (:obj:`numeric`, `optional`, defaults to 0): 
             The width of the canvas that the interval is on.
     """
-
+    _name = "interval"
+    _features = ["start", "end", "axis", "canvas_height", "canvas_width"]
     name = "_interval"
     feature_names = ["x_1", "y_1", "x_2", "y_2", "height", "width"]
 
-    def __init__(self, start, end, axis='x',
-                 canvas_height=0, canvas_width=0):
+    def __init__(self, start, end, axis,
+                 canvas_height=None, canvas_width=None):
 
         assert start <= end, f"Invalid input for start and end. Start must <= end."
         self.start = start
@@ -359,8 +397,8 @@ class Interval(BaseCoordElement):
             'x', 'y'], f"Invalid axis {axis}. Axis must be in 'x' or 'y'"
         self.axis = axis
 
-        self.canvas_height = canvas_height
-        self.canvas_width = canvas_width
+        self.canvas_height = canvas_height or 0
+        self.canvas_width = canvas_width or 0
 
     @property
     def height(self):
@@ -681,6 +719,8 @@ class Rectangle(BaseCoordElement):
             y coordinate on the vertical axis of the lower right corner of the rectangle.
     """
 
+    _name = "rectangle"
+    _features = ["x_1", "y_1", "x_2", "y_2"]
     name = "_rectangle"
     feature_names = ["x_1", "y_1", "x_2", "y_2"]
 
@@ -894,7 +934,7 @@ class Rectangle(BaseCoordElement):
         x_1, y_1, x_2, y_2 = self.coordinates
         return image[int(y_1):int(y_2), int(x_1):int(x_2)]
 
-    def to_interval(self, axis='x', **kwargs):
+    def to_interval(self, axis, **kwargs):
         if axis == 'x':
             start, end = self.x_1, self.x_2
         else:
@@ -935,7 +975,8 @@ class Quadrilateral(BaseCoordElement):
             The width of the quadrilateral. Similarly as height, this is to better support the perspective
             transformation from the OpenCV library.
     """
-
+    _name = "quadrilateral"
+    _features = ["points", "height", "width"]
     name = "_quadrilateral"
     feature_names = ["p11", "p12", "p21", "p22",
                      "p31", "p32", "p41", "p42",
@@ -1211,6 +1252,34 @@ class Quadrilateral(BaseCoordElement):
         info_str = ', '.join([f'{key}={getattr(self, key)}' for key in keys])
         return f"{self.__class__.__name__}({info_str})"
 
+    def to_dict(self) -> Dict[str, Any]:
+        
+        """
+        Generate a dictionary representation of the current object: 
+            {
+                "block_type": "quadrilateral",
+                "block_attr": {
+                    "points": [
+                        p[0,0], p[0,1], 
+                        p[1,0], p[1,1],
+                        p[2,0], p[2,1],
+                        p[3,0], p[3,1]
+                    ],
+                    "height": value,
+                    "width": value,
+                }
+            }
+        """
+
+        return {
+            "block_type": self._name, 
+            "block_attr": {
+                key: getattr(self, key) if key != "points"
+                else getattr(self, key).reshape(-1).tolist()
+                for key in self._features
+            }
+        }
+
 
 @inherit_docstrings(base_class=BaseCoordElement)
 class TextBlock(BaseLayoutElement):
@@ -1221,7 +1290,7 @@ class TextBlock(BaseLayoutElement):
     Args:
         block (:obj:`BaseCoordElement`): 
             The shape-specific coordinate systems that the text block belongs to.
-        text (:obj:`str`, `optional`, defaults to ""):
+        text (:obj:`str`, `optional`, defaults to None):
             The ocr'ed text results within the boundaries of the text block.
         id (:obj:`int`, `optional`, defaults to `None`):
             The id of the text block.
@@ -1234,11 +1303,12 @@ class TextBlock(BaseLayoutElement):
         score (:obj:`numeric`, defaults to `None`):
             The prediction confidence of the block
     """
-
+    _name = "textblock"
+    _features = ["text", "id", "type", "parent", "next", "score"]
     name = "_textblock"
     feature_names = ["text", "id", "type", "parent", "next", "score"]
 
-    def __init__(self, block, text="",
+    def __init__(self, block, text=None,
                  id=None, type=None, parent=None,
                  next=None, score=None):
 
@@ -1348,7 +1418,21 @@ class TextBlock(BaseLayoutElement):
             block=target_type.from_series(series),
             **features)
 
-
+    def to_dict(self) -> Dict[str, Any]:
+        """Generate a dictionary representation of the current textblock: 
+            {
+                "block_type": <name of self.block>,
+                "block_attr": {
+                    <attributes of self.block combined with 
+                    self._features>
+                }
+            }
+        """
+        base_dict = self.block.to_dict()
+        for f in self._features:
+            base_dict[f] = getattr(self, f)
+        return base_dict
+        
 class Layout(list):
     """ A handy class for handling a list of text blocks. All the class functions will be broadcasted to
     each element block in the list.
