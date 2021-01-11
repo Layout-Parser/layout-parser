@@ -1672,8 +1672,29 @@ class Layout(MutableSequence):
 
         return new_blocks
     
+    def to_dataframe(self, enforce_same_type=False) -> pd.DataFrame:
+        """Convert the layout object into the dataframe. 
+        Warning: the page data won't be exported. 
+        
+        Args:
+            enforce_same_type (:obj:`bool`, optional): 
+                If true, it will convert all the contained blocks to 
+                the maximal compatible data type. 
+                Defaults to False.
+                
         Returns:
-            :obj:`List`: 
-                A list of dictionaries
+            pd.DataFrame: 
+                The dataframe representation of layout object
         """
-        return [ele.to_dict() for ele in self]
+        if enforce_same_type:
+            blocks = self.get_homogeneous_blocks()
+        else:
+            blocks = self
+        
+        
+        df = pd.DataFrame([ele.to_dict() for ele in blocks])
+        (df
+            .drop(columns=['block_attr'], inplace=True)
+            .join(df['block_attr'].apply(pd.Series), inplace=True))
+        
+        return df
