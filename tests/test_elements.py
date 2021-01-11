@@ -169,6 +169,7 @@ def test_layout():
     l.relative_to(q)
     l.filter_by(t)
     l.is_in(r)
+    assert l.get_homogeneous_blocks() == [i.to_quadrilateral(), q, r.to_quadrilateral()]
     
     l = Layout([
         TextBlock(i, id=1, type=2, text="12"),
@@ -185,6 +186,10 @@ def test_layout():
     l.scale(4)
     l.shift(4)
     l.pad(left=2)
+
+    homogeneous_blocks = l[:2].get_homogeneous_blocks()
+    assert homogeneous_blocks[0].block == i.to_rectangle()
+    assert homogeneous_blocks[1].block == r
     
 def test_dict_io():
     

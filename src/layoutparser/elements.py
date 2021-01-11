@@ -1307,6 +1307,7 @@ class Quadrilateral(BaseCoordElement):
 ALL_BASECOORD_ELEMENTS = [Interval, Rectangle, Quadrilateral]
 
 BASECOORD_ELEMENT_NAMEMAP = {ele._name:ele for ele in ALL_BASECOORD_ELEMENTS}
+BASECOORD_ELEMENT_INDEXMAP = {ele._name:idx for idx, ele in enumerate(ALL_BASECOORD_ELEMENTS)}
 
 @inherit_docstrings(base_class=BaseCoordElement)
 class TextBlock(BaseLayoutElement):
@@ -1628,6 +1629,49 @@ class Layout(MutableSequence):
             "page_data": self.page_data,
             "blocks": [ele.to_dict() for ele in self]
         }
+    
+    def get_homogeneous_blocks(self) -> List[BaseLayoutElement]:
+        """Convert all elements into blocks of the same type based 
+        on the type casting rule:
+            Interval < Rectangle < Quadrilateral < TextBlock
+
+        Returns:
+            List[BaseLayoutElement]: 
+                A list of base layout elements of the maximal compatible 
+                type
+        """
+        
+        # Detect the maximal compatible type
+        has_textblock = False
+        max_coord_level = -1
+        for ele in self:
+            
+            if isinstance(ele, TextBlock):
+                has_textblock = True
+                block = ele.block
+            else:
+                block = ele 
+                
+            max_coord_level = max(max_coord_level, BASECOORD_ELEMENT_INDEXMAP[block._name])
+        target_coord_name = ALL_BASECOORD_ELEMENTS[max_coord_level]._name
+        
+        if has_textblock:
+            new_blocks = []
+            for ele in self:
+                if isinstance(ele, TextBlock):
+                    ele = copy(ele)
+                    if ele.block._name != target_coord_name:
+                        ele.block = getattr(ele.block, f"to_{target_coord_name}")()
+                else:
+                    if ele._name != target_coord_name:
+                        ele = getattr(ele, f"to_{target_coord_name}")()
+                    ele = TextBlock(block) 
+                new_blocks.append(ele)
+        else:
+            new_blocks = [getattr(ele, f"to_{target_coord_name}")() if ele._name != target_coord_name else ele for ele in self]
+
+        return new_blocks
+    
         Returns:
             :obj:`List`: 
                 A list of dictionaries
