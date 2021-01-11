@@ -202,10 +202,7 @@ def test_dict_io():
     assert i.to_dict() == i_dict
     assert i == Interval.from_dict(i_dict)
     
-    i2 = TextBlock(i, "")
-    i_dict["text"] = ""
-    assert i2.to_dict() == i_dict
-    assert i2 == TextBlock.from_dict(i_dict)
+    
     
     r = Rectangle(1,2,3,4)
     r_dict = {
@@ -220,11 +217,6 @@ def test_dict_io():
     assert r.to_dict() == r_dict
     assert r == Rectangle.from_dict(r_dict)
     
-    r2 = TextBlock(r, id=24)
-    r_dict["id"] = 24
-    assert r2.to_dict() == r_dict
-    assert r2 == TextBlock.from_dict(r_dict)
-    
     q = Quadrilateral(np.arange(8).reshape(4,2), 200, 400)
     q_dict = {'block_type': 'quadrilateral', 
               'block_attr': 
@@ -232,9 +224,37 @@ def test_dict_io():
     }
     assert q.to_dict() == q_dict
     assert q == Quadrilateral.from_dict(q_dict)
+
+    l = Layout([i, r, q], page_data={'width':200, 'height':200})
+    l_dict = {
+        'page_data': {'width':200, 'height':200},
+        'blocks': [
+            i_dict, r_dict, q_dict
+        ]
+    }
+    assert l.to_dict() == l_dict
+
+    i2 = TextBlock(i, "")
+    i_dict["text"] = ""
+    assert i2.to_dict() == i_dict
+    assert i2 == TextBlock.from_dict(i_dict)
+    
+    r2 = TextBlock(r, id=24)
+    r_dict["id"] = 24
+    assert r2.to_dict() == r_dict
+    assert r2 == TextBlock.from_dict(r_dict)
     
     q2 = TextBlock(q, text="test", parent=45)
     q_dict["text"] = "test"
     q_dict["parent"] = 45
     assert q2.to_dict() == q_dict
     assert q2 == TextBlock.from_dict(q_dict)
+    
+    l2 = Layout([i2, r2, q2])
+    l2_dict = {
+        'page_data': {},
+        'blocks': [
+            i_dict, r_dict, q_dict
+        ]
+    }
+    assert l2.to_dict() == l2_dict

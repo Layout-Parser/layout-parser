@@ -1616,9 +1616,18 @@ class Layout(MutableSequence):
         """
         return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]
 
-    def to_dict(self) -> List[Dict[str, Any]]:
-        """Convert all elements into its dict representation. 
-
+    def to_dict(self) -> Dict[str, Any]:
+        """Generate a dict representation of the layout object with 
+        the page_data and all the blocks in its dict representation.
+        
+        Returns:
+            :obj:`Dict`: 
+                The dictionary representation of the layout object.
+        """
+        return {
+            "page_data": self.page_data,
+            "blocks": [ele.to_dict() for ele in self]
+        }
         Returns:
             :obj:`List`: 
                 A list of dictionaries
