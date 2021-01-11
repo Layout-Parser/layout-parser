@@ -1,6 +1,6 @@
 from typing import List, Union, Dict, Dict, Any
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableSequence
 from copy import copy, deepcopy
 from inspect import getmembers, isfunction
 import warnings
@@ -1409,16 +1409,16 @@ class TextBlock(BaseLayoutElement):
     def relative_to(self, other):
         return self.block.relative_to(other)
 
-    def is_in(self, other, **kwargs):
-        return self.block.is_in(other, **kwargs)
+    def is_in(self, other, soft_margin={}, center=False):
+        return self.block.is_in(other, soft_margin, center)
 
     @mixin_textblock_meta
     def shift(self, shift_distance):
         return self.block.shift(shift_distance)
 
     @mixin_textblock_meta
-    def pad(self, **kwargs):
-        return self.block.pad(**kwargs)
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
+        return self.block.pad(left, right, top, bottom, safe_mode)
 
     @mixin_textblock_meta
     def scale(self, scale_factor):
@@ -1478,21 +1478,60 @@ class TextBlock(BaseLayoutElement):
         return cls(block, **{f:data.get(f,None) for f in cls._features})
     
         
-class Layout(list):
-    """ A handy class for handling a list of text blocks. All the class functions will be broadcasted to
-    each element block in the list.
+class Layout(MutableSequence):
     """
+    The :obj:`Layout` class id designed for processing a list of layout elements
+    on a page. It stores the layout elements in a list and the related `page_data`, 
+    and provides handy APIs for processing all the layout elements in batch. `
+
+    Args:
+        blocks (:obj:`list`): 
+            A list of layout element blocks
+        page_data (Dict, optional): 
+            A dictionary storing the page (canvas) related information
+            like `height`, `width`, etc. 
+            Defaults to None.
+    """
+    def __init__(self, blocks:List = [], page_data:Dict = None):
+        self._blocks = blocks
+        self.page_data = page_data or {}  
+
+    def __getitem__(self, key):
+        blocks = self._blocks[key]
+        if isinstance(key, slice):
+            return self.__class__(self._blocks[key], self.page_data)
+        else:
+            return blocks
     
+    def __setitem__(self, key, newvalue):
+        self._blocks[key] = newvalue
+    
+    def __delitem__(self, key):
+        del self._blocks[key]
+    
+    def __len__(self):
+        return len(self._blocks)
+    
+    def __iter__(self):
+        for ele in self._blocks:
+            yield ele
+    
+    def insert(self, key, value):
+        self._blocks.insert(key, value)
+    
+    def copy(self):
+        return self.__class__(copy(self._blocks), self.page_data)
+        
     def relative_to(self, other):
-        return self.__class__([ele.relative_to(other) for ele in self])
+        return self.__class__([ele.relative_to(other) for ele in self], self.page_data)
 
     def condition_on(self, other):
-        return self.__class__([ele.condition_on(other) for ele in self])
+        return self.__class__([ele.condition_on(other) for ele in self], self.page_data)
 
-    def is_in(self, other, **kwargs):
-        return self.__class__([ele.is_in(other, **kwargs) for ele in self])
+    def is_in(self, other, soft_margin={}, center=False):
+        return self.__class__([ele.is_in(other, soft_margin, center) for ele in self], self.page_data)
 
-    def filter_by(self, other, **kwargs):
+    def filter_by(self, other, soft_margin={}, center=False):
         """
         Return a `Layout` object containing the elements that are in the `other` object.
 
@@ -1502,19 +1541,54 @@ class Layout(list):
         Returns:
             :obj:`Layout`
         """
-        return self.__class__([ele for ele in self if ele.is_in(other, **kwargs)])
+        return self.__class__([ele for ele in self if ele.is_in(other, soft_margin, center)], self.page_data)
 
-    @functools.wraps(BaseCoordElement.shift)
     def shift(self, shift_distance):
-        return self.__class__([ele.shift(shift_distance) for ele in self])
+        """
+        Shift all layout elements by user specified amounts on x and y axis respectively. If shift_distance is one
+        numeric value, the element will by shifted by the same specified amount on both x and y axis.
 
-    @functools.wraps(BaseCoordElement.pad)
-    def pad(self, **kwargs):
-        return self.__class__([ele.pad(**kwargs) for ele in self])
+        Args:
+            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): 
+                The number of pixels used to shift the element.
 
-    @functools.wraps(BaseCoordElement.scale)
+        Returns:
+            :obj:`Layout`: 
+                A new layout object with all the elements shifted in the specified values.
+        """
+        return self.__class__([ele.shift(shift_distance) for ele in self], self.page_data)
+
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
+        """ Pad all layout elements on the four sides of the polygon with the user-defined pixels. If 
+        safe_mode is set to True, the function will cut off the excess padding that falls on the negative 
+        side of the coordinates.
+
+        Args:
+            left (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the upper side of the polygon.
+            right (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the lower side of the polygon.
+            top (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the left side of the polygon.
+            bottom (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the right side of the polygon.
+            safe_mode (:obj:`bool`, `optional`, defaults to True): A bool value to toggle the safe_mode.
+
+        Returns:
+            :obj:`Layout`: 
+                A new layout object with all the elements padded in the specified values.
+        """
+        return self.__class__([ele.pad(left, right, top, bottom, safe_mode) for ele in self], self.page_data)
+
     def scale(self, scale_factor):
-        return self.__class__([ele.scale(scale_factor) for ele in self])
+        """
+        Scale all layout element by a user specified amount on x and y axis respectively. If scale_factor is one
+        numeric value, the element will by scaled by the same specified amount on both x and y axis.
+
+        Args:
+            scale_factor (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): The amount for downscaling or upscaling the element.
+
+        Returns:
+            :obj:`Layout`: 
+                A new layout object with all the elements scaled in the specified values.
+        """
+        return self.__class__([ele.scale(scale_factor) for ele in self], self.page_data)
 
     def crop_image(self, image):
         return [ele.crop_image(image) for ele in self]
