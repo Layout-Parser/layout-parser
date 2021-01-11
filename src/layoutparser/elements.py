@@ -1482,13 +1482,7 @@ class Layout(list):
     """ A handy class for handling a list of text blocks. All the class functions will be broadcasted to
     each element block in the list.
     """
-
-    identifier_map = {
-        Interval.name:      Interval,
-        Rectangle.name:     Rectangle,
-        Quadrilateral.name: Quadrilateral,
-        TextBlock.name:     TextBlock}
-
+    
     def relative_to(self, other):
         return self.__class__([ele.relative_to(other) for ele in self])
 
@@ -1548,26 +1542,11 @@ class Layout(list):
         """
         return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]
 
-    @classmethod
-    def from_dataframe(cls, df):
+    def to_dict(self) -> List[Dict[str, Any]]:
+        """Convert all elements into its dict representation. 
 
-        if "_identifier" in df.columns:
-            return cls(
-                [cls.identifier_map[series["_identifier"]].from_series(series.drop(columns=["_identifier"]))
-                    for (_, series) in df.iterrows()]
-            )
-
-        elif any(col in TextBlock.feature_names for col in df.columns):
-
-            return cls(
-                [TextBlock.from_series(series)
-                    for (_, series) in df.iterrows()]
-            )
-
-        else:
-            target_type = _parse_datatype_from_feature_names(df.columns)
-
-            return cls(
-                [target_type.from_series(series)
-                    for (_, series) in df.iterrows()]
-            )
+        Returns:
+            :obj:`List`: 
+                A list of dictionaries
+        """
+        return [ele.to_dict() for ele in self]
