@@ -1279,7 +1279,8 @@ class Quadrilateral(BaseCoordElement):
     def to_dict(self) -> Dict[str, Any]:
         
         """
-        Generate a dictionary representation of the current object: 
+        Generate a dictionary representation of the current object::
+        
             {
                 "block_type": "quadrilateral",
                 "block_attr": {
@@ -1447,7 +1448,9 @@ class TextBlock(BaseLayoutElement):
             **features)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Generate a dictionary representation of the current textblock: 
+        """
+        Generate a dictionary representation of the current textblock of the format::
+        
             {
                 "block_type": <name of self.block>,
                 "block_attr": {
@@ -1537,10 +1540,12 @@ class Layout(MutableSequence):
         Return a `Layout` object containing the elements that are in the `other` object.
 
         Args:
-            other (:obj:`BaseCoordElement`)
+            other (:obj:`BaseCoordElement`): 
+                The block to filter the current elements.
 
         Returns:
-            :obj:`Layout`
+            :obj:`Layout`:
+                A new layout object after filtering. 
         """
         return self.__class__([ele for ele in self if ele.is_in(other, soft_margin, center)], self.page_data)
 
@@ -1632,7 +1637,8 @@ class Layout(MutableSequence):
     
     def get_homogeneous_blocks(self) -> List[BaseLayoutElement]:
         """Convert all elements into blocks of the same type based 
-        on the type casting rule:
+        on the type casting rule::
+        
             Interval < Rectangle < Quadrilateral < TextBlock
 
         Returns:
