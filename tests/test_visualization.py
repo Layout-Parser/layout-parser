@@ -7,11 +7,11 @@ import numpy as np
 
 def test_viz():
 
-    image = cv2.imread("tests/source/test_gcv_image.jpg")
+    image = cv2.imread("tests/fixtures/ocr/test_gcv_image.jpg")
     ocr_agent = GCVAgent.with_credential(
-        "tests/source/test_gcv_credential.json", languages=["en"]
+        "tests/fixtures/ocr/test_gcv_credential.json", languages=["en"]
     )
-    res = ocr_agent.load_response("tests/source/test_gcv_response.json")
+    res = ocr_agent.load_response("tests/fixtures/ocr/test_gcv_response.json")
 
     draw_box(image, Layout([]))
     draw_text(image, Layout([]))

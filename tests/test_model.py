@@ -20,9 +20,9 @@ def test_Detectron2Model(is_large_scale=False):
         for config in ALL_CONFIGS:
             model = Detectron2LayoutModel(config)
 
-            image = cv2.imread("tests/source/test_gcv_image.jpg")
+            image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
             layout = model.detect(image)
     else:
-        model = Detectron2LayoutModel("tests/source/config.yml")
-        image = cv2.imread("tests/source/test_gcv_image.jpg")
+        model = Detectron2LayoutModel("tests/fixtures/model/config.yml")
+        image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
         layout = model.detect(image)

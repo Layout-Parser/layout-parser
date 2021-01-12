@@ -6,7 +6,7 @@ from layoutparser.ocr import (
 )
 import json, cv2, os
 
-image = cv2.imread("tests/source/test_gcv_image.jpg")
+image = cv2.imread("tests/fixtures/ocr/test_gcv_image.jpg")
 
 
 def test_gcv_agent(test_detect=False):
@@ -15,7 +15,7 @@ def test_gcv_agent(test_detect=False):
     ocr_agent = GCVAgent()
 
     # Test loading the saved response and parse the data
-    res = ocr_agent.load_response("tests/source/test_gcv_response.json")
+    res = ocr_agent.load_response("tests/fixtures/ocr/test_gcv_response.json")
     r0 = ocr_agent.gather_text_annotations(res)
     r1 = ocr_agent.gather_full_text_annotation(res, GCVFeatureType.SYMBOL)
     r2 = ocr_agent.gather_full_text_annotation(res, GCVFeatureType.WORD)
@@ -38,14 +38,14 @@ def test_gcv_agent(test_detect=False):
         assert r5 == ocr_agent.gather_full_text_annotation(res2, GCVFeatureType.PAGE)
 
     # Finally, test the response storage and remove the file
-    ocr_agent.save_response(res, "tests/source/.test_gcv_response.json")
-    os.remove("tests/source/.test_gcv_response.json")
+    ocr_agent.save_response(res, "tests/fixtures/ocr/.test_gcv_response.json")
+    os.remove("tests/fixtures/ocr/.test_gcv_response.json")
 
 
 def test_tesseract(test_detect=False):
 
     ocr_agent = TesseractAgent(languages="eng")
-    res = ocr_agent.load_response("tests/source/test_tesseract_response.pickle")
+    res = ocr_agent.load_response("tests/fixtures/ocr/test_tesseract_response.pickle")
     r0 = res["text"]
     r1 = ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PAGE)
     r2 = ocr_agent.gather_data(res, agg_level=TesseractFeatureType.BLOCK)
