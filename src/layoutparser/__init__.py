@@ -17,3 +17,7 @@ from .ocr import (
 from .models import (
     Detectron2LayoutModel
 )
+
+from .io import (
+    load_json
+)
