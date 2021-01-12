@@ -185,30 +185,42 @@ def test_layout():
     l.is_in(r)
     assert l.get_homogeneous_blocks() == [i.to_quadrilateral(), q, r.to_quadrilateral()]
 
-    l = Layout(
-        [
-            TextBlock(i, id=1, type=2, text="12"),
-            TextBlock(r, id=1, type=2, parent="a"),
-            TextBlock(q, id=1, type=2, next="a"),
-        ]
-    )
-    l.get_texts()
-    l.get_info("next")
-    l.condition_on(i)
-    l.relative_to(q)
-    l.filter_by(t)
-    l.is_in(r)
+    i2 = TextBlock(i, id=1, type=2, text="12")
+    r2 = TextBlock(r, id=1, type=2, parent="a")
+    q2 = TextBlock(q, id=1, type=2, next="a")
+    l2 = Layout([i2, r2, q2], page_data={"width": 200, "height": 200})
+    
+    l2.get_texts()
+    l2.get_info("next")
+    l2.condition_on(i)
+    l2.relative_to(q)
+    l2.filter_by(t)
+    l2.is_in(r)
 
-    l.scale(4)
-    l.shift(4)
-    l.pad(left=2)
-
-    homogeneous_blocks = l[:2].get_homogeneous_blocks()
+    l2.scale(4)
+    l2.shift(4)
+    l2.pad(left=2)
+    
+    # Test slicing function
+    homogeneous_blocks = l2[:2].get_homogeneous_blocks()
     assert homogeneous_blocks[0].block == i.to_rectangle()
     assert homogeneous_blocks[1].block == r
 
+    # Test appending and extending
+    assert l + [i2] == Layout([i,q,r,i2])
+    assert l + l == Layout([i,q,r]*2)
+    l.append(i)
+    assert l == Layout([i,q,r,i])
+    l2.extend([q])
+    assert l2 == Layout([i2, r2, q2, q], page_data={"width": 200, "height": 200})
+    
+    # Test addition
+    l + l2
+    with pytest.raises(ValueError):
+        l.page_data = {"width": 200, "height":400}
+        l + l2
 
-def test_dict_io():
+def test_dict():
 
     i = Interval(1, 2, "y", canvas_height=5)
     i_dict = {

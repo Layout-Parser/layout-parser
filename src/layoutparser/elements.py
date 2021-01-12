@@ -1538,6 +1538,38 @@ class Layout(MutableSequence):
         for ele in self._blocks:
             yield ele
 
+    def __repr__(self):
+        info_str = ", ".join([f"{key}={val}" for key, val in vars(self).items()])
+        return f"{self.__class__.__name__}({info_str})"
+
+    def __eq__(self, other):
+        if isinstance(other, Layout):
+            return (
+                all((a, b) for a, b in zip(self, other))
+                and self.page_data == other.page_data
+            )
+        else:
+            return False
+
+    def __add__(self, other):
+        if isinstance(other, Layout):
+            if self.page_data == other.page_data:
+                return self.__class__(self._blocks + other._blocks, self.page_data)
+            elif self.page_data == {} or other.page_data == {}:
+                return self.__class__(
+                    self._blocks + other._blocks, self.page_data or other.page_data
+                )
+            else:
+                raise ValueError(
+                    f"Incompatible page_data for two innputs: {self.page_data} vs {other.page_data}."
+                )
+        elif isinstance(other, list):
+            return self.__class__(self._blocks + other, self.page_data)
+        else:
+            raise ValueError(
+                f"Invalid input type for other {other.__class__.__name__}."
+            )
+
     def insert(self, key, value):
         self._blocks.insert(key, value)
 
