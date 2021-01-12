@@ -58,26 +58,6 @@ def _vertice_in_polygon(vertice, polygon_points):
     # If the points are ordered clockwise, the det should <=0
 
 
-def _parse_datatype_from_feature_names(feature_names):
-
-    type_feature_map = {
-        Interval: set(Interval.feature_names),
-        Rectangle: set(Rectangle.feature_names),
-        Quadrilateral: set(Quadrilateral.feature_names)
-    }
-
-    for cls, fnames in type_feature_map.items():
-        if set(feature_names) == fnames:
-            return cls
-
-    raise ValueError(
-        "\n "
-        "\n The input feature is incompatible with the designated format."
-        "\n Please check the tutorials for more details."
-        "\n "
-    )
-
-
 def _polygon_area(xs, ys):
     """Calculate the area of polygons using 
     `Shoelace Formula <https://en.wikipedia.org/wiki/Shoelace_formula>`_.
