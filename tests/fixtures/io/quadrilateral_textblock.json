@@ -1,1 +1,1 @@
-{"block_type": "quadrilateral", "block_attr": {"points": [0, 1, 2, 3, 4, 5, 6, 7], "height": 200, "width": 400}, "text": "test", "parent": 45}
+{"points": [0, 1, 2, 3, 4, 5, 6, 7], "height": 200, "width": 400, "block_type": "quadrilateral", "text": "test", "parent": 45}

@@ -189,7 +189,7 @@ def test_layout():
     r2 = TextBlock(r, id=1, type=2, parent="a")
     q2 = TextBlock(q, id=1, type=2, next="a")
     l2 = Layout([i2, r2, q2], page_data={"width": 200, "height": 200})
-    
+
     l2.get_texts()
     l2.get_info("next")
     l2.condition_on(i)
@@ -200,54 +200,52 @@ def test_layout():
     l2.scale(4)
     l2.shift(4)
     l2.pad(left=2)
-    
+
     # Test slicing function
     homogeneous_blocks = l2[:2].get_homogeneous_blocks()
     assert homogeneous_blocks[0].block == i.to_rectangle()
     assert homogeneous_blocks[1].block == r
 
     # Test appending and extending
-    assert l + [i2] == Layout([i,q,r,i2])
-    assert l + l == Layout([i,q,r]*2)
+    assert l + [i2] == Layout([i, q, r, i2])
+    assert l + l == Layout([i, q, r] * 2)
     l.append(i)
-    assert l == Layout([i,q,r,i])
+    assert l == Layout([i, q, r, i])
     l2.extend([q])
     assert l2 == Layout([i2, r2, q2, q], page_data={"width": 200, "height": 200})
-    
+
     # Test addition
     l + l2
     with pytest.raises(ValueError):
-        l.page_data = {"width": 200, "height":400}
+        l.page_data = {"width": 200, "height": 400}
         l + l2
+
 
 def test_dict():
 
     i = Interval(1, 2, "y", canvas_height=5)
     i_dict = {
         "block_type": "interval",
-        "block_attr": {
-            "start": 1,
-            "end": 2,
-            "axis": "y",
-            "canvas_height": 5,
-            "canvas_width": 0,
-        },
+        "start": 1,
+        "end": 2,
+        "axis": "y",
+        "canvas_height": 5,
+        "canvas_width": 0,
     }
     assert i.to_dict() == i_dict
     assert i == Interval.from_dict(i_dict)
 
     r = Rectangle(1, 2, 3, 4)
-    r_dict = {
-        "block_type": "rectangle",
-        "block_attr": {"x_1": 1, "y_1": 2, "x_2": 3, "y_2": 4},
-    }
+    r_dict = {"block_type": "rectangle", "x_1": 1, "y_1": 2, "x_2": 3, "y_2": 4}
     assert r.to_dict() == r_dict
     assert r == Rectangle.from_dict(r_dict)
 
     q = Quadrilateral(np.arange(8).reshape(4, 2), 200, 400)
     q_dict = {
         "block_type": "quadrilateral",
-        "block_attr": {"points": [0, 1, 2, 3, 4, 5, 6, 7], "height": 200, "width": 400},
+        "points": [0, 1, 2, 3, 4, 5, 6, 7],
+        "height": 200,
+        "width": 400,
     }
     assert q.to_dict() == q_dict
     assert q == Quadrilateral.from_dict(q_dict)

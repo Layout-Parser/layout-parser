@@ -335,17 +335,18 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         Generate a dictionary representation of the current object:
             {
                 "block_type": <"interval", "rectangle", "quadrilateral"> ,
-                "block_attr": {
-                    "name": value,
-                    ...
-                }
+                "non_empty_block_attr1": value1,
+                ...
             }
         """
 
-        return {
-            "block_type": self._name,
-            "block_attr": {key: getattr(self, key) for key in self._features},
+        data = {
+            key: getattr(self, key)
+            for key in self._features
+            if getattr(self, key) is not None
         }
+        data["block_type"] = self._name
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "BaseCoordElement":
@@ -359,7 +360,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             cls._name == data["block_type"]
         ), f"Incompatible block types {data['block_type']}"
 
-        return cls(**{f: data["block_attr"][f] for f in cls._features})
+        return cls(**{f: data[f] for f in cls._features})
 
 
 @inherit_docstrings
@@ -1294,28 +1295,19 @@ class Quadrilateral(BaseCoordElement):
 
             {
                 "block_type": "quadrilateral",
-                "block_attr": {
-                    "points": [
-                        p[0,0], p[0,1],
-                        p[1,0], p[1,1],
-                        p[2,0], p[2,1],
-                        p[3,0], p[3,1]
-                    ],
-                    "height": value,
-                    "width": value,
-                }
+                "points": [
+                    p[0,0], p[0,1],
+                    p[1,0], p[1,1],
+                    p[2,0], p[2,1],
+                    p[3,0], p[3,1]
+                ],
+                "height": value,
+                "width": value
             }
         """
-
-        return {
-            "block_type": self._name,
-            "block_attr": {
-                key: getattr(self, key)
-                if key != "points"
-                else getattr(self, key).reshape(-1).tolist()
-                for key in self._features
-            },
-        }
+        data = super().to_dict()
+        data["points"] = data["points"].reshape(-1).tolist()
+        return data
 
 
 ALL_BASECOORD_ELEMENTS = [Interval, Rectangle, Quadrilateral]
@@ -1468,10 +1460,8 @@ class TextBlock(BaseLayoutElement):
 
             {
                 "block_type": <name of self.block>,
-                "block_attr": {
-                    <attributes of self.block combined with
+                <attributes of self.block combined with
                     non-empty self._features>
-                }
             }
         """
         base_dict = self.block.to_dict()
