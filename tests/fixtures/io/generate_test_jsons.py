@@ -17,6 +17,7 @@ if __name__ == "__main__":
         json.dump(q.to_dict(), fp)
     with open("layout.json", "w") as fp:
         json.dump(l.to_dict(), fp)
+    l.to_dataframe().to_csv("layout.csv", index=None)
 
     i2 = TextBlock(i, "")
     r2 = TextBlock(r, id=24)
@@ -31,3 +32,4 @@ if __name__ == "__main__":
         json.dump(q2.to_dict(), fp)
     with open("layout_textblock.json", "w") as fp:
         json.dump(l2.to_dict(), fp)
+    l2.to_dataframe().to_csv("layout_textblock.csv", index=None)
