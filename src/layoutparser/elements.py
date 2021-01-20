@@ -1752,10 +1752,5 @@ class Layout(MutableSequence):
             blocks = self
 
         df = pd.DataFrame([ele.to_dict() for ele in blocks])
-        (
-            df.drop(columns=["block_attr"], inplace=True).join(
-                df["block_attr"].apply(pd.Series), inplace=True
-            )
-        )
 
         return df

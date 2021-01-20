@@ -1,5 +1,8 @@
+import ast
 import json
 from typing import List, Union, Dict, Dict, Any
+
+import pandas as pd
 
 from .elements import (
     BaseCoordElement,
@@ -14,7 +17,7 @@ from .elements import (
 
 
 def load_json(filename: str) -> Union[BaseLayoutElement, Layout]:
-    """Load a JSON file and automatically parse its layout data type.
+    """Load a JSON file and save it as a layout object with appropriate data types.
 
     Args:
         filename (str):
@@ -70,7 +73,61 @@ def load_dict(data: Union[Dict, List[Dict]]) -> Union[BaseLayoutElement, Layout]
                 return BASECOORD_ELEMENT_NAMEMAP[data["block_type"]].from_dict(data)
 
     elif isinstance(data, list):
-        return [load_dict(ele) for ele in data]
+        return Layout([load_dict(ele) for ele in data])
 
     else:
         raise ValueError(f"Invalid input JSON structure.")
+
+
+def load_csv(filename: str, block_type: str = None) -> Layout:
+    """Load the Layout object from the given CSV file.
+
+    Args:
+        filename (str):
+            The name of the CSV file. A row of the table represents
+            an individual layout element.
+
+        block_type (str):
+            If there's no block_type column in the CSV file,
+            you must pass in a block_type variable such that layout parser
+            can appropriately detect the type of the layout elements.
+
+    Returns:
+        Layout:
+            The parsed Layout object from the CSV file.
+    """
+
+    return load_dataframe(pd.read_csv(filename), block_type=block_type)
+
+
+def load_dataframe(df: pd.DataFrame, block_type: str = None) -> Layout:
+    """Load the Layout object from the given dataframe.
+
+    Args:
+        df (pd.DataFrame):
+
+        block_type (str):
+            If there's no block_type column in the CSV file,
+            you must pass in a block_type variable such that layout parser
+            can appropriately detect the type of the layout elements.
+
+    Returns:
+        Layout:
+            The parsed Layout object from the CSV file.
+    """
+    df = df.copy()
+    if "points" in df.columns:
+        if df["points"].dtype == object:
+            df["points"] = df["points"].map(
+                lambda x: ast.literal_eval(x) if not pd.isna(x) else x
+            )
+
+    if block_type is None:
+        if "block_type" not in df.columns:
+            raise ValueError(
+                "`block_type` not specified both in dataframe and arguments"
+            )
+    else:
+        df["block_type"] = block_type
+
+    return load_dict(df.apply(lambda x: x.dropna().to_dict(), axis=1).to_list())
