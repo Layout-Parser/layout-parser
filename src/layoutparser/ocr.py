@@ -5,12 +5,15 @@ import io
 import os
 import json
 import csv
+import warnings
+import pickle
+
 import numpy as np
 import pandas as pd
 from cv2 import imencode
+
 from .elements import *
-import warnings
-import pickle
+from .io import load_dataframe
 
 __all__ = ["GCVFeatureType", "GCVAgent", "TesseractFeatureType", "TesseractAgent"]
 
@@ -484,11 +487,11 @@ class TesseractAgent(BaseOCRAgent):
                     "index": "id",
                 }
             )
-            .assign(x_2=lambda x: x.x_1 + x.w, y_2=lambda x: x.y_1 + x.h, type=None)
+            .assign(x_2=lambda x: x.x_1 + x.w, y_2=lambda x: x.y_1 + x.h, block_type="rectangle")
             .drop(columns=["w", "h"])
         )
 
-        return Layout.from_dataframe(df)
+        return load_dataframe(df)
 
     @staticmethod
     def load_response(filename):
