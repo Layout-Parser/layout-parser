@@ -384,8 +384,6 @@ class Interval(BaseCoordElement):
 
     _name = "interval"
     _features = ["start", "end", "axis", "canvas_height", "canvas_width"]
-    name = "_interval"
-    feature_names = ["x_1", "y_1", "x_2", "y_2", "height", "width"]
 
     def __init__(self, start, end, axis, canvas_height=None, canvas_width=None):
 
@@ -712,8 +710,6 @@ class Rectangle(BaseCoordElement):
 
     _name = "rectangle"
     _features = ["x_1", "y_1", "x_2", "y_2"]
-    name = "_rectangle"
-    feature_names = ["x_1", "y_1", "x_2", "y_2"]
 
     def __init__(self, x_1, y_1, x_2, y_2):
 
@@ -981,19 +977,6 @@ class Quadrilateral(BaseCoordElement):
 
     _name = "quadrilateral"
     _features = ["points", "height", "width"]
-    name = "_quadrilateral"
-    feature_names = [
-        "p11",
-        "p12",
-        "p21",
-        "p22",
-        "p31",
-        "p32",
-        "p41",
-        "p42",
-        "height",
-        "width",
-    ]
 
     def __init__(self, points, height=None, width=None):
 
@@ -1343,8 +1326,6 @@ class TextBlock(BaseLayoutElement):
 
     _name = "textblock"
     _features = ["text", "id", "type", "parent", "next", "score"]
-    name = "_textblock"
-    feature_names = ["text", "id", "type", "parent", "next", "score"]
 
     def __init__(
         self, block, text=None, id=None, type=None, parent=None, next=None, score=None
