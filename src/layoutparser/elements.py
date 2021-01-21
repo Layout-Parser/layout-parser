@@ -1,26 +1,31 @@
+from typing import List, Union, Dict, Dict, Any
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableSequence
 from copy import copy, deepcopy
 from inspect import getmembers, isfunction
 import warnings
 import functools
+
 import numpy as np
 import pandas as pd
 from PIL import Image
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
 
-__all__ = ['Interval', 'Rectangle', 'Quadrilateral', 'TextBlock', 'Layout']
+__all__ = ["Interval", "Rectangle", "Quadrilateral", "TextBlock", "Layout"]
 
 
 def _cvt_coordinates_to_points(coords):
 
     x_1, y_1, x_2, y_2 = coords
-    return np.array([[x_1, y_1],  # Top Left
-                     [x_2, y_1],  # Top Right
-                     [x_2, y_2],  # Bottom Right
-                     [x_1, y_2],  # Bottom Left
-                     ])
+    return np.array(
+        [
+            [x_1, y_1],  # Top Left
+            [x_2, y_1],  # Top Right
+            [x_2, y_2],  # Bottom Right
+            [x_1, y_2],  # Bottom Left
+        ]
+    )
 
 
 def _cvt_points_to_coordinates(points):
@@ -39,7 +44,7 @@ def _perspective_transformation(M, points, is_inv=False):
     src_mid = np.hstack([points, np.ones((points.shape[0], 1))]).T  # 3x4
     dst_mid = np.matmul(M, src_mid)
 
-    dst = (dst_mid/dst_mid[-1]).T[:, :2]  # 4x2
+    dst = (dst_mid / dst_mid[-1]).T[:, :2]  # 4x2
 
     return dst
 
@@ -56,28 +61,8 @@ def _vertice_in_polygon(vertice, polygon_points):
     # If the points are ordered clockwise, the det should <=0
 
 
-def _parse_datatype_from_feature_names(feature_names):
-
-    type_feature_map = {
-        Interval: set(Interval.feature_names),
-        Rectangle: set(Rectangle.feature_names),
-        Quadrilateral: set(Quadrilateral.feature_names)
-    }
-
-    for cls, fnames in type_feature_map.items():
-        if set(feature_names) == fnames:
-            return cls
-
-    raise ValueError(
-        "\n "
-        "\n The input feature is incompatible with the designated format."
-        "\n Please check the tutorials for more details."
-        "\n "
-    )
-
-
 def _polygon_area(xs, ys):
-    """Calculate the area of polygons using 
+    """Calculate the area of polygons using
     `Shoelace Formula <https://en.wikipedia.org/wiki/Shoelace_formula>`_.
 
     Args:
@@ -89,7 +74,7 @@ def _polygon_area(xs, ys):
     # The formula is equivalent to the original one indicated in the wikipedia
     # page.
 
-    return 0.5*np.abs(np.dot(xs, np.roll(ys, 1)) - np.dot(ys, np.roll(xs, 1)))
+    return 0.5 * np.abs(np.dot(xs, np.roll(ys, 1)) - np.dot(ys, np.roll(xs, 1)))
 
 
 def mixin_textblock_meta(func):
@@ -100,6 +85,7 @@ def mixin_textblock_meta(func):
             self = copy(self)
             self.block = out
             return self
+
     return wrap
 
 
@@ -131,11 +117,11 @@ def support_textblock(func):
             other = other.block
         out = func(self, other, *args, **kwargs)
         return out
+
     return wrap
 
 
-class BaseLayoutElement():
-
+class BaseLayoutElement:
     def set(self, inplace=False, **kwargs):
 
         obj = self if inplace else copy(self)
@@ -152,8 +138,7 @@ class BaseLayoutElement():
 
     def __repr__(self):
 
-        info_str = ', '.join(
-            [f'{key}={val}' for key, val in vars(self).items()])
+        info_str = ", ".join([f"{key}={val}" for key, val in vars(self).items()])
         return f"{self.__class__.__name__}({info_str})"
 
     def __eq__(self, other):
@@ -165,6 +150,17 @@ class BaseLayoutElement():
 
 
 class BaseCoordElement(ABC, BaseLayoutElement):
+    @property
+    @abstractmethod
+    def _name(self) -> str:
+        """The name of the class"""
+        pass
+
+    @property
+    @abstractmethod
+    def _features(self) -> List[str]:
+        """A list of features names used for initializing the class object"""
+        pass
 
     #######################################################################
     #########################  Layout Properties  #########################
@@ -172,26 +168,31 @@ class BaseCoordElement(ABC, BaseLayoutElement):
 
     @property
     @abstractmethod
-    def width(self): pass
+    def width(self):
+        pass
 
     @property
     @abstractmethod
-    def height(self): pass
+    def height(self):
+        pass
 
     @property
     @abstractmethod
-    def coordinates(self): pass
+    def coordinates(self):
+        pass
 
     @property
     @abstractmethod
-    def points(self): pass
+    def points(self):
+        pass
 
     @property
     @abstractmethod
-    def area(self): pass
+    def area(self):
+        pass
 
     #######################################################################
-    ### Geometric Relations (relative to, condition on, and is in)  ###
+    ###   Geometric Relations (relative to, condition on, and is in)    ###
     #######################################################################
 
     @abstractmethod
@@ -201,14 +202,14 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         generate a new element of the current element in absolute coordinates.
 
         Args:
-            other (:obj:`BaseCoordElement`): 
+            other (:obj:`BaseCoordElement`):
                 The other layout element involved in the geometric operations.
 
         Raises:
             Exception: Raise error when the input type of the other element is invalid.
 
         Returns:
-            :obj:`BaseCoordElement`: 
+            :obj:`BaseCoordElement`:
                 The BaseCoordElement object of the original element in the absolute coordinate system.
         """
 
@@ -227,7 +228,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             Exception: Raise error when the input type of the other element is invalid.
 
         Returns:
-            :obj:`BaseCoordElement`: 
+            :obj:`BaseCoordElement`:
                 The BaseCoordElement object of the original element in the relative coordinate system.
         """
 
@@ -236,15 +237,15 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     @abstractmethod
     def is_in(self, other, soft_margin={}, center=False):
         """
-        Identify whether the current element is within another element. 
+        Identify whether the current element is within another element.
 
         Args:
-            other (:obj:`BaseCoordElement`): 
+            other (:obj:`BaseCoordElement`):
                 The other layout element involved in the geometric operations.
-            soft_margin (:obj:`dict`, `optional`, defaults to `{}`): 
-                Enlarge the other element with wider margins to relax the restrictions.  
-            center (:obj:`bool`, `optional`, defaults to `False`): 
-                The toggle to determine whether the center (instead of the four corners) 
+            soft_margin (:obj:`dict`, `optional`, defaults to `{}`):
+                Enlarge the other element with wider margins to relax the restrictions.
+            center (:obj:`bool`, `optional`, defaults to `False`):
+                The toggle to determine whether the center (instead of the four corners)
                 of the current element is in the other element.
 
         Returns:
@@ -258,10 +259,9 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     #######################################################################
 
     @abstractmethod
-    def pad(self, left=0, right=0, top=0, bottom=0,
-            safe_mode=True):
-        """ Pad the layout element on the four sides of the polygon with the user-defined pixels. If 
-        safe_mode is set to True, the function will cut off the excess padding that falls on the negative 
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
+        """Pad the layout element on the four sides of the polygon with the user-defined pixels. If
+        safe_mode is set to True, the function will cut off the excess padding that falls on the negative
         side of the coordinates.
 
         Args:
@@ -284,7 +284,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         numeric value, the element will by shifted by the same specified amount on both x and y axis.
 
         Args:
-            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): 
+            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`):
                 The number of pixels used to shift the element.
 
         Returns:
@@ -307,6 +307,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         """
 
         pass
+
     #######################################################################
     ################################# MISC ################################
     #######################################################################
@@ -325,54 +326,88 @@ class BaseCoordElement(ABC, BaseLayoutElement):
 
         pass
 
+    #######################################################################
+    ########################## Import and Export ##########################
+    #######################################################################
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Generate a dictionary representation of the current object:
+            {
+                "block_type": <"interval", "rectangle", "quadrilateral"> ,
+                "non_empty_block_attr1": value1,
+                ...
+            }
+        """
+
+        data = {
+            key: getattr(self, key)
+            for key in self._features
+            if getattr(self, key) is not None
+        }
+        data["block_type"] = self._name
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "BaseCoordElement":
+        """Initialize an instance based on the dictionary representation
+
+        Args:
+            data (:obj:`dict`): The dictionary representation of the object
+        """
+
+        assert (
+            cls._name == data["block_type"]
+        ), f"Incompatible block types {data['block_type']}"
+
+        return cls(**{f: data[f] for f in cls._features})
+
 
 @inherit_docstrings
 class Interval(BaseCoordElement):
     """
-    This class describes the coordinate system of an interval, a block defined by a pair of start and end point 
+    This class describes the coordinate system of an interval, a block defined by a pair of start and end point
     on the designated axis and same length as the base canvas on the other axis.
 
     Args:
-        start (:obj:`numeric`): 
+        start (:obj:`numeric`):
             The coordinate of the start point on the designated axis.
-        end (:obj:`numeric`): 
+        end (:obj:`numeric`):
             The end coordinate on the same axis as start.
-        axis (:obj:`str`, optional`, defaults to 'x'): 
+        axis (:obj:`str`):
             The designated axis that the end points belong to.
-        canvas_height (:obj:`numeric`, `optional`, defaults to 0): 
+        canvas_height (:obj:`numeric`, `optional`, defaults to 0):
             The height of the canvas that the interval is on.
-        canvas_width (:obj:`numeric`, `optional`, defaults to 0): 
+        canvas_width (:obj:`numeric`, `optional`, defaults to 0):
             The width of the canvas that the interval is on.
     """
 
-    name = "_interval"
-    feature_names = ["x_1", "y_1", "x_2", "y_2", "height", "width"]
+    _name = "interval"
+    _features = ["start", "end", "axis", "canvas_height", "canvas_width"]
 
-    def __init__(self, start, end, axis='x',
-                 canvas_height=0, canvas_width=0):
+    def __init__(self, start, end, axis, canvas_height=None, canvas_width=None):
 
         assert start <= end, f"Invalid input for start and end. Start must <= end."
         self.start = start
         self.end = end
 
-        assert axis in [
-            'x', 'y'], f"Invalid axis {axis}. Axis must be in 'x' or 'y'"
+        assert axis in ["x", "y"], f"Invalid axis {axis}. Axis must be in 'x' or 'y'"
         self.axis = axis
 
-        self.canvas_height = canvas_height
-        self.canvas_width = canvas_width
+        self.canvas_height = canvas_height or 0
+        self.canvas_width = canvas_width or 0
 
     @property
     def height(self):
         """
-        Calculate the height of the interval. If the interval is along the x-axis, the height will be the 
+        Calculate the height of the interval. If the interval is along the x-axis, the height will be the
         height of the canvas, otherwise, it will be the difference between the start and end point.
 
         Returns:
             :obj:`numeric`: Output the numeric value of the height.
         """
 
-        if self.axis == 'x':
+        if self.axis == "x":
             return self.canvas_height
         else:
             return self.end - self.start
@@ -380,14 +415,14 @@ class Interval(BaseCoordElement):
     @property
     def width(self):
         """
-        Calculate the width of the interval. If the interval is along the y-axis, the width will be the 
+        Calculate the width of the interval. If the interval is along the y-axis, the width will be the
         width of the canvas, otherwise, it will be the difference between the start and end point.
 
         Returns:
             :obj:`numeric`: Output the numeric value of the width.
         """
 
-        if self.axis == 'y':
+        if self.axis == "y":
             return self.canvas_width
         else:
             return self.end - self.start
@@ -395,15 +430,15 @@ class Interval(BaseCoordElement):
     @property
     def coordinates(self):
         """
-        This method considers an interval as a rectangle and calculates the coordinates of the upper left 
+        This method considers an interval as a rectangle and calculates the coordinates of the upper left
         and lower right corners to define the interval.
 
         Returns:
-            :obj:`Tuple(numeric)`: 
-                Output the numeric values of the coordinates in a Tuple of size four. 
+            :obj:`Tuple(numeric)`:
+                Output the numeric values of the coordinates in a Tuple of size four.
         """
 
-        if self.axis == 'x':
+        if self.axis == "x":
             coords = (self.start, 0, self.end, self.canvas_height)
         else:
             coords = (0, self.start, self.canvas_width, self.end)
@@ -413,8 +448,8 @@ class Interval(BaseCoordElement):
     @property
     def points(self):
         """
-        Return the coordinates of all four corners of the interval in a clockwise fashion 
-        starting from the upper left. 
+        Return the coordinates of all four corners of the interval in a clockwise fashion
+        starting from the upper left.
 
         Returns:
             :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
@@ -431,14 +466,14 @@ class Interval(BaseCoordElement):
             :obj:`Tuple(numeric)`: Returns of coordinate of the center.
         """
 
-        return (self.start + self.end) / 2.
+        return (self.start + self.end) / 2.0
 
     @property
     def area(self):
-        """Return the area of the covered region of the interval. 
+        """Return the area of the covered region of the interval.
         The area is bounded to the canvas. If the interval is put
-        on a canvas, the area equals to interval width * canvas height 
-        (axis='x') or interval height * canvas width (axis='y'). 
+        on a canvas, the area equals to interval width * canvas height
+        (axis='x') or interval height * canvas width (axis='y').
         Otherwise, the area is zero.
         """
         return self.height * self.width
@@ -448,13 +483,13 @@ class Interval(BaseCoordElement):
         Set the height and the width of the canvas that the interval is on.
 
         Args:
-            canvas (:obj:`Numpy array` or :obj:`BaseCoordElement` or :obj:`PIL.Image.Image`): 
-                The base element that the interval is on. The numpy array should be the 
+            canvas (:obj:`Numpy array` or :obj:`BaseCoordElement` or :obj:`PIL.Image.Image`):
+                The base element that the interval is on. The numpy array should be the
                 format of `[height, width]`.
 
         Returns:
-            :obj:`Interval`: 
-                A copy of the current Interval with its canvas height and width set to 
+            :obj:`Interval`:
+                A copy of the current Interval with its canvas height and width set to
                 those of the input canvas.
         """
 
@@ -482,19 +517,11 @@ class Interval(BaseCoordElement):
 
         elif isinstance(other, Rectangle):
 
-            return (self
-                    .put_on_canvas(other)
-                    .to_rectangle()
-                    .condition_on(other)
-                    )
+            return self.put_on_canvas(other).to_rectangle().condition_on(other)
 
         elif isinstance(other, Quadrilateral):
 
-            return (self
-                    .put_on_canvas(other)
-                    .to_quadrilateral()
-                    .condition_on(other)
-                    )
+            return self.put_on_canvas(other).to_quadrilateral().condition_on(other)
 
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
@@ -512,19 +539,11 @@ class Interval(BaseCoordElement):
 
         elif isinstance(other, Rectangle):
 
-            return (self
-                    .put_on_canvas(other)
-                    .to_rectangle()
-                    .relative_to(other)
-                    )
+            return self.put_on_canvas(other).to_rectangle().relative_to(other)
 
         elif isinstance(other, Quadrilateral):
 
-            return (self
-                    .put_on_canvas(other)
-                    .to_quadrilateral()
-                    .relative_to(other)
-                    )
+            return self.put_on_canvas(other).to_quadrilateral().relative_to(other)
 
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
@@ -547,12 +566,12 @@ class Interval(BaseCoordElement):
             x_1, y_1, x_2, y_2 = other.coordinates
 
             if center:
-                if self.axis == 'x':
+                if self.axis == "x":
                     return x_1 <= self.center <= x_2
                 else:
                     return y_1 <= self.center <= y_2
             else:
-                if self.axis == 'x':
+                if self.axis == "x":
                     return x_1 <= self.start <= self.end <= x_2
                 else:
                     return y_1 <= self.start <= self.end <= y_2
@@ -562,18 +581,20 @@ class Interval(BaseCoordElement):
 
     def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
 
-        if self.axis == 'x':
+        if self.axis == "x":
             start = self.start - left
             end = self.end + right
             if top or bottom:
                 warnings.warn(
-                    f"Invalid padding top/bottom for an x axis {self.__class__.__name__}")
+                    f"Invalid padding top/bottom for an x axis {self.__class__.__name__}"
+                )
         else:
             start = self.start - top
             end = self.end + bottom
             if left or right:
                 warnings.warn(
-                    f"Invalid padding right/left for a y axis {self.__class__.__name__}")
+                    f"Invalid padding right/left for a y axis {self.__class__.__name__}"
+                )
 
         if safe_mode:
             start = max(0, start)
@@ -592,10 +613,12 @@ class Interval(BaseCoordElement):
         """
 
         if isinstance(shift_distance, Iterable):
-            shift_distance = shift_distance[0] if self.axis == 'x' \
-                else shift_distance[1]
+            shift_distance = (
+                shift_distance[0] if self.axis == "x" else shift_distance[1]
+            )
             warnings.warn(
-                f"Input shift for multiple axes. Only use the distance for the {self.axis} axis")
+                f"Input shift for multiple axes. Only use the distance for the {self.axis} axis"
+            )
 
         start = self.start + shift_distance
         end = self.end + shift_distance
@@ -613,10 +636,10 @@ class Interval(BaseCoordElement):
         """
 
         if isinstance(scale_factor, Iterable):
-            scale_factor = scale_factor[0] if self.axis == 'x' \
-                else scale_factor[1]
+            scale_factor = scale_factor[0] if self.axis == "x" else scale_factor[1]
             warnings.warn(
-                f"Input scale for multiple axes. Only use the factor for the {self.axis} axis")
+                f"Input scale for multiple axes. Only use the factor for the {self.axis} axis"
+            )
 
         start = self.start * scale_factor
         end = self.end * scale_factor
@@ -624,10 +647,10 @@ class Interval(BaseCoordElement):
 
     def crop_image(self, image):
         x_1, y_1, x_2, y_2 = self.put_on_canvas(image).coordinates
-        return image[int(y_1):int(y_2), int(x_1):int(x_2)]
+        return image[int(y_1) : int(y_2), int(x_1) : int(x_2)]
 
     def to_rectangle(self):
-        """ 
+        """
         Convert the Interval to a Rectangle element.
 
         Returns:
@@ -647,16 +670,20 @@ class Interval(BaseCoordElement):
     @classmethod
     def from_series(cls, series):
         series = series.dropna()
-        if series.get('x_1') and series.get('x_2'):
-            axis = 'x'
-            start, end = series.get('x_1'), series.get('x_2')
+        if series.get("x_1") and series.get("x_2"):
+            axis = "x"
+            start, end = series.get("x_1"), series.get("x_2")
         else:
-            axis = 'y'
-            start, end = series.get('y_1'), series.get('y_2')
+            axis = "y"
+            start, end = series.get("y_1"), series.get("y_2")
 
-        return cls(start, end, axis=axis,
-                   canvas_height=series.get('height') or 0,
-                   canvas_width=series.get('width') or 0)
+        return cls(
+            start,
+            end,
+            axis=axis,
+            canvas_height=series.get("height") or 0,
+            canvas_width=series.get("width") or 0,
+        )
 
 
 @inherit_docstrings
@@ -671,18 +698,18 @@ class Rectangle(BaseCoordElement):
             ---- (x_2, y_2)
 
     Args:
-        x_1 (:obj:`numeric`): 
+        x_1 (:obj:`numeric`):
             x coordinate on the horizontal axis of the upper left corner of the rectangle.
-        y_1 (:obj:`numeric`): 
+        y_1 (:obj:`numeric`):
             y coordinate on the vertical axis of the upper left corner of the rectangle.
-        x_2 (:obj:`numeric`): 
+        x_2 (:obj:`numeric`):
             x coordinate on the horizontal axis of the lower right corner of the rectangle.
-        y_2 (:obj:`numeric`): 
+        y_2 (:obj:`numeric`):
             y coordinate on the vertical axis of the lower right corner of the rectangle.
     """
 
-    name = "_rectangle"
-    feature_names = ["x_1", "y_1", "x_2", "y_2"]
+    _name = "rectangle"
+    _features = ["x_1", "y_1", "x_2", "y_2"]
 
     def __init__(self, x_1, y_1, x_2, y_2):
 
@@ -719,7 +746,7 @@ class Rectangle(BaseCoordElement):
         Return the coordinates of the two points that define the rectangle.
 
         Returns:
-            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four.
         """
 
         return (self.x_1, self.y_1, self.x_2, self.y_2)
@@ -727,8 +754,8 @@ class Rectangle(BaseCoordElement):
     @property
     def points(self):
         """
-        Return the coordinates of all four corners of the rectangle in a clockwise fashion 
-        starting from the upper left. 
+        Return the coordinates of all four corners of the rectangle in a clockwise fashion
+        starting from the upper left.
 
         Returns:
             :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
@@ -745,7 +772,7 @@ class Rectangle(BaseCoordElement):
             :obj:`Tuple(numeric)`: Returns of coordinate of the center.
         """
 
-        return (self.x_1 + self.x_2)/2., (self.y_1 + self.y_2)/2.
+        return (self.x_1 + self.x_2) / 2.0, (self.y_1 + self.y_2) / 2.0
 
     @property
     def area(self):
@@ -758,23 +785,26 @@ class Rectangle(BaseCoordElement):
     def condition_on(self, other):
 
         if isinstance(other, Interval):
-            if other.axis == 'x':
+            if other.axis == "x":
                 dx, dy = other.start, 0
             else:
                 dx, dy = 0, other.start
 
-            return self.__class__(self.x_1 + dx, self.y_1 + dy,
-                                  self.x_2 + dx, self.y_2 + dy)
+            return self.__class__(
+                self.x_1 + dx, self.y_1 + dy, self.x_2 + dx, self.y_2 + dy
+            )
 
         elif isinstance(other, Rectangle):
             dx, dy, _, _ = other.coordinates
 
-            return self.__class__(self.x_1 + dx, self.y_1 + dy,
-                                  self.x_2 + dx, self.y_2 + dy)
+            return self.__class__(
+                self.x_1 + dx, self.y_1 + dy, self.x_2 + dx, self.y_2 + dy
+            )
 
         elif isinstance(other, Quadrilateral):
-            transformed_points = _perspective_transformation(other.perspective_matrix,
-                                                             self.points, is_inv=True)
+            transformed_points = _perspective_transformation(
+                other.perspective_matrix, self.points, is_inv=True
+            )
 
             return other.__class__(transformed_points, self.height, self.width)
 
@@ -784,23 +814,26 @@ class Rectangle(BaseCoordElement):
     @support_textblock
     def relative_to(self, other):
         if isinstance(other, Interval):
-            if other.axis == 'x':
+            if other.axis == "x":
                 dx, dy = other.start, 0
             else:
                 dx, dy = 0, other.start
 
-            return self.__class__(self.x_1 - dx, self.y_1 - dy,
-                                  self.x_2 - dx, self.y_2 - dy)
+            return self.__class__(
+                self.x_1 - dx, self.y_1 - dy, self.x_2 - dx, self.y_2 - dy
+            )
 
         elif isinstance(other, Rectangle):
             dx, dy, _, _ = other.coordinates
 
-            return self.__class__(self.x_1 - dx, self.y_1 - dy,
-                                  self.x_2 - dx, self.y_2 - dy)
+            return self.__class__(
+                self.x_1 - dx, self.y_1 - dy, self.x_2 - dx, self.y_2 - dy
+            )
 
         elif isinstance(other, Quadrilateral):
-            transformed_points = _perspective_transformation(other.perspective_matrix,
-                                                             self.points, is_inv=False)
+            transformed_points = _perspective_transformation(
+                other.perspective_matrix, self.points, is_inv=False
+            )
 
             return other.__class__(transformed_points, self.height, self.width)
 
@@ -814,28 +847,31 @@ class Rectangle(BaseCoordElement):
 
         if isinstance(other, Interval):
             if not center:
-                if other.axis == 'x':
+                if other.axis == "x":
                     start, end = self.x_1, self.x_2
                 else:
                     start, end = self.y_1, self.y_2
                 return other.start <= start <= end <= other.end
             else:
-                c = self.center[0] if other.axis == 'x' else self.center[1]
+                c = self.center[0] if other.axis == "x" else self.center[1]
                 return other.start <= c <= other.end
 
         elif isinstance(other, Rectangle):
-            x_interval = other.to_interval(axis='x')
-            y_interval = other.to_interval(axis='y')
-            return self.is_in(x_interval, center=center) and \
-                self.is_in(y_interval, center=center)
+            x_interval = other.to_interval(axis="x")
+            y_interval = other.to_interval(axis="y")
+            return self.is_in(x_interval, center=center) and self.is_in(
+                y_interval, center=center
+            )
 
         elif isinstance(other, Quadrilateral):
 
             if not center:
                 # This is equivalent to determine all the points of the
                 # rectangle is in the quadrilateral.
-                is_vertice_in = [_vertice_in_polygon(
-                    vertice, other.points) for vertice in self.points]
+                is_vertice_in = [
+                    _vertice_in_polygon(vertice, other.points)
+                    for vertice in self.points
+                ]
                 return all(is_vertice_in)
             else:
                 center = np.array(self.center)
@@ -844,8 +880,7 @@ class Rectangle(BaseCoordElement):
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
-    def pad(self, left=0, right=0, top=0, bottom=0,
-            safe_mode=True):
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
 
         x_1 = self.x_1 - left
         y_1 = self.y_1 - top
@@ -864,8 +899,9 @@ class Rectangle(BaseCoordElement):
             shift_x = shift_distance
             shift_y = shift_distance
         else:
-            assert len(
-                shift_distance) == 2, "shift_distance should have 2 elements, one for x dimension and one for y dimension"
+            assert (
+                len(shift_distance) == 2
+            ), "shift_distance should have 2 elements, one for x dimension and one for y dimension"
             shift_x, shift_y = shift_distance
 
         x_1 = self.x_1 + shift_x
@@ -880,8 +916,9 @@ class Rectangle(BaseCoordElement):
             scale_x = scale_factor
             scale_y = scale_factor
         else:
-            assert len(
-                scale_factor) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            assert (
+                len(scale_factor) == 2
+            ), "scale_factor should have 2 elements, one for x dimension and one for y dimension"
             scale_x, scale_y = scale_factor
 
         x_1 = self.x_1 * scale_x
@@ -892,10 +929,10 @@ class Rectangle(BaseCoordElement):
 
     def crop_image(self, image):
         x_1, y_1, x_2, y_2 = self.coordinates
-        return image[int(y_1):int(y_2), int(x_1):int(x_2)]
+        return image[int(y_1) : int(y_2), int(x_1) : int(x_2)]
 
-    def to_interval(self, axis='x', **kwargs):
-        if axis == 'x':
+    def to_interval(self, axis, **kwargs):
+        if axis == "x":
             start, end = self.x_1, self.x_2
         else:
             start, end = self.y_1, self.y_2
@@ -914,7 +951,7 @@ class Rectangle(BaseCoordElement):
 @inherit_docstrings
 class Quadrilateral(BaseCoordElement):
     """
-    This class describes the coodinate system of a four-sided polygon. A quadrilateral is defined by 
+    This class describes the coodinate system of a four-sided polygon. A quadrilateral is defined by
     the coordinates of its 4 corners in a clockwise order starting with the upper left corner (as shown below)::
 
         points[0] -...- points[1]
@@ -926,8 +963,10 @@ class Quadrilateral(BaseCoordElement):
         points[3] -...- points[2]
 
     Args:
-        points (:obj:`Numpy array`):
-            The array of 4 corner coordinates of size 4x2.
+        points (:obj:`Numpy array` or `list`):
+            A `np.ndarray` of shape 4x2  for four corner coordinates
+            or a list of length 8 for in the format of
+            `[p[0,0], p[0,1], p[1,0], p[1,1], ...]`.
         height (:obj:`numeric`, `optional`, defaults to `None`):
             The height of the quadrilateral. This is to better support the perspective
             transformation from the OpenCV library.
@@ -936,15 +975,25 @@ class Quadrilateral(BaseCoordElement):
             transformation from the OpenCV library.
     """
 
-    name = "_quadrilateral"
-    feature_names = ["p11", "p12", "p21", "p22",
-                     "p31", "p32", "p41", "p42",
-                     "height", "width"]
+    _name = "quadrilateral"
+    _features = ["points", "height", "width"]
 
     def __init__(self, points, height=None, width=None):
 
-        assert isinstance(
-            points, np.ndarray), f" Invalid input: points must be a numpy array"
+        if isinstance(points, np.ndarray):
+            if points.shape != (4, 2):
+                raise ValueError(f"Invalid points shape: {points.shape}.")
+        elif isinstance(points, list):
+            if len(points) != 8:
+                raise ValueError(
+                    f"Invalid number of points element {len(points)}. Should be 8."
+                )
+            points = np.array(points).reshape(4, 2)
+        else:
+            raise ValueError(
+                f"Invalid input type for points {type(points)}."
+                "Please make sure it is a list of np.ndarray."
+            )
 
         self._points = points
         self._width = width
@@ -979,11 +1028,11 @@ class Quadrilateral(BaseCoordElement):
     @property
     def coordinates(self):
         """
-        Return the coordinates of the upper left and lower right corners points that 
+        Return the coordinates of the upper left and lower right corners points that
         define the circumscribed rectangle.
 
         Returns
-            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four.
         """
 
         return _cvt_points_to_coordinates(self.points)
@@ -991,8 +1040,8 @@ class Quadrilateral(BaseCoordElement):
     @property
     def points(self):
         """
-        Return the coordinates of all four corners of the quadrilateral in a clockwise fashion 
-        starting from the upper left. 
+        Return the coordinates of all four corners of the quadrilateral in a clockwise fashion
+        starting from the upper left.
 
         Returns:
             :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
@@ -1028,25 +1077,29 @@ class Quadrilateral(BaseCoordElement):
 
     @property
     def perspective_matrix(self):
-        return _getPerspectiveTransform(self.points.astype('float32'),
-                                        self.mapped_rectangle_points.astype('float32'))
+        return _getPerspectiveTransform(
+            self.points.astype("float32"),
+            self.mapped_rectangle_points.astype("float32"),
+        )
 
     def map_to_points_ordering(self, x_map, y_map):
 
         points_ordering = self.points.argsort(axis=0).argsort(axis=0)
         # Ref: https://github.com/numpy/numpy/issues/8757#issuecomment-355126992
 
-        return np.vstack([
-            np.vectorize(x_map.get)(points_ordering[:, 0]),
-            np.vectorize(y_map.get)(points_ordering[:, 1])
-        ]).T
+        return np.vstack(
+            [
+                np.vectorize(x_map.get)(points_ordering[:, 0]),
+                np.vectorize(y_map.get)(points_ordering[:, 1]),
+            ]
+        ).T
 
     @support_textblock
     def condition_on(self, other):
 
         if isinstance(other, Interval):
 
-            if other.axis == 'x':
+            if other.axis == "x":
                 return self.shift([other.start, 0])
             else:
                 return self.shift([0, other.start])
@@ -1057,8 +1110,9 @@ class Quadrilateral(BaseCoordElement):
 
         elif isinstance(other, Quadrilateral):
 
-            transformed_points = _perspective_transformation(other.perspective_matrix,
-                                                             self.points, is_inv=True)
+            transformed_points = _perspective_transformation(
+                other.perspective_matrix, self.points, is_inv=True
+            )
             return self.__class__(transformed_points, self.height, self.width)
 
         else:
@@ -1069,7 +1123,7 @@ class Quadrilateral(BaseCoordElement):
 
         if isinstance(other, Interval):
 
-            if other.axis == 'x':
+            if other.axis == "x":
                 return self.shift([-other.start, 0])
             else:
                 return self.shift([0, -other.start])
@@ -1080,8 +1134,9 @@ class Quadrilateral(BaseCoordElement):
 
         elif isinstance(other, Quadrilateral):
 
-            transformed_points = _perspective_transformation(other.perspective_matrix,
-                                                             self.points, is_inv=False)
+            transformed_points = _perspective_transformation(
+                other.perspective_matrix, self.points, is_inv=False
+            )
             return self.__class__(transformed_points, self.height, self.width)
 
         else:
@@ -1094,28 +1149,31 @@ class Quadrilateral(BaseCoordElement):
 
         if isinstance(other, Interval):
             if not center:
-                if other.axis == 'x':
+                if other.axis == "x":
                     start, end = self.coordinates[0], self.coordinates[2]
                 else:
                     start, end = self.coordinates[1], self.coordinates[3]
                 return other.start <= start <= end <= other.end
             else:
-                c = self.center[0] if other.axis == 'x' else self.center[1]
+                c = self.center[0] if other.axis == "x" else self.center[1]
                 return other.start <= c <= other.end
 
         elif isinstance(other, Rectangle):
-            x_interval = other.to_interval(axis='x')
-            y_interval = other.to_interval(axis='y')
-            return self.is_in(x_interval, center=center) and \
-                self.is_in(y_interval, center=center)
+            x_interval = other.to_interval(axis="x")
+            y_interval = other.to_interval(axis="y")
+            return self.is_in(x_interval, center=center) and self.is_in(
+                y_interval, center=center
+            )
 
         elif isinstance(other, Quadrilateral):
 
             if not center:
                 # This is equivalent to determine all the points of the
                 # rectangle is in the quadrilateral.
-                is_vertice_in = [_vertice_in_polygon(
-                    vertice, other.points) for vertice in self.points]
+                is_vertice_in = [
+                    _vertice_in_polygon(vertice, other.points)
+                    for vertice in self.points
+                ]
                 return all(is_vertice_in)
             else:
                 center = np.array(self.center)
@@ -1124,11 +1182,10 @@ class Quadrilateral(BaseCoordElement):
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
-    def pad(self, left=0, right=0, top=0, bottom=0,
-            safe_mode=True):
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
 
-        x_map = {0: -left,  1: -left,  2: right,  3: right}
-        y_map = {0: -top,   1: -top,   2: bottom, 3: bottom}
+        x_map = {0: -left, 1: -left, 2: right, 3: right}
+        y_map = {0: -top, 1: -top, 2: bottom, 3: bottom}
 
         padding_mat = self.map_to_points_ordering(x_map, y_map)
 
@@ -1143,8 +1200,9 @@ class Quadrilateral(BaseCoordElement):
         if not isinstance(shift_distance, Iterable):
             shift_mat = [shift_distance, shift_distance]
         else:
-            assert len(
-                shift_distance) == 2, "shift_distance should have 2 elements, one for x dimension and one for y dimension"
+            assert (
+                len(shift_distance) == 2
+            ), "shift_distance should have 2 elements, one for x dimension and one for y dimension"
             shift_mat = shift_distance
 
         points = self.points + np.array(shift_mat)
@@ -1156,8 +1214,9 @@ class Quadrilateral(BaseCoordElement):
         if not isinstance(scale_factor, Iterable):
             scale_mat = [scale_factor, scale_factor]
         else:
-            assert len(
-                scale_factor) == 2, "scale_factor should have 2 elements, one for x dimension and one for y dimension"
+            assert (
+                len(scale_factor) == 2
+            ), "scale_factor should have 2 elements, one for x dimension and one for y dimension"
             scale_mat = scale_factor
 
         points = self.points * np.array(scale_mat)
@@ -1175,12 +1234,14 @@ class Quadrilateral(BaseCoordElement):
             :obj:`Numpy array`: The array of the cropped image.
         """
 
-        return _warpPerspective(image, self.perspective_matrix, (int(self.width), int(self.height)))
+        return _warpPerspective(
+            image, self.perspective_matrix, (int(self.width), int(self.height))
+        )
 
-    def to_interval(self, axis='x', **kwargs):
+    def to_interval(self, axis="x", **kwargs):
 
         x_1, y_1, x_2, y_2 = self.coordinates
-        if axis == 'x':
+        if axis == "x":
             start, end = x_1, x_2
         else:
             start, end = y_1, y_2
@@ -1194,12 +1255,11 @@ class Quadrilateral(BaseCoordElement):
     def from_series(cls, series):
         series = series.dropna()
 
-        points = pd.to_numeric(
-            series[cls.feature_names[:8]]).values.reshape(4, -2)
+        points = pd.to_numeric(series[cls.feature_names[:8]]).values.reshape(4, -2)
 
-        return cls(points=points,
-                   height=series.get("height"),
-                   width=series.get("width"))
+        return cls(
+            points=points, height=series.get("height"), width=series.get("width")
+        )
 
     def __eq__(self, other):
         if other.__class__ is not self.__class__:
@@ -1207,21 +1267,50 @@ class Quadrilateral(BaseCoordElement):
         return np.isclose(self.points, other.points).all()
 
     def __repr__(self):
-        keys = ['points', 'width', 'height']
-        info_str = ', '.join([f'{key}={getattr(self, key)}' for key in keys])
+        keys = ["points", "width", "height"]
+        info_str = ", ".join([f"{key}={getattr(self, key)}" for key in keys])
         return f"{self.__class__.__name__}({info_str})"
+
+    def to_dict(self) -> Dict[str, Any]:
+
+        """
+        Generate a dictionary representation of the current object::
+
+            {
+                "block_type": "quadrilateral",
+                "points": [
+                    p[0,0], p[0,1],
+                    p[1,0], p[1,1],
+                    p[2,0], p[2,1],
+                    p[3,0], p[3,1]
+                ],
+                "height": value,
+                "width": value
+            }
+        """
+        data = super().to_dict()
+        data["points"] = data["points"].reshape(-1).tolist()
+        return data
+
+
+ALL_BASECOORD_ELEMENTS = [Interval, Rectangle, Quadrilateral]
+
+BASECOORD_ELEMENT_NAMEMAP = {ele._name: ele for ele in ALL_BASECOORD_ELEMENTS}
+BASECOORD_ELEMENT_INDEXMAP = {
+    ele._name: idx for idx, ele in enumerate(ALL_BASECOORD_ELEMENTS)
+}
 
 
 @inherit_docstrings(base_class=BaseCoordElement)
 class TextBlock(BaseLayoutElement):
     """
-    This class constructs content-related information of a layout element in addition to its coordinate definitions 
+    This class constructs content-related information of a layout element in addition to its coordinate definitions
     (i.e. Interval, Rectangle or Quadrilateral).
 
     Args:
-        block (:obj:`BaseCoordElement`): 
+        block (:obj:`BaseCoordElement`):
             The shape-specific coordinate systems that the text block belongs to.
-        text (:obj:`str`, `optional`, defaults to ""):
+        text (:obj:`str`, `optional`, defaults to None):
             The ocr'ed text results within the boundaries of the text block.
         id (:obj:`int`, `optional`, defaults to `None`):
             The id of the text block.
@@ -1235,12 +1324,12 @@ class TextBlock(BaseLayoutElement):
             The prediction confidence of the block
     """
 
-    name = "_textblock"
-    feature_names = ["text", "id", "type", "parent", "next", "score"]
+    _name = "textblock"
+    _features = ["text", "id", "type", "parent", "next", "score"]
 
-    def __init__(self, block, text="",
-                 id=None, type=None, parent=None,
-                 next=None, score=None):
+    def __init__(
+        self, block, text=None, id=None, type=None, parent=None, next=None, score=None
+    ):
 
         assert isinstance(block, BaseCoordElement)
         self.block = block
@@ -1280,7 +1369,7 @@ class TextBlock(BaseLayoutElement):
         Return the coordinates of the two corner points that define the shape-specific block.
 
         Returns:
-            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four. 
+            :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four.
         """
 
         return self.block.coordinates
@@ -1288,8 +1377,8 @@ class TextBlock(BaseLayoutElement):
     @property
     def points(self):
         """
-        Return the coordinates of all four corners of the shape-specific block in a clockwise fashion 
-        starting from the upper left. 
+        Return the coordinates of all four corners of the shape-specific block in a clockwise fashion
+        starting from the upper left.
 
         Returns:
             :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
@@ -1312,16 +1401,16 @@ class TextBlock(BaseLayoutElement):
     def relative_to(self, other):
         return self.block.relative_to(other)
 
-    def is_in(self, other, **kwargs):
-        return self.block.is_in(other, **kwargs)
+    def is_in(self, other, soft_margin={}, center=False):
+        return self.block.is_in(other, soft_margin, center)
 
     @mixin_textblock_meta
     def shift(self, shift_distance):
         return self.block.shift(shift_distance)
 
     @mixin_textblock_meta
-    def pad(self, **kwargs):
-        return self.block.pad(**kwargs)
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
+        return self.block.pad(left, right, top, bottom, safe_mode)
 
     @mixin_textblock_meta
     def scale(self, scale_factor):
@@ -1344,54 +1433,199 @@ class TextBlock(BaseLayoutElement):
         else:
             target_type = Interval
 
-        return cls(
-            block=target_type.from_series(series),
-            **features)
+        return cls(block=target_type.from_series(series), **features)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Generate a dictionary representation of the current textblock of the format::
+
+            {
+                "block_type": <name of self.block>,
+                <attributes of self.block combined with
+                    non-empty self._features>
+            }
+        """
+        base_dict = self.block.to_dict()
+        for f in self._features:
+            val = getattr(self, f)
+            if val is not None:
+                base_dict[f] = getattr(self, f)
+        return base_dict
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "TextBlock":
+        """Initialize the textblock based on the dictionary representation.
+        It generate the block based on the `block_type` and `block_attr`,
+        and loads the textblock specific features from the dict.
+
+        Args:
+            data (:obj:`dict`): The dictionary representation of the object
+        """
+        assert (
+            data["block_type"] in BASECOORD_ELEMENT_NAMEMAP
+        ), f"Invalid block_type {data['block_type']}"
+
+        block = BASECOORD_ELEMENT_NAMEMAP[data["block_type"]].from_dict(data)
+
+        return cls(block, **{f: data.get(f, None) for f in cls._features})
 
 
-class Layout(list):
-    """ A handy class for handling a list of text blocks. All the class functions will be broadcasted to
-    each element block in the list.
+class Layout(MutableSequence):
+    """
+    The :obj:`Layout` class id designed for processing a list of layout elements
+    on a page. It stores the layout elements in a list and the related `page_data`,
+    and provides handy APIs for processing all the layout elements in batch. `
+
+    Args:
+        blocks (:obj:`list`):
+            A list of layout element blocks
+        page_data (Dict, optional):
+            A dictionary storing the page (canvas) related information
+            like `height`, `width`, etc.
+            Defaults to None.
     """
 
-    identifier_map = {
-        Interval.name:      Interval,
-        Rectangle.name:     Rectangle,
-        Quadrilateral.name: Quadrilateral,
-        TextBlock.name:     TextBlock}
+    def __init__(self, blocks: List = [], page_data: Dict = None):
+        self._blocks = blocks
+        self.page_data = page_data or {}
+
+    def __getitem__(self, key):
+        blocks = self._blocks[key]
+        if isinstance(key, slice):
+            return self.__class__(self._blocks[key], self.page_data)
+        else:
+            return blocks
+
+    def __setitem__(self, key, newvalue):
+        self._blocks[key] = newvalue
+
+    def __delitem__(self, key):
+        del self._blocks[key]
+
+    def __len__(self):
+        return len(self._blocks)
+
+    def __iter__(self):
+        for ele in self._blocks:
+            yield ele
+
+    def __repr__(self):
+        info_str = ", ".join([f"{key}={val}" for key, val in vars(self).items()])
+        return f"{self.__class__.__name__}({info_str})"
+
+    def __eq__(self, other):
+        if isinstance(other, Layout):
+            return (
+                all((a, b) for a, b in zip(self, other))
+                and self.page_data == other.page_data
+            )
+        else:
+            return False
+
+    def __add__(self, other):
+        if isinstance(other, Layout):
+            if self.page_data == other.page_data:
+                return self.__class__(self._blocks + other._blocks, self.page_data)
+            elif self.page_data == {} or other.page_data == {}:
+                return self.__class__(
+                    self._blocks + other._blocks, self.page_data or other.page_data
+                )
+            else:
+                raise ValueError(
+                    f"Incompatible page_data for two innputs: {self.page_data} vs {other.page_data}."
+                )
+        elif isinstance(other, list):
+            return self.__class__(self._blocks + other, self.page_data)
+        else:
+            raise ValueError(
+                f"Invalid input type for other {other.__class__.__name__}."
+            )
+
+    def insert(self, key, value):
+        self._blocks.insert(key, value)
+
+    def copy(self):
+        return self.__class__(copy(self._blocks), self.page_data)
 
     def relative_to(self, other):
-        return self.__class__([ele.relative_to(other) for ele in self])
+        return self.__class__([ele.relative_to(other) for ele in self], self.page_data)
 
     def condition_on(self, other):
-        return self.__class__([ele.condition_on(other) for ele in self])
+        return self.__class__([ele.condition_on(other) for ele in self], self.page_data)
 
-    def is_in(self, other, **kwargs):
-        return self.__class__([ele.is_in(other, **kwargs) for ele in self])
+    def is_in(self, other, soft_margin={}, center=False):
+        return self.__class__(
+            [ele.is_in(other, soft_margin, center) for ele in self], self.page_data
+        )
 
-    def filter_by(self, other, **kwargs):
+    def filter_by(self, other, soft_margin={}, center=False):
         """
         Return a `Layout` object containing the elements that are in the `other` object.
 
         Args:
-            other (:obj:`BaseCoordElement`)
+            other (:obj:`BaseCoordElement`):
+                The block to filter the current elements.
 
         Returns:
-            :obj:`Layout`
+            :obj:`Layout`:
+                A new layout object after filtering.
         """
-        return self.__class__([ele for ele in self if ele.is_in(other, **kwargs)])
+        return self.__class__(
+            [ele for ele in self if ele.is_in(other, soft_margin, center)],
+            self.page_data,
+        )
 
-    @functools.wraps(BaseCoordElement.shift)
     def shift(self, shift_distance):
-        return self.__class__([ele.shift(shift_distance) for ele in self])
+        """
+        Shift all layout elements by user specified amounts on x and y axis respectively. If shift_distance is one
+        numeric value, the element will by shifted by the same specified amount on both x and y axis.
 
-    @functools.wraps(BaseCoordElement.pad)
-    def pad(self, **kwargs):
-        return self.__class__([ele.pad(**kwargs) for ele in self])
+        Args:
+            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`):
+                The number of pixels used to shift the element.
 
-    @functools.wraps(BaseCoordElement.scale)
+        Returns:
+            :obj:`Layout`:
+                A new layout object with all the elements shifted in the specified values.
+        """
+        return self.__class__(
+            [ele.shift(shift_distance) for ele in self], self.page_data
+        )
+
+    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
+        """Pad all layout elements on the four sides of the polygon with the user-defined pixels. If
+        safe_mode is set to True, the function will cut off the excess padding that falls on the negative
+        side of the coordinates.
+
+        Args:
+            left (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the upper side of the polygon.
+            right (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the lower side of the polygon.
+            top (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the left side of the polygon.
+            bottom (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the right side of the polygon.
+            safe_mode (:obj:`bool`, `optional`, defaults to True): A bool value to toggle the safe_mode.
+
+        Returns:
+            :obj:`Layout`:
+                A new layout object with all the elements padded in the specified values.
+        """
+        return self.__class__(
+            [ele.pad(left, right, top, bottom, safe_mode) for ele in self],
+            self.page_data,
+        )
+
     def scale(self, scale_factor):
-        return self.__class__([ele.scale(scale_factor) for ele in self])
+        """
+        Scale all layout element by a user specified amount on x and y axis respectively. If scale_factor is one
+        numeric value, the element will by scaled by the same specified amount on both x and y axis.
+
+        Args:
+            scale_factor (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): The amount for downscaling or upscaling the element.
+
+        Returns:
+            :obj:`Layout`:
+                A new layout object with all the elements scaled in the specified values.
+        """
+        return self.__class__([ele.scale(scale_factor) for ele in self], self.page_data)
 
     def crop_image(self, image):
         return [ele.crop_image(image) for ele in self]
@@ -1404,7 +1638,7 @@ class Layout(list):
             :obj:`List[str]`: A list of text strings of the text blocks in the list of layout elements.
         """
 
-        return [ele.text for ele in self if hasattr(ele, 'text')]
+        return [ele.text for ele in self if hasattr(ele, "text")]
 
     def get_info(self, attr_name):
         """Given user-provided attribute name, check all the elements in the list and return the corresponding
@@ -1414,31 +1648,90 @@ class Layout(list):
             attr_name (:obj:`str`): The text string of certain attribute name.
 
         Returns:
-            :obj:`List`: 
-                The list of the corresponding attribute value (if exist) of each element in the list. 
+            :obj:`List`:
+                The list of the corresponding attribute value (if exist) of each element in the list.
         """
         return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]
 
-    @classmethod
-    def from_dataframe(cls, df):
+    def to_dict(self) -> Dict[str, Any]:
+        """Generate a dict representation of the layout object with
+        the page_data and all the blocks in its dict representation.
 
-        if "_identifier" in df.columns:
-            return cls(
-                [cls.identifier_map[series["_identifier"]].from_series(series.drop(columns=["_identifier"]))
-                    for (_, series) in df.iterrows()]
+        Returns:
+            :obj:`Dict`:
+                The dictionary representation of the layout object.
+        """
+        return {"page_data": self.page_data, "blocks": [ele.to_dict() for ele in self]}
+
+    def get_homogeneous_blocks(self) -> List[BaseLayoutElement]:
+        """Convert all elements into blocks of the same type based
+        on the type casting rule::
+
+            Interval < Rectangle < Quadrilateral < TextBlock
+
+        Returns:
+            List[BaseLayoutElement]:
+                A list of base layout elements of the maximal compatible
+                type
+        """
+
+        # Detect the maximal compatible type
+        has_textblock = False
+        max_coord_level = -1
+        for ele in self:
+
+            if isinstance(ele, TextBlock):
+                has_textblock = True
+                block = ele.block
+            else:
+                block = ele
+
+            max_coord_level = max(
+                max_coord_level, BASECOORD_ELEMENT_INDEXMAP[block._name]
             )
+        target_coord_name = ALL_BASECOORD_ELEMENTS[max_coord_level]._name
 
-        elif any(col in TextBlock.feature_names for col in df.columns):
-
-            return cls(
-                [TextBlock.from_series(series)
-                    for (_, series) in df.iterrows()]
-            )
-
+        if has_textblock:
+            new_blocks = []
+            for ele in self:
+                if isinstance(ele, TextBlock):
+                    ele = copy(ele)
+                    if ele.block._name != target_coord_name:
+                        ele.block = getattr(ele.block, f"to_{target_coord_name}")()
+                else:
+                    if ele._name != target_coord_name:
+                        ele = getattr(ele, f"to_{target_coord_name}")()
+                    ele = TextBlock(block)
+                new_blocks.append(ele)
         else:
-            target_type = _parse_datatype_from_feature_names(df.columns)
+            new_blocks = [
+                getattr(ele, f"to_{target_coord_name}")()
+                if ele._name != target_coord_name
+                else ele
+                for ele in self
+            ]
 
-            return cls(
-                [target_type.from_series(series)
-                    for (_, series) in df.iterrows()]
-            )
+        return new_blocks
+
+    def to_dataframe(self, enforce_same_type=False) -> pd.DataFrame:
+        """Convert the layout object into the dataframe.
+        Warning: the page data won't be exported.
+
+        Args:
+            enforce_same_type (:obj:`bool`, optional):
+                If true, it will convert all the contained blocks to
+                the maximal compatible data type.
+                Defaults to False.
+
+        Returns:
+            pd.DataFrame:
+                The dataframe representation of layout object
+        """
+        if enforce_same_type:
+            blocks = self.get_homogeneous_blocks()
+        else:
+            blocks = self
+
+        df = pd.DataFrame([ele.to_dict() for ele in blocks])
+
+        return df

@@ -6,7 +6,8 @@ from PIL import Image
 import numpy as np
 import torch
 from fvcore.common.file_io import PathManager
-#TODO: Update to iopath in the next major release 
+
+# TODO: Update to iopath in the next major release
 
 from ..elements import *
 
