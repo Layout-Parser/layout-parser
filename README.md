@@ -58,13 +58,13 @@ With only 4 lines of code in `layoutparse`, you can unlock the information from 
 
 ## Citing `layoutparser`
 
-If you find `layoutparser` helpful to your work, please consider citing our tool using the following BibTeX entry.
+If you find `layoutparser` helpful to your work, please consider citing our tool and [paper](https://arxiv.org/pdf/2103.15348.pdf) using the following BibTeX entry.
 
 ```
-@misc{shen2020layoutparser,
-  author = {Zejiang Shen and Ruochen Zhang and Melissa Dell},
-  title = {LayoutParser},
-  howpublished = {\url{https://github.com/Layout-Parser/layout-parser}},
-  year = {2020}
+@article{shen2021layoutparser,
+  title={LayoutParser: A Unified Toolkit for Deep Learning Based Document Image Analysis},
+  author={Shen, Zejiang and Zhang, Ruochen and Dell, Melissa and Lee, Benjamin Charles Germain and Carlson, Jacob and Li, Weining},
+  journal={arXiv preprint arXiv:2103.15348},
+  year={2021}
 }
 ```
