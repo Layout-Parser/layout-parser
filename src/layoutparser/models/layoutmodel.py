@@ -92,7 +92,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
         {"import_name": "_config", "module_path": "detectron2.config"},
     ]
 
-    def __init__(self, config_path, model_path=None, label_map=None, extra_config=[]):
+    def __init__(self, config_path, model_path=None, label_map=None, extra_config=[], cuda_flag=False):
 
         cfg = self._config.get_cfg()
         config_path = PathManager.get_local_path(config_path)
@@ -101,7 +101,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
 
         if model_path is not None:
             cfg.MODEL.WEIGHTS = model_path
-        cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+        cfg.MODEL.DEVICE = "cuda" if cuda_flag else "cpu"
         self.cfg = cfg
 
         self.label_map = label_map
