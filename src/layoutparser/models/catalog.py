@@ -1,4 +1,4 @@
-from fvcore.common.file_io import PathHandler, PathManager, HTTPURLHandler
+from iopath.common.file_io import PathHandler, PathManager, HTTPURLHandler
 
 MODEL_CATALOG = {
     'HJDataset': {
@@ -77,5 +77,6 @@ class LayoutParserHandler(PathHandler):
         return PathManager.open(self._get_local_path(path), mode, **kwargs)
 
 
-PathManager.register_handler(DropboxHandler())
-PathManager.register_handler(LayoutParserHandler())
+PathManagerSingleton = PathManager()
+PathManagerSingleton.register_handler(DropboxHandler())
+PathManagerSingleton.register_handler(LayoutParserHandler())
