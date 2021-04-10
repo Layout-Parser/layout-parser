@@ -5,10 +5,8 @@ import importlib
 from PIL import Image
 import numpy as np
 import torch
-from fvcore.common.file_io import PathManager
 
-# TODO: Update to iopath in the next major release
-
+from .catalog import PathManager
 from ..elements import *
 
 __all__ = ["Detectron2LayoutModel"]
