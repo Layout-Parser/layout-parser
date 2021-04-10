@@ -6,7 +6,7 @@ from PIL import Image
 import numpy as np
 import torch
 
-from .catalog import PathManagerSingleton
+from .catalog import PathManager
 from ..elements import *
 
 __all__ = ["Detectron2LayoutModel"]
@@ -93,7 +93,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
     def __init__(self, config_path, model_path=None, label_map=None, extra_config=[]):
 
         cfg = self._config.get_cfg()
-        config_path = PathManagerSingleton.get_local_path(config_path)
+        config_path = PathManager.get_local_path(config_path)
         cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
 

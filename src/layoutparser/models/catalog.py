@@ -1,4 +1,6 @@
 from iopath.common.file_io import PathHandler, PathManager, HTTPURLHandler
+from iopath.common.file_io import PathManager as PathManagerBase
+# A trick learned from https://github.com/facebookresearch/detectron2/blob/65faeb4779e4c142484deeece18dc958c5c9ad18/detectron2/utils/file_io.py#L3
 
 MODEL_CATALOG = {
     'HJDataset': {
@@ -61,7 +63,7 @@ class LayoutParserHandler(PathHandler):
     def _get_supported_prefixes(self):
         return [self.PREFIX]
 
-    def _get_local_path(self, path):
+    def _get_local_path(self, path, **kwargs):
         model_name = path[len(self.PREFIX):]
         dataset_name, *model_name, data_type = model_name.split('/')
 
@@ -71,12 +73,12 @@ class LayoutParserHandler(PathHandler):
             model_url = CONFIG_CATALOG[dataset_name]['/'.join(model_name)]
         else:
             raise ValueError(f"Unknown data_type {data_type}")
-        return PathManager.get_local_path(model_url)
+        return PathManager.get_local_path(model_url, **kwargs)
 
     def _open(self, path, mode="r", **kwargs):
         return PathManager.open(self._get_local_path(path), mode, **kwargs)
 
 
-PathManagerSingleton = PathManager()
-PathManagerSingleton.register_handler(DropboxHandler())
-PathManagerSingleton.register_handler(LayoutParserHandler())
+PathManager = PathManagerBase()
+PathManager.register_handler(DropboxHandler())
+PathManager.register_handler(LayoutParserHandler())
