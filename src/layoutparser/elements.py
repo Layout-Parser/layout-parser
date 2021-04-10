@@ -1,4 +1,4 @@
-from typing import List, Union, Dict, Dict, Any
+from typing import List, Union, Dict, Dict, Any, Optional
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, MutableSequence
 from copy import copy, deepcopy
@@ -1485,8 +1485,8 @@ class Layout(MutableSequence):
             Defaults to None.
     """
 
-    def __init__(self, blocks: List = [], page_data: Dict = None):
-        self._blocks = blocks
+    def __init__(self, blocks: Optional[List] = None, page_data: Dict = None):
+        self._blocks = blocks if blocks is not None else []
         self.page_data = page_data or {}
 
     def __getitem__(self, key):
