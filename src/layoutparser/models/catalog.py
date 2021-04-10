@@ -18,7 +18,11 @@ MODEL_CATALOG = {
     },
     "NewspaperNavigator": {
         'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/6ewh6g8rqt2ev3a/model_final.pth?dl=1',
-    }
+    },
+    "TableBank": {
+        'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/8v4uqmz1at9v72a/model_final.pth?dl=1',
+        'faster_rcnn_R_101_FPN_3x': 'https://www.dropbox.com/s/6vzfk8lk9xvyitg/model_final.pth?dl=1',
+    },
 }
 
 CONFIG_CATALOG = {
@@ -37,7 +41,11 @@ CONFIG_CATALOG = {
     },
     "NewspaperNavigator": {
         'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/wnido8pk4oubyzr/config.yml?dl=1',
-    }
+    },
+    "TableBank": {
+        'faster_rcnn_R_50_FPN_3x': 'https://www.dropbox.com/s/7cqle02do7ah7k4/config.yaml?dl=1',
+        'faster_rcnn_R_101_FPN_3x': 'https://www.dropbox.com/s/h63n6nv51kfl923/config.yaml?dl=1',
+    },
 }
 
 
