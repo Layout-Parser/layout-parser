@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock, Layout
+from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock, Layout, InvalidShapeError, NotSupportedShapeError
 
 
 def test_interval():
@@ -46,7 +46,7 @@ def test_quadrilateral():
 
     points = np.array([[2, 2], [6, 2], [6, 7], [2, 6]])
     q = Quadrilateral(points)
-    q.to_interval()
+    q.to_interval(axis='x')
     q.to_rectangle()
     assert q.shift(1) == Quadrilateral(points + 1)
     assert q.shift([1, 2]) == Quadrilateral(points + np.array([1, 2]))
@@ -69,6 +69,9 @@ def test_quadrilateral():
     assert q.area == 8.0
 
     q = Quadrilateral([1, 2, 3, 4, 5, 6, 7, 8])
+    assert (q.points == np.array([[1, 2], [3, 4], [5, 6], [7, 8]])).all()
+    
+    q = Quadrilateral([[1, 2], [3, 4], [5, 6], [7, 8]])
     assert (q.points == np.array([[1, 2], [3, 4], [5, 6], [7, 8]])).all()
 
     with pytest.raises(ValueError):
@@ -108,7 +111,7 @@ def test_rectangle_relations():
     assert not r.is_in(q)
     assert r.is_in(q, soft_margin={"bottom": 1})
     assert r.is_in(q.to_rectangle())
-    assert r.is_in(q.to_interval())
+    assert r.is_in(q.to_interval(axis="x"))
 
     # convert to absolute then convert back to relative
     assert r.condition_on(i).relative_to(i) == r
@@ -170,6 +173,24 @@ def test_textblock():
 
     t = TextBlock(q, score=0.2)
 
+    # Additional test for shape conversion 
+    assert TextBlock(i, id=1, type=2, text="12").to_interval() == TextBlock(i, id=1, type=2, text="12")
+    assert TextBlock(i, id=1, type=2, text="12").to_rectangle() == TextBlock(i.to_rectangle(), id=1, type=2, text="12")
+    assert TextBlock(i, id=1, type=2, text="12").to_quadrilateral() == TextBlock(i.to_quadrilateral(), id=1, type=2, text="12")
+    
+    assert TextBlock(r, id=1, type=2, parent="a").to_interval(axis="x") == TextBlock(r.to_interval(axis="x"), id=1, type=2, parent="a")
+    assert TextBlock(r, id=1, type=2, parent="a").to_interval(axis="y") == TextBlock(r.to_interval(axis="y"), id=1, type=2, parent="a")
+    assert TextBlock(r, id=1, type=2, parent="a").to_rectangle() == TextBlock(r, id=1, type=2, parent="a")
+    assert TextBlock(r, id=1, type=2, parent="a").to_quadrilateral() == TextBlock(r.to_quadrilateral(), id=1, type=2, parent="a")
+    
+    assert TextBlock(q, id=1, type=2, parent="a").to_interval(axis="x") == TextBlock(q.to_interval(axis="x"), id=1, type=2, parent="a")
+    assert TextBlock(q, id=1, type=2, parent="a").to_interval(axis="y") == TextBlock(q.to_interval(axis="y"), id=1, type=2, parent="a")
+    assert TextBlock(q, id=1, type=2, parent="a").to_rectangle() == TextBlock(q.to_rectangle(), id=1, type=2, parent="a")
+    assert TextBlock(q, id=1, type=2, parent="a").to_quadrilateral() == TextBlock(q, id=1, type=2, parent="a")
+
+    with pytest.raises(ValueError):
+        TextBlock(q, id=1, type=2, parent="a").to_interval()
+        TextBlock(r, id=1, type=2, parent="a").to_interval()
 
 def test_layout():
     i = Interval(4, 5, axis="y")
@@ -220,6 +241,79 @@ def test_layout():
         l.page_data = {"width": 200, "height": 400}
         l + l2
 
+def test_shape_operations():
+    i_1 = Interval(1, 2, axis="y", canvas_height=30, canvas_width=400)
+    i_2 = TextBlock(Interval(1, 2, axis="x"))
+    i_3 = Interval(1, 2, axis="y")
+
+    r_1 = Rectangle(0.5, 0.5, 2.5, 1.5)
+    r_2 = TextBlock(Rectangle(0.5, 0.5, 2, 2.5))
+
+    q_1 = Quadrilateral([[1,1], [2.5, 1.2], [2.5, 3], [1.5, 3]])
+    q_2 = TextBlock(Quadrilateral([[0.5, 0.5], [2,1], [1.5, 2.5], [0.5, 2]]))
+
+    # I and I in different axes 
+    assert i_1.intersect(i_1) == i_1
+    assert i_1.intersect(i_2) == Rectangle(1,1,2,2)
+    assert i_1.intersect(i_3) == i_1 # Ensure intersect copy the canvas size 
+
+    assert i_1.union(i_1) == i_1
+    with pytest.raises(InvalidShapeError):
+        assert i_1.union(i_2) == Rectangle(1,1,2,2)
+
+    # I and R in different axes 
+    assert i_1.intersect(r_1) == Rectangle(0.5, 1, 2.5, 1.5)
+    assert i_2.intersect(r_1).block == Rectangle(1, 0.5, 2, 1.5)
+    assert i_1.union(r_1) == Rectangle(0.5, 0.5, 2.5, 2)
+    assert i_2.union(r_1).block == r_1
+
+    # I and Q in strict mode
+    with pytest.raises(NotSupportedShapeError):
+        i_1.intersect(q_1)
+        i_1.union(q_1)
+        
+    # I and Q in different axes
+    assert i_1.intersect(q_1, strict=False) == Rectangle(1,1,2.5,2)
+    assert i_1.union(q_1, strict=False)  == Rectangle(1,1,2.5,3)   
+    assert i_2.intersect(q_1, strict=False).block == Rectangle(1, 1, 2, 3)
+    assert i_2.union(q_1, strict=False).block  == Rectangle(1,1,2.5,3)
+
+    # R and I
+    assert r_1.intersect(i_1) == i_1.intersect(r_1)
+
+    # R and R
+    assert r_1.intersect(r_2) == r_2.intersect(r_1).block == Rectangle(0.5, 0.5, 2, 1.5)
+    assert r_1.union(r_2) == r_2.union(r_1).block == Rectangle(0.5, 0.5, 2.5, 2.5)
+
+    # R and Q
+    with pytest.raises(NotSupportedShapeError):
+        r_1.intersect(q_1)
+        r_1.union(q_1)
+        
+    assert r_1.intersect(q_1, strict=False) == Rectangle(1, 1, 2.5, 1.5)
+    assert r_1.union(q_1, strict=False) == Rectangle(0.5, 0.5, 2.5, 3)
+    assert r_1.intersect(q_2, strict=False) == r_1.intersect(q_2.to_rectangle())
+    assert r_1.union(q_2, strict=False) == r_1.union(q_2.to_rectangle())
+
+    # Q and others in strict mode
+    with pytest.raises(NotSupportedShapeError):
+        q_1.intersect(i_1)
+        q_1.intersect(r_1)
+        q_1.intersect(q_2)
+        
+    # Q and I
+    assert q_1.intersect(i_1, strict=False) == i_1.intersect(q_1, strict=False)
+    assert q_1.union(i_1, strict=False) == i_1.union(q_1, strict=False)
+
+    # Q and R
+    assert q_1.intersect(r_1, strict=False) == r_1.intersect(q_1, strict=False)
+    assert q_1.union(r_1, strict=False) == r_1.union(q_1, strict=False)
+
+    # Q and R
+    assert q_1.intersect(q_2, strict=False) == q_2.intersect(q_1, strict=False).block
+    assert q_1.intersect(q_2, strict=False) == Rectangle(1, 1, 2, 2.5)
+    assert q_1.union(q_2, strict=False) == q_2.union(q_1, strict=False).block
+    assert q_1.union(q_2, strict=False) == Rectangle(0.5, 0.5, 2.5, 3)
 
 def test_dict():
 
