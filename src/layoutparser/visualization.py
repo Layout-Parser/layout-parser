@@ -131,6 +131,7 @@ def draw_box(
     box_width=None,
     color_map=None,
     show_element_id=False,
+    show_element_type=False,
     id_font_size=None,
     id_font_path=None,
     id_text_color=None,
@@ -158,6 +159,10 @@ def draw_box(
             Whether to display `block.id` on the top-left corner of
             the block.
             Defaults to False.
+        show_element_id (bool, optional):
+            Whether to display `block.type` on the top-left corner of
+            the block.
+            Defaults to False.
         id_font_size (int, optional):
             Set to change the font size used for drawing `block.id`.
             Defaults to None, when the size is set to
@@ -183,7 +188,7 @@ def draw_box(
     if box_width is None:
         box_width = _calculate_default_box_width(canvas)
 
-    if show_element_id:
+    if show_element_id or show_element_type:
         font_obj = _create_font_object(id_font_size, id_font_path)
 
     if color_map is None:
@@ -208,11 +213,16 @@ def draw_box(
             p = ele.points.ravel().tolist()
             draw.line(p + p[:2], width=box_width, fill=outline_color)
 
-        if show_element_id:
-            ele_id = ele.id or idx
+        if show_element_id or show_element_type:
+            text = ""
+            if show_element_id:
+                ele_id = ele.id or idx
+                text += str(ele_id)
+            if show_element_type:
+                text = str(ele.type) if not text else text + ": " + str(ele.type)
 
             start_x, start_y = ele.coordinates[:2]
-            text_w, text_h = font_obj.getsize(f"{ele_id}")
+            text_w, text_h = font_obj.getsize(text)
 
             # Add a small background for the text
             draw.rectangle(
@@ -223,7 +233,7 @@ def draw_box(
             # Draw the ids
             draw.text(
                 (start_x, start_y),
-                f"{ele_id}",
+                text,
                 fill=id_text_color or DEFAULT_TEXT_COLOR,
                 font=font_obj,
             )
