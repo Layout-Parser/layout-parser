@@ -1,20 +1,24 @@
-<p align="left">
+<p align="center">
   <img src="https://github.com/Layout-Parser/layout-parser/raw/master/.github/layout-parser.png" alt="Layout Parser Logo" width="35%">
+  <p align="center">
+  A unified toolkit for Deep Learning Based Document Image Analysis
+  </p>
 </p>
 
-<p align="center">
+<p align=center>
+<a href="https://arxiv.org/abs/2103.15348"><img src="https://img.shields.io/badge/arXiv-2103.15348-b31b1b.svg" title="Layout Parser Paper"></a>
+<a href="https://layout-parser.github.io"><img src="https://img.shields.io/badge/website-layout--parser.github.io-informational.svg" title="Layout Parser Paper"></a>
+<a href="https://layout-parser.readthedocs.io/en/latest/"><img src="https://img.shields.io/badge/doc-layout--parser.readthedocs.io-light.svg" title="Layout Parser Documentation"></a>
+</p>
 
-[![Docs](https://readthedocs.org/projects/layout-parser/badge/)](https://layout-parser.readthedocs.io/en/latest/)
-[![PyPI](https://img.shields.io/pypi/v/layoutparser?color=%23099cec&label=PyPI%20package&logo=pypi&logoColor=white)](https://pypi.org/project/layoutparser/)
-[![PyVersion](https://img.shields.io/pypi/pyversions/layoutparser?color=%23099cec&
-)](https://pypi.org/project/layoutparser/)
-[![License](https://img.shields.io/pypi/l/layoutparser)](https://github.com/Layout-Parser/layout-parser/blob/master/LICENSE)
-
+<p align=center>
+<a href="https://pypi.org/project/layoutparser/"><img src="https://img.shields.io/pypi/v/layoutparser?color=%23099cec&label=PyPI%20package&logo=pypi&logoColor=white" title="The current version of Layout Parser"></a>
+<a href="https://pypi.org/project/layoutparser/"><img src="https://img.shields.io/pypi/pyversions/layoutparser?color=%23099cec&" alt="Python 3.6 3.7 3.8" title="Layout Parser supports Python 3.6 and above"></a>
+<img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/layoutparser">
+<a href="https://github.com/Layout-Parser/layout-parser/blob/master/LICENSE"><img src="https://img.shields.io/pypi/l/layoutparser" title="Layout Parser uses Apache 2 License"></a>
 </p>
 
 ---
-
-Layout Parser is a deep learning based tool for document image layout analysis tasks. 
 
 ## Installation 
 
@@ -58,6 +62,10 @@ With only 4 lines of code in `layoutparse`, you can unlock the information from 
 >>> layout = model.detect(image) # You need to load the image somewhere else, e.g., image = cv2.imread(...)
 >>> lp.draw_box(image, layout,) # With extra configurations
 ```
+
+## Contributing
+
+We encourage you to contribute to Ruby on Rails! Please check out the [Contributing guidelines](.github/CONTRIBUTING.md) for guidelines about how to proceed. Join us!
 
 ## Citing `layoutparser`
 
