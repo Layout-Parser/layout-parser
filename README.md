@@ -18,19 +18,22 @@ Layout Parser is a deep learning based tool for document image layout analysis t
 
 ## Installation 
 
-Use pip or conda to install the library:
+You can find detailed installation instructions in [installation.md](installation.md). But generally, it's just `pip install` 
+some libraries: 
+
 ```bash
-pip install layoutparser
+pip install -U layoutparser
 
 # Install Detectron2 for using DL Layout Detection Model
 # Please make sure the PyTorch version is compatible with
 # the installed Detectron2 version. 
-pip install 'git+https://github.com/facebookresearch/detectron2.git#egg=detectron2' 
+pip install 'git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=detectron2' 
 
 # Install the ocr components when necessary 
 pip install layoutparser[ocr]      
 ```
-This by default will install the CPU version of the Detectron2, and it should be able to run on most of the computers. But if you have a GPU, you can consider the GPU version of the Detectron2, referring to the [official instructions](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md).
+
+**For Windows Users:** Please read [installation.md](installation.md) for details about installing Detectron2.
 
 ## Quick Start
 
