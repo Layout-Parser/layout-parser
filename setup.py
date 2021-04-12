@@ -26,7 +26,6 @@ setup(name         = "layoutparser",
         "pyyaml>=5.1",
         "torch",
         "torchvision",
-        "pycocotools>=2.0.2",
         "iopath",
       ],
       extras_require={
