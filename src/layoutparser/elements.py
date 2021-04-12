@@ -124,12 +124,14 @@ def support_textblock(func):
 class NotSupportedShapeError(Exception):
     """For now (v0.2), if the created shape might be a polygon (shapes with more than 4 vertices),
     layoutparser will raise NotSupportedShapeError. It is expected to be fixed in the future versions.
+    See
+    :ref:`shape_operations:problems-related-to-the-quadrilateral-class`.
     """
 
 
 class InvalidShapeError(Exception):
-    """For shape operations like intersection of union, lp will raise the InvalidShapeError when 
-    invalid shapes are created (e.g., intersecting a rectangle and an interval). 
+    """For shape operations like intersection of union, lp will raise the InvalidShapeError when
+    invalid shapes are created (e.g., intersecting a rectangle and an interval).
     """
 
 
@@ -270,13 +272,17 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     ################# Shape Operations (intersect, union)  ################
     #######################################################################
 
-    # @abstractmethod
-    # def intersect(self, other: "BaseCoordElement", strict: bool = True):
-    #     """"""
+    @abstractmethod
+    def intersect(self, other: "BaseCoordElement", strict: bool = True):
+        """Intersect the current shape with the other object, with operations defined in 
+        :doc:`../notes/shape_operations`.
+        """
 
-    # @abstractmethod
-    # def union(self, other: "BaseCoordElement", strict: bool = True):
-    #     """"""
+    @abstractmethod
+    def union(self, other: "BaseCoordElement", strict: bool = True):
+        """Union the current shape with the other object, with operations defined in 
+        :doc:`../notes/shape_operations`.
+        """
 
     #######################################################################
     ############### Geometric Operations (pad, shift, scale) ##############
@@ -648,7 +654,9 @@ class Interval(BaseCoordElement):
         """"""
         if isinstance(other, Interval):
             if self.axis != other.axis:
-                raise InvalidShapeError(f"Unioning two intervals of different axes is not allowed.")       
+                raise InvalidShapeError(
+                    f"Unioning two intervals of different axes is not allowed."
+                )
             else:
                 return self.__class__(
                     min(self.start, other.start),
@@ -675,7 +683,7 @@ class Interval(BaseCoordElement):
                     f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
                 )
                 return self.union(other.to_rectangle())
-            
+
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
@@ -986,9 +994,9 @@ class Rectangle(BaseCoordElement):
 
         if isinstance(other, Interval):
             return other.intersect(self)
-        
+
         elif isinstance(other, Rectangle):
-            
+
             return self.__class__(
                 max(self.x_1, other.x_1),
                 max(self.y_1, other.y_1),
@@ -1015,7 +1023,7 @@ class Rectangle(BaseCoordElement):
         """"""
         if isinstance(other, Interval):
             return other.intersect(self)
-        
+
         elif isinstance(other, Rectangle):
             return self.__class__(
                 min(self.x_1, other.x_1),
@@ -1034,7 +1042,7 @@ class Rectangle(BaseCoordElement):
                     f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
                 )
                 return self.union(other.to_rectangle())
-            
+
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
@@ -1124,8 +1132,8 @@ class Quadrilateral(BaseCoordElement):
         points (:obj:`Numpy array` or `list`):
             A `np.ndarray` of shape 4x2  for four corner coordinates
             or a list of length 8 for in the format of
-            `[p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y]` 
-            or a list of length 4 in the format of 
+            `[p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y]`
+            or a list of length 4 in the format of
             `[[p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y]]`.
         height (:obj:`numeric`, `optional`, defaults to `None`):
             The height of the quadrilateral. This is to better support the perspective
@@ -1138,7 +1146,9 @@ class Quadrilateral(BaseCoordElement):
     _name = "quadrilateral"
     _features = ["points", "height", "width"]
 
-    def __init__(self, points: Union[np.ndarray, List, List[List]], height=None, width=None):
+    def __init__(
+        self, points: Union[np.ndarray, List, List[List]], height=None, width=None
+    ):
 
         if isinstance(points, np.ndarray):
             if points.shape != (4, 2):
@@ -1611,13 +1621,13 @@ class TextBlock(BaseLayoutElement):
         return self.block.is_in(other, soft_margin, center)
 
     @mixin_textblock_meta
-    def union(self, other:BaseCoordElement, strict: bool = True):
+    def union(self, other: BaseCoordElement, strict: bool = True):
         return self.block.union(other, strict=strict)
-    
+
     @mixin_textblock_meta
-    def intersect(self, other:BaseCoordElement, strict: bool = True):
+    def intersect(self, other: BaseCoordElement, strict: bool = True):
         return self.block.intersect(other, strict=strict)
-    
+
     @mixin_textblock_meta
     def shift(self, shift_distance):
         return self.block.shift(shift_distance)
@@ -1633,12 +1643,14 @@ class TextBlock(BaseLayoutElement):
     def crop_image(self, image):
         return self.block.crop_image(image)
 
-    def to_interval(self, axis:Optional[str]=None, **kwargs):
+    def to_interval(self, axis: Optional[str] = None, **kwargs):
         if isinstance(self.block, Interval):
             return self
         else:
-            if not axis: 
-                raise ValueError(f"Please provide valid `axis` values {'x' or 'y'} as the input")
+            if not axis:
+                raise ValueError(
+                    f"Please provide valid `axis` values {'x' or 'y'} as the input"
+                )
             return self.set(block=self.block.to_interval(axis=axis, **kwargs))
 
     def to_rectangle(self):
@@ -1646,7 +1658,7 @@ class TextBlock(BaseLayoutElement):
             return self
         else:
             return self.set(block=self.block.to_rectangle())
-        
+
     def to_quadrilateral(self):
         if isinstance(self.block, Quadrilateral):
             return self
