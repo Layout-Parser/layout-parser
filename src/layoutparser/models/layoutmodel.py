@@ -6,7 +6,7 @@ from PIL import Image
 import numpy as np
 import torch
 
-from .catalog import PathManager
+from .catalog import PathManager, LABEL_MAP_CATALOG
 from ..elements import *
 
 __all__ = ["Detectron2LayoutModel"]
@@ -65,7 +65,8 @@ class Detectron2LayoutModel(BaseLayoutModel):
             Defaults to `None`.
         label_map (:obj:`dict`, optional):
             The map from the model prediction (ids) to real
-            word labels (strings).
+            word labels (strings). If the config is from one of the supported
+            datasets, Layout Parser will automatically initialize the label_map.
             Defaults to `None`.
         extra_config (:obj:`list`, optional):
             Extra configuration passed to the Detectron2 model
@@ -91,6 +92,10 @@ class Detectron2LayoutModel(BaseLayoutModel):
     ]
 
     def __init__(self, config_path, model_path=None, label_map=None, extra_config=[]):
+
+        if config_path.startswith("lp://") and label_map is None:
+            dataset_name = config_path.lstrip("lp://").split("/")[0]
+            label_map = LABEL_MAP_CATALOG[dataset_name]
 
         cfg = self._config.get_cfg()
         config_path = PathManager.get_local_path(config_path)
