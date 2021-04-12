@@ -59,6 +59,10 @@ With only 4 lines of code in `layoutparse`, you can unlock the information from 
 >>> lp.draw_box(image, layout,) # With extra configurations
 ```
 
+## Contributing
+
+We encourage you to contribute to Ruby on Rails! Please check out the [Contributing guidelines](.github/CONTRIBUTING.md) for guidelines about how to proceed. Join us!
+
 ## Citing `layoutparser`
 
 If you find `layoutparser` helpful to your work, please consider citing our tool and [paper](https://arxiv.org/pdf/2103.15348.pdf) using the following BibTeX entry.
