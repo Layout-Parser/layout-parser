@@ -42,6 +42,31 @@ Layout Parser can be easily turned into a command line tool or service to proces
 - Better ways for installing Detectron2 and related components on Windows machines 
 - A Docker configuration for installing the Layout Parser
 
+## How to Contribute?
+
+This how-to-guide is abridged from the [MMOCR repo](https://github.com/open-mmlab/mmocr/blob/main/.github/CONTRIBUTING.md)
+
+### Main Steps
+
+1. Fork and pull the latest Layout Parser Repo
+2. Checkout a new branch (do not use main branch for PRs)
+3. Commit your changes
+4. Create a PR
+
+**Notes**:
+1. If you plan to add some new features that involve large changes, please open an issue for discussion first.
+2. If you are the author of some papers and would like to include your method to Layout Parser, please let us know (open an issue or contact the maintainers). We will much appreciate your contribution.
+3. For new features and new modules, unit tests are required to improve the robustness.
+4. You might want to run `pip install -r dev-requirements.txt` to install the dev-dependencies. 
+
+### Code Style 
+
+1. We adopt [PEP8](https://www.python.org/dev/peps/pep-0008/) as the preferred code style.
+2. We use the following tools for linting and formatting:
+    - pylint: linter
+    - black: formatter
+3. We suggest adding [type hints](https://docs.python.org/3/library/typing.html) for all APIs. 
+
 Sincere thanks,
 
 Zejiang (Shannon) Shen 
