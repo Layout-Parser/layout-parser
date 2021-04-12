@@ -18,8 +18,8 @@ import layoutparser
 # -- Project information -----------------------------------------------------
 
 project = 'Layout Parser'
-copyright = '2020, Zejiang Shen, Ruochen Zhang'
-author = 'Zejiang Shen, Ruochen Zhang'
+copyright = '2020-2021, Layout Parser Contributors'
+author = 'Layout Parser Contributors'
 
 # The full version, including alpha/beta/rc tags
 release = layoutparser.__version__
