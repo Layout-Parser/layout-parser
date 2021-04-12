@@ -274,13 +274,13 @@ class BaseCoordElement(ABC, BaseLayoutElement):
 
     @abstractmethod
     def intersect(self, other: "BaseCoordElement", strict: bool = True):
-        """Intersect the current shape with the other object, with operations defined in 
+        """Intersect the current shape with the other object, with operations defined in
         :doc:`../notes/shape_operations`.
         """
 
     @abstractmethod
     def union(self, other: "BaseCoordElement", strict: bool = True):
-        """Union the current shape with the other object, with operations defined in 
+        """Union the current shape with the other object, with operations defined in
         :doc:`../notes/shape_operations`.
         """
 
@@ -1727,7 +1727,7 @@ class Layout(MutableSequence):
             A list of layout element blocks
         page_data (Dict, optional):
             A dictionary storing the page (canvas) related information
-            like `height`, `width`, etc. It should be passed in as a 
+            like `height`, `width`, etc. It should be passed in as a
             keyword argument to avoid any confusion.
             Defaults to None.
     """
@@ -1772,17 +1772,20 @@ class Layout(MutableSequence):
     def __add__(self, other):
         if isinstance(other, Layout):
             if self.page_data == other.page_data:
-                return self.__class__(self._blocks + other._blocks, page_data = self.page_data)
+                return self.__class__(
+                    self._blocks + other._blocks, page_data=self.page_data
+                )
             elif self.page_data == {} or other.page_data == {}:
                 return self.__class__(
-                    self._blocks + other._blocks, page_data = self.page_data or other.page_data
+                    self._blocks + other._blocks,
+                    page_data=self.page_data or other.page_data,
                 )
             else:
                 raise ValueError(
                     f"Incompatible page_data for two innputs: {self.page_data} vs {other.page_data}."
                 )
         elif isinstance(other, list):
-            return self.__class__(self._blocks + other, page_data = self.page_data)
+            return self.__class__(self._blocks + other, page_data=self.page_data)
         else:
             raise ValueError(
                 f"Invalid input type for other {other.__class__.__name__}."
@@ -1792,18 +1795,49 @@ class Layout(MutableSequence):
         self._blocks.insert(key, value)
 
     def copy(self):
-        return self.__class__(copy(self._blocks), page_data= self.page_data)
+        return self.__class__(copy(self._blocks), page_data=self.page_data)
 
     def relative_to(self, other):
-        return self.__class__([ele.relative_to(other) for ele in self], page_data= self.page_data)
+        return self.__class__(
+            [ele.relative_to(other) for ele in self], page_data=self.page_data
+        )
 
     def condition_on(self, other):
-        return self.__class__([ele.condition_on(other) for ele in self], page_data= self.page_data)
+        return self.__class__(
+            [ele.condition_on(other) for ele in self], page_data=self.page_data
+        )
 
     def is_in(self, other, soft_margin={}, center=False):
         return self.__class__(
-            [ele.is_in(other, soft_margin, center) for ele in self], page_data= self.page_data
+            [ele.is_in(other, soft_margin, center) for ele in self],
+            page_data=self.page_data,
         )
+
+    def sort(self, key=None, reverse=False, inplace=False) -> Optional["Layout"]:
+        """Sort the list of blocks based on the given 
+
+        Args:
+            key ([type], optional): key specifies a function of one argument that 
+            is used to extract a comparison key from each list element. 
+            Defaults to None.
+            reverse (bool, optional): reverse is a boolean value. If set to True, 
+            then the list elements are sorted as if each comparison were reversed. 
+            Defaults to False.
+            inplace (bool, optional): whether to perform the sort inplace. If set 
+            to False, it will return another object instance with _block sorted in
+            the order. Defaults to False.
+
+        Examples::
+            >>> import layoutparser as lp
+            >>> i = lp.Interval(4, 5, axis="y")
+            >>> l = lp.Layout([i, i.shift(2)])
+            >>> l.sort(key=lambda x: x.coordinates[1], reverse=True)
+
+        """
+        if not inplace:
+            return self.__class__(sorted(self._blocks, key=key, reverse=reverse), page_data=self.page_data)
+        else:
+            self._blocks.sort(key=key, reverse=reverse)
 
     def filter_by(self, other, soft_margin={}, center=False):
         """
@@ -1872,7 +1906,9 @@ class Layout(MutableSequence):
             :obj:`Layout`:
                 A new layout object with all the elements scaled in the specified values.
         """
-        return self.__class__([ele.scale(scale_factor) for ele in self], page_data=self.page_data)
+        return self.__class__(
+            [ele.scale(scale_factor) for ele in self], page_data=self.page_data
+        )
 
     def crop_image(self, image):
         return [ele.crop_image(image) for ele in self]
