@@ -1444,7 +1444,7 @@ class Quadrilateral(BaseCoordElement):
             image, self.perspective_matrix, (int(self.width), int(self.height))
         )
 
-    def to_interval(self, axis="x", **kwargs):
+    def to_interval(self, axis, **kwargs):
 
         x_1, y_1, x_2, y_2 = self.coordinates
         if axis == "x":

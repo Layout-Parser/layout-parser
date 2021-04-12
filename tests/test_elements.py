@@ -46,7 +46,7 @@ def test_quadrilateral():
 
     points = np.array([[2, 2], [6, 2], [6, 7], [2, 6]])
     q = Quadrilateral(points)
-    q.to_interval()
+    q.to_interval(axis='x')
     q.to_rectangle()
     assert q.shift(1) == Quadrilateral(points + 1)
     assert q.shift([1, 2]) == Quadrilateral(points + np.array([1, 2]))
@@ -111,7 +111,7 @@ def test_rectangle_relations():
     assert not r.is_in(q)
     assert r.is_in(q, soft_margin={"bottom": 1})
     assert r.is_in(q.to_rectangle())
-    assert r.is_in(q.to_interval())
+    assert r.is_in(q.to_interval(axis="x"))
 
     # convert to absolute then convert back to relative
     assert r.condition_on(i).relative_to(i) == r
