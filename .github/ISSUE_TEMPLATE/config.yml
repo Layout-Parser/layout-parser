@@ -1,0 +1,7 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Installation Guide
+    url: https://layout-parser.readthedocs.io/en/latest/notes/installation.html
+    about: |
+      For any questions related to installation, especially installation on 
+      Windows platforms, please check the Installation Guide first. 
