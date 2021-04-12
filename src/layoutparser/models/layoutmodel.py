@@ -68,6 +68,9 @@ class Detectron2LayoutModel(BaseLayoutModel):
             word labels (strings). If the config is from one of the supported
             datasets, Layout Parser will automatically initialize the label_map.
             Defaults to `None`.
+        enforce_cpu(:obj:`bool`, optional):
+            When set to `True`, it will enforce using cpu even if it is on a CUDA
+            available device.
         extra_config (:obj:`list`, optional):
             Extra configuration passed to the Detectron2 model
             configuration. The argument will be used in the `merge_from_list
@@ -91,11 +94,21 @@ class Detectron2LayoutModel(BaseLayoutModel):
         {"import_name": "_config", "module_path": "detectron2.config"},
     ]
 
-    def __init__(self, config_path, model_path=None, label_map=None, extra_config=[]):
+    def __init__(
+        self,
+        config_path,
+        model_path=None,
+        label_map=None,
+        extra_config=[],
+        enforce_cpu=False,
+    ):
 
         if config_path.startswith("lp://") and label_map is None:
             dataset_name = config_path.lstrip("lp://").split("/")[0]
             label_map = LABEL_MAP_CATALOG[dataset_name]
+
+        if enforce_cpu:
+            extra_config.extend(["MODEL.DEVICE", "cpu"])
 
         cfg = self._config.get_cfg()
         config_path = PathManager.get_local_path(config_path)

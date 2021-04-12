@@ -28,3 +28,8 @@ def test_Detectron2Model(is_large_scale=False):
         model = Detectron2LayoutModel("tests/fixtures/model/config.yml")
         image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
         layout = model.detect(image)
+        
+    # Test in enforce CPU mode
+    model = Detectron2LayoutModel("tests/fixtures/model/config.yml", enforce_cpu=True)
+    image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
+    layout = model.detect(image)
