@@ -173,6 +173,24 @@ def test_textblock():
 
     t = TextBlock(q, score=0.2)
 
+    # Additional test for shape conversion 
+    assert TextBlock(i, id=1, type=2, text="12").to_interval() == TextBlock(i, id=1, type=2, text="12")
+    assert TextBlock(i, id=1, type=2, text="12").to_rectangle() == TextBlock(i.to_rectangle(), id=1, type=2, text="12")
+    assert TextBlock(i, id=1, type=2, text="12").to_quadrilateral() == TextBlock(i.to_quadrilateral(), id=1, type=2, text="12")
+    
+    assert TextBlock(r, id=1, type=2, parent="a").to_interval(axis="x") == TextBlock(r.to_interval(axis="x"), id=1, type=2, parent="a")
+    assert TextBlock(r, id=1, type=2, parent="a").to_interval(axis="y") == TextBlock(r.to_interval(axis="y"), id=1, type=2, parent="a")
+    assert TextBlock(r, id=1, type=2, parent="a").to_rectangle() == TextBlock(r, id=1, type=2, parent="a")
+    assert TextBlock(r, id=1, type=2, parent="a").to_quadrilateral() == TextBlock(r.to_quadrilateral(), id=1, type=2, parent="a")
+    
+    assert TextBlock(q, id=1, type=2, parent="a").to_interval(axis="x") == TextBlock(q.to_interval(axis="x"), id=1, type=2, parent="a")
+    assert TextBlock(q, id=1, type=2, parent="a").to_interval(axis="y") == TextBlock(q.to_interval(axis="y"), id=1, type=2, parent="a")
+    assert TextBlock(q, id=1, type=2, parent="a").to_rectangle() == TextBlock(q.to_rectangle(), id=1, type=2, parent="a")
+    assert TextBlock(q, id=1, type=2, parent="a").to_quadrilateral() == TextBlock(q, id=1, type=2, parent="a")
+
+    with pytest.raises(ValueError):
+        TextBlock(q, id=1, type=2, parent="a").to_interval()
+        TextBlock(r, id=1, type=2, parent="a").to_interval()
 
 def test_layout():
     i = Interval(4, 5, axis="y")

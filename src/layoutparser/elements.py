@@ -1625,6 +1625,26 @@ class TextBlock(BaseLayoutElement):
     def crop_image(self, image):
         return self.block.crop_image(image)
 
+    def to_interval(self, axis:Optional[str]=None, **kwargs):
+        if isinstance(self.block, Interval):
+            return self
+        else:
+            if not axis: 
+                raise ValueError(f"Please provide valid `axis` values {'x' or 'y'} as the input")
+            return self.set(block=self.block.to_interval(axis=axis, **kwargs))
+
+    def to_rectangle(self):
+        if isinstance(self.block, Rectangle):
+            return self
+        else:
+            return self.set(block=self.block.to_rectangle())
+        
+    def to_quadrilateral(self):
+        if isinstance(self.block, Quadrilateral):
+            return self
+        else:
+            return self.set(block=self.block.to_quadrilateral())
+
     @classmethod
     def from_series(cls, series):
 
