@@ -1611,6 +1611,14 @@ class TextBlock(BaseLayoutElement):
         return self.block.is_in(other, soft_margin, center)
 
     @mixin_textblock_meta
+    def union(self, other:BaseCoordElement, strict: bool = True):
+        return self.block.union(other, strict=strict)
+    
+    @mixin_textblock_meta
+    def intersect(self, other:BaseCoordElement, strict: bool = True):
+        return self.block.intersect(other, strict=strict)
+    
+    @mixin_textblock_meta
     def shift(self, shift_distance):
         return self.block.shift(shift_distance)
 
