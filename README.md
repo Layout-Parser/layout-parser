@@ -1,5 +1,8 @@
 <p align="center">
   <img src="https://github.com/Layout-Parser/layout-parser/raw/master/.github/layout-parser.png" alt="Layout Parser Logo" width="35%">
+  <p align="center">
+  A unified toolkit for Deep Learning Based Document Image Analysis
+  </p>
 </p>
 
 <p align=center>
@@ -16,8 +19,6 @@
 </p>
 
 ---
-
-Layout Parser is a deep learning based tool for document image layout analysis tasks. 
 
 ## Installation 
 
