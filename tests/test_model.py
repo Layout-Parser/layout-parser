@@ -35,7 +35,7 @@ def test_Detectron2Model(is_large_scale=False):
     image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
     layout = model.detect(image)
     
-def test_Detectron2Model_version_compatibility(enabled=True):
+def test_Detectron2Model_version_compatibility(enabled=False):
     
     if enabled:
         model = Detectron2LayoutModel(
