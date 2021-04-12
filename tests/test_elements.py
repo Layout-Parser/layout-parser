@@ -70,6 +70,9 @@ def test_quadrilateral():
 
     q = Quadrilateral([1, 2, 3, 4, 5, 6, 7, 8])
     assert (q.points == np.array([[1, 2], [3, 4], [5, 6], [7, 8]])).all()
+    
+    q = Quadrilateral([[1, 2], [3, 4], [5, 6], [7, 8]])
+    assert (q.points == np.array([[1, 2], [3, 4], [5, 6], [7, 8]])).all()
 
     with pytest.raises(ValueError):
         Quadrilateral([1, 2, 3, 4, 5, 6, 7])  # Incompatible list length

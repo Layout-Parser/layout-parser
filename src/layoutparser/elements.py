@@ -966,7 +966,9 @@ class Quadrilateral(BaseCoordElement):
         points (:obj:`Numpy array` or `list`):
             A `np.ndarray` of shape 4x2  for four corner coordinates
             or a list of length 8 for in the format of
-            `[p[0,0], p[0,1], p[1,0], p[1,1], ...]`.
+            `[p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y]` 
+            or a list of length 4 in the format of 
+            `[[p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y]]`.
         height (:obj:`numeric`, `optional`, defaults to `None`):
             The height of the quadrilateral. This is to better support the perspective
             transformation from the OpenCV library.
@@ -978,17 +980,20 @@ class Quadrilateral(BaseCoordElement):
     _name = "quadrilateral"
     _features = ["points", "height", "width"]
 
-    def __init__(self, points, height=None, width=None):
+    def __init__(self, points: Union[np.ndarray, List, List[List]], height=None, width=None):
 
         if isinstance(points, np.ndarray):
             if points.shape != (4, 2):
                 raise ValueError(f"Invalid points shape: {points.shape}.")
         elif isinstance(points, list):
-            if len(points) != 8:
+            if len(points) == 8:
+                points = np.array(points).reshape(4, 2)
+            elif len(points) == 4 and isinstance(points[0], list):
+                points = np.array(points)
+            else:
                 raise ValueError(
                     f"Invalid number of points element {len(points)}. Should be 8."
                 )
-            points = np.array(points).reshape(4, 2)
         else:
             raise ValueError(
                 f"Invalid input type for points {type(points)}."
