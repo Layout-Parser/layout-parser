@@ -32,6 +32,13 @@ pip install 'git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=det
 # Install the ocr components when necessary 
 pip install layoutparser[ocr]      
 ```
+if you are having dependency related issues with fvcore of detectron model , use below commands for installation
+
+```bash
+
+pip install -U 'git+https://github.com/layout-parser/layout-parser.git#egg=layoutparser'
+pip install -U 'git+https://github.com/facebookresearch/detectron2.git@v0.3#egg=detectron2'     
+```
 
 **For Windows Users:** Please read [installation.md](installation.md) for details about installing Detectron2.
 
