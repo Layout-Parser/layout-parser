@@ -26,6 +26,7 @@ Welcome to Layout Parser's documentation!
    :caption: API Reference
 
    api_doc/elements
+   notes/shape_operations.md
    api_doc/ocr
    api_doc/models
    api_doc/visualization
