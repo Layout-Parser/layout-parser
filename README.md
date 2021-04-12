@@ -65,7 +65,7 @@ With only 4 lines of code in `layoutparse`, you can unlock the information from 
 
 ## Contributing
 
-We encourage you to contribute to Ruby on Rails! Please check out the [Contributing guidelines](.github/CONTRIBUTING.md) for guidelines about how to proceed. Join us!
+We encourage you to contribute to Layout Parser! Please check out the [Contributing guidelines](.github/CONTRIBUTING.md) for guidelines about how to proceed. Join us!
 
 ## Citing `layoutparser`
 
