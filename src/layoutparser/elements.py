@@ -121,6 +121,18 @@ def support_textblock(func):
     return wrap
 
 
+class NotSupportedShapeError(Exception):
+    """For now (v0.2), if the created shape might be a polygon (shapes with more than 4 vertices),
+    layoutparser will raise NotSupportedShapeError. It is expected to be fixed in the future versions.
+    """
+
+
+class InvalidShapeError(Exception):
+    """For shape operations like intersection of union, lp will raise the InvalidShapeError when 
+    invalid shapes are created (e.g., intersecting a rectangle and an interval). 
+    """
+
+
 class BaseLayoutElement:
     def set(self, inplace=False, **kwargs):
 
@@ -253,6 +265,18 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         """
 
         pass
+
+    #######################################################################
+    ################# Shape Operations (intersect, union)  ################
+    #######################################################################
+
+    # @abstractmethod
+    # def intersect(self, other: "BaseCoordElement", strict: bool = True):
+    #     """"""
+
+    # @abstractmethod
+    # def union(self, other: "BaseCoordElement", strict: bool = True):
+    #     """"""
 
     #######################################################################
     ############### Geometric Operations (pad, shift, scale) ##############
@@ -579,6 +603,82 @@ class Interval(BaseCoordElement):
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
+    @support_textblock
+    def intersect(self, other: BaseCoordElement, strict: bool = True):
+        """"""
+
+        if isinstance(other, Interval):
+            if self.axis != other.axis:
+                if self.axis == "x" and other.axis == "y":
+                    return Rectangle(self.start, other.start, self.end, other.end)
+                else:
+                    return Rectangle(other.start, self.start, other.end, self.end)
+            else:
+                return self.__class__(
+                    max(self.start, other.start),
+                    min(self.end, other.end),
+                    self.axis,
+                    self.canvas_height,
+                    self.canvas_width,
+                )
+
+        elif isinstance(other, Rectangle):
+            x_1, y_1, x_2, y_2 = other.coordinates
+            if self.axis == "x":
+                return Rectangle(max(x_1, self.start), y_1, min(x_2, self.end), y_2)
+            elif self.axis == "y":
+                return Rectangle(x_1, max(y_1, self.start), x_2, min(y_2, self.end))
+
+        elif isinstance(other, Quadrilateral):
+            if strict:
+                raise NotSupportedShapeError(
+                    "The intersection between an Interval and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
+                )
+            else:
+                warnings.warn(
+                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return self.intersect(other.to_rectangle())
+
+        else:
+            raise Exception(f"Invalid input type {other.__class__} for other")
+
+    @support_textblock
+    def union(self, other: BaseCoordElement, strict: bool = True):
+        """"""
+        if isinstance(other, Interval):
+            if self.axis != other.axis:
+                raise InvalidShapeError(f"Unioning two intervals of different axes is not allowed.")       
+            else:
+                return self.__class__(
+                    min(self.start, other.start),
+                    max(self.end, other.end),
+                    self.axis,
+                    self.canvas_height,
+                    self.canvas_width,
+                )
+
+        elif isinstance(other, Rectangle):
+            x_1, y_1, x_2, y_2 = other.coordinates
+            if self.axis == "x":
+                return Rectangle(min(x_1, self.start), y_1, max(x_2, self.end), y_2)
+            elif self.axis == "y":
+                return Rectangle(x_1, min(y_1, self.start), x_2, max(y_2, self.end))
+
+        elif isinstance(other, Quadrilateral):
+            if strict:
+                raise NotSupportedShapeError(
+                    "The intersection between an Interval and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
+                )
+            else:
+                warnings.warn(
+                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return self.union(other.to_rectangle())
+            
+        else:
+            raise Exception(f"Invalid input type {other.__class__} for other")
+
     def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
 
         if self.axis == "x":
@@ -877,6 +977,64 @@ class Rectangle(BaseCoordElement):
                 center = np.array(self.center)
                 return _vertice_in_polygon(center, other.points)
 
+        else:
+            raise Exception(f"Invalid input type {other.__class__} for other")
+
+    @support_textblock
+    def intersect(self, other: BaseCoordElement, strict: bool = True):
+        """"""
+
+        if isinstance(other, Interval):
+            return other.intersect(self)
+        
+        elif isinstance(other, Rectangle):
+            
+            return self.__class__(
+                max(self.x_1, other.x_1),
+                max(self.y_1, other.y_1),
+                min(self.x_2, other.x_2),
+                min(self.y_2, other.y_2),
+            )
+
+        elif isinstance(other, Quadrilateral):
+            if strict:
+                raise NotSupportedShapeError(
+                    "The intersection between a Rectangle and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
+                )
+            else:
+                warnings.warn(
+                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return self.intersect(other.to_rectangle())
+
+        else:
+            raise Exception(f"Invalid input type {other.__class__} for other")
+
+    @support_textblock
+    def union(self, other: BaseCoordElement, strict: bool = True):
+        """"""
+        if isinstance(other, Interval):
+            return other.intersect(self)
+        
+        elif isinstance(other, Rectangle):
+            return self.__class__(
+                min(self.x_1, other.x_1),
+                min(self.y_1, other.y_1),
+                max(self.x_2, other.x_2),
+                max(self.y_2, other.y_2),
+            )
+
+        elif isinstance(other, Quadrilateral):
+            if strict:
+                raise NotSupportedShapeError(
+                    "The intersection between an Interval and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
+                )
+            else:
+                warnings.warn(
+                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return self.union(other.to_rectangle())
+            
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
@@ -1186,6 +1344,49 @@ class Quadrilateral(BaseCoordElement):
 
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
+
+    @support_textblock
+    def intersect(self, other: BaseCoordElement, strict: bool = True):
+        """"""
+
+        if strict:
+            raise NotSupportedShapeError(
+                "The intersection between a Quadrilateral and other objects might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
+            )
+        else:
+            if isinstance(other, Interval) or isinstance(other, Rectangle):
+                warnings.warn(
+                    f"With `strict=False`, the current Quadrilateral object will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return other.intersect(self.to_rectangle())
+            elif isinstance(other, Quadrilateral):
+                warnings.warn(
+                    f"With `strict=False`, both input Quadrilateral objects will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return self.to_rectangle().intersect(other.to_rectangle())
+            else:
+                raise Exception(f"Invalid input type {other.__class__} for other")
+
+    @support_textblock
+    def union(self, other: BaseCoordElement, strict: bool = True):
+        """"""
+        if strict:
+            raise NotSupportedShapeError(
+                "The intersection between a Quadrilateral and other objects might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
+            )
+        else:
+            if isinstance(other, Interval) or isinstance(other, Rectangle):
+                warnings.warn(
+                    f"With `strict=False`, the current Quadrilateral object will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return other.union(self.to_rectangle())
+            elif isinstance(other, Quadrilateral):
+                warnings.warn(
+                    f"With `strict=False`, both input Quadrilateral objects will be converted to {Rectangle} for obtaining the intersection"
+                )
+                return self.to_rectangle().union(other.to_rectangle())
+            else:
+                raise Exception(f"Invalid input type {other.__class__} for other")
 
     def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
 
