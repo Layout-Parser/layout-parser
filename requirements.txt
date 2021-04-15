@@ -1,5 +1,5 @@
 layoutparser
 # Detectron
---find-links https://dl.fbaipublicfiles.com/detectron2/wheels/cu101/index.html
+--find-links https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.8/index.html
 detectron2
 gradio
