@@ -1,3 +1,5 @@
 layoutparser
-git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=detectron2
+# Detectron
+--find-links https://dl.fbaipublicfiles.com/detectron2/wheels/cu101/index.html
+detectron2
 gradio
