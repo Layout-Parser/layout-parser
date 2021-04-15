@@ -67,6 +67,9 @@ With only 4 lines of code in `layoutparse`, you can unlock the information from 
 
 We encourage you to contribute to Layout Parser! Please check out the [Contributing guidelines](.github/CONTRIBUTING.md) for guidelines about how to proceed. Join us!
 
+## Web Demo
+* [Gradio](https://gradio.app/g/AK391/layout-parser)
+
 ## Citing `layoutparser`
 
 If you find `layoutparser` helpful to your work, please consider citing our tool and [paper](https://arxiv.org/pdf/2103.15348.pdf) using the following BibTeX entry.
