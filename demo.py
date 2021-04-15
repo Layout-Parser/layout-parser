@@ -20,4 +20,4 @@ examples = [
     
 ]
 
-gr.Interface(lpi, inputs, outputs, title=title, description=description, article=article).launch()
+gr.Interface(lpi, inputs, outputs, title=title, description=description, article=article, examples=examples).launch()
