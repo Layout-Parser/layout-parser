@@ -175,7 +175,7 @@ outputs.
 Group Rows based on hard-coded parameteres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As there are 13 rows, we can iterate the rows and fetech the row-based
+As there are 13 rows, we can iterate the rows and fetch the row-based
 information:
 
 .. code:: python

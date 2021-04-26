@@ -142,11 +142,11 @@ Visualize the cleaned text blocks:
 
 
 
-Fetech the text inside each text region
+Fetch the text inside each text region
 ---------------------------------------
 
 We can also combine with the OCR functionality in ``layoutparser`` to
-fetech the text in the document.
+fetch the text in the document.
 
 .. code:: python
 
