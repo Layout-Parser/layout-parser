@@ -11,11 +11,11 @@ from .visualization import (
 
 from .ocr import (
     GCVFeatureType, GCVAgent, 
-    TesseractFeatureType, TesseractAgent
+    TesseractFeatureType, TesseractAgent, PaddleocrAgent
 )
 
 from .models import (
-    Detectron2LayoutModel
+    Detectron2LayoutModel, PaddleDetectionLayoutModel
 )
 
 from .io import (
