@@ -62,9 +62,9 @@ TableBank Dataset:
 
 **Envrionment：**	
 
-​	**GPU： ** a single NVIDIA Tesla P40
-
 ​	**CPU：**  Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz，24core
+
+​	**GPU：**  a single NVIDIA Tesla P40
 
 ## Model `label_map`
 
