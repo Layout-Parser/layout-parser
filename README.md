@@ -71,7 +71,7 @@ We provide a series of examples for to help you start using the layout parser li
 
 *The images shown in the figure above are: a screenshot of [this paper](https://arxiv.org/abs/2004.08686), an image from the [PRIMA Layout Analysis Dataset](https://www.primaresearch.org/dataset/), a screenshot of the [WSJ website](http://wsj.com), and an image from the [HJDataset](https://dell-research-harvard.github.io/HJDataset/).*
 
-With only 4 lines of code in `layoutparse`, you can unlock the information from complex documents that existing tools could not provide. You can either choose a deep learning model from the [ModelZoo](https://github.com/Layout-Parser/layout-parser/blob/master/docs/notes/modelzoo.md), or load the model that you trained on your own. And use the following code to predict the layout as well as visualize it: 
+With only 4 lines of code in `layoutparse`, you can unlock the information from complex documents that existing tools could not provide. You can either choose a deep learning model from the [ModelZoo](docs/notes/modelzoo.md), or load the model that you trained on your own. And use the following code to predict the layout as well as visualize it: 
 
 ```python
 >>> import layoutparser as lp
