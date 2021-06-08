@@ -12,7 +12,7 @@ setup(name         = "layoutparser",
       version      = __version__,
       author       = "Zejiang Shen Ruochen Zhang",
       license      = "Apache-2.0",
-      url          = "https://github.com/Layout-Parser/layout-parser",
+      url          = "https://github.com/an1018/layout-parser",
       package_dir  = {"": "src"},
       packages     = find_packages("src"),
       long_description=open("README.md", "r", encoding="utf-8").read(),
@@ -27,11 +27,15 @@ setup(name         = "layoutparser",
         "torch",
         "torchvision",
         "iopath",
+        "tqdm",
       ],
       extras_require={
         "ocr": [
           'google-cloud-vision==1',
           'pytesseract'
+        ], 
+        "paddleocr": [
+          'paddleocr>=2.0.1'
         ], 
       },
       include_package_data=True
