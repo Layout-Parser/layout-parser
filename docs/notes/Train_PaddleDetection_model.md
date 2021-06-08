@@ -25,11 +25,10 @@ Download [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)：
 
 ```bash
 cd PaddleDetection/dataset/
-# 新建数据集存储目录（可修改）
 mkdir publaynet
-# 下载数据
+# download dataset
 wget https://dax-cdn.cdn.appdomain.cloud/dax-publaynet/1.0.0/publaynet.tar.gz?_ga=2.104193024.1076900768.1622560733-649911202.1622560733
-# 解压数据
+
 tar -xvf publaynet.tar.gz
 ```
 
@@ -50,8 +49,9 @@ Folder structure：
 Use `configs/ppyolo/ppyolov2_r50vd_dcn_365e_coco.yml` config for training：
 
 <div align='center'>
-  <img src='data/PaddleDetection_config.png' width='600px'/>
+  <img src='../../examples/data/PaddleDetection_config.png' width='600px'/>
 </div>
+
 
 From the figure above, `ppyolov2_r50vd_dcn_365e_coco.yml` the config depends on other config files:
 
