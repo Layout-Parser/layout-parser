@@ -89,7 +89,7 @@ Use PaddleDetection model：
 >>> lp.draw_box(image, layout,) # With extra configurations
 ```
 
-If you want to train Paddledetection model yourself, please refer to：[Train PaddleDetection model](docs/notes/Train_PaddleDetection_model.md)
+If you want to train Paddledetection model yourself, please refer to：[Train PaddleDetection model](https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.1/docs/tutorials/GETTING_STARTED.md)
 
 ## Contributing
 
