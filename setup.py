@@ -27,11 +27,16 @@ setup(name         = "layoutparser",
         "torch",
         "torchvision",
         "iopath",
+        "paddlepaddle==2.1.0",
+        "tqdm",
       ],
       extras_require={
         "ocr": [
           'google-cloud-vision==1',
           'pytesseract'
+        ], 
+          "paddleocr": [
+          'paddleocr>=2.0.1'
         ], 
       },
       include_package_data=True

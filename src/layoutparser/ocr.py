@@ -11,11 +11,12 @@ import pickle
 import numpy as np
 import pandas as pd
 from cv2 import imencode
+from paddleocr import PaddleOCR
 
 from .elements import *
 from .io import load_dataframe
 
-__all__ = ["GCVFeatureType", "GCVAgent", "TesseractFeatureType", "TesseractAgent"]
+__all__ = ["GCVFeatureType", "GCVAgent", "TesseractFeatureType", "TesseractAgent", "PaddleocrAgent"]
 
 
 def _cvt_GCV_vertices_to_points(vertices):
@@ -504,3 +505,55 @@ class TesseractAgent(BaseOCRAgent):
 
         with open(file_name, "wb") as fp:
             pickle.dump(res, fp, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+class PaddleocrAgent():
+    """
+    A wrapper for `PaddleOCR <https://github.com/PaddlePaddle/PaddleOCR>`_ Text
+    Detection APIs based on `paddleocr <https://github.com/PaddlePaddle/PaddleOCR>`_.
+    """
+
+    DEPENDENCIES = ["paddleocr"]
+
+    def __init__(self, languages="en", use_gpu=True, use_angle_cls=False, det=True, rec=True, cls=False, **kwargs):
+        """Create a Tesseract OCR Agent.
+
+        Args:
+            languages (:obj:`list` or :obj:`str`, optional):
+                You can specify the language code(s) of the documents to detect to improve
+                accuracy. The supported language and their code can be found on
+                `its github repo <https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.1/doc/doc_ch/whl.md>`_.
+                It supports llaguages：`ch`, `en`, `french`, `german`, `korean`, `japan`.
+                Defaults to 'eng'.
+        """
+        self.lang = languages
+        self.use_gpu = use_gpu
+        self.use_angle_cls = use_angle_cls
+        self.det = det
+        self.rec = rec
+        self.cls = cls
+        self.configs = kwargs
+        self.ocr = PaddleOCR(use_gpu=self.use_gpu, use_angle_cls=self.use_angle_cls, lang=self.lang)
+
+    def detect(
+        self, image, return_response=False, return_only_text=True, agg_output_level=None
+    ):
+        """Send the input image for OCR.
+
+        Args:
+            image (:obj:`np.ndarray` or :obj:`str`):
+                The input image array or the name of the image file
+            return_response (:obj:`bool`, optional):
+                Whether directly return all output (string and boxes
+                info) from Tesseract.
+                Defaults to `False`.
+            return_only_text (:obj:`bool`, optional):
+                Whether return only the texts in the OCR results.
+                Defaults to `False`.
+            agg_output_level (:obj:`~TesseractFeatureType`, optional):
+                When set, aggregate the GCV output with respect to the
+                specified aggregation level. Defaults to `None`.
+        """ 
+        result = self.ocr.ocr(image, det=self.det, rec=self.rec, cls=self.cls)
+        txts = '\n'.join(line[1][0] for line in result)
+        return txts

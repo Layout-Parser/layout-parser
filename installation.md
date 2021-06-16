@@ -38,6 +38,47 @@ As reported by many users, the installation of Detectron2 can be rather tricky o
     - [@ivanpp](https://github.com/ivanpp) curates a detailed description for installing `Detectron2` on Windows: [Detectron2 walkthrough (Windows)](https://ivanpp.cc/detectron2-walkthrough-windows/#step3installdetectron2)
     - `Detectron2` maintainers claim that they won't provide official support for Windows (see [1](https://github.com/facebookresearch/detectron2/issues/9#issuecomment-540974288) and [2](https://detectron2.readthedocs.io/en/latest/tutorials/install.html)), but Detectron2 is continuously built on windows with CircleCI (see [3](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md#common-installation-issues)). Hopefully this situation will be improved in the future.
 
+## [Optional] Install PaddlePaddle for Using PaddleDetection Layout Models
+
+### For Windows and Linux Users 
+
+If you would like to use PaddleDetection deep learning models for layout detection, you also need to install paddle on your computer. This could be done by running the following command: 
+
+```bash
+# CPU version
+python -m pip install paddlepaddle -i https://mirror.baidu.com/pypi/simple
+```
+
+If you would like to use PaddlePaddle GPU version to predict, you need to uninstall paddlepaddle first, and running the following conmand:
+
+```bash
+# If you already have installed the CPU version paddle
+pip uninstall paddlepaddle
+# GPU version
+python -m pip install paddlepaddle-gpu -i https://mirror.baidu.com/pypi/simple
+```
+
+### For Mac OS users
+
+This could be done by running the following command: 
+
+```bash
+python -m pip install paddlepaddle -i https://mirror.baidu.com/pypi/simple
+```
+
+- For more CUDA version or environment to quick install, please refer to the [PaddlePaddle Quick Installation document](https://www.paddlepaddle.org.cn/install/quick)
+- For more installation methods such as conda or compile with source code, please refer to the [installation document](https://www.paddlepaddle.org.cn/documentation/docs/en/install/index_en.html)
+
+Please make sure that your PaddlePaddle is installed successfully and the version is not lower than the required version. Use the following command to verify.
+
+```bash
+# check
+>>> import paddle
+>>> paddle.utils.run_check()
+
+# confirm the paddle's version
+python -c "import paddle; print(paddle.__version__)"
+```
 
 ## [Optional] Install OCR utils
 
@@ -49,6 +90,16 @@ pip3 install -U layoutparser[ocr]
 
 Additionally, if you want to use the Tesseract-OCR engine, you also need to install it on your computer. Please check the 
 [official documentation](https://tesseract-ocr.github.io/tessdoc/Installation.html) for detailed installation instructions. 
+
+## [Optional] Install PaddleOCR utils
+
+Layout Parser also comes with supports for PaddleOCR functions. In order to use them, you need to install the PaddleOCR utils via: 
+
+```bash
+pip3 install -U layoutparser[paddleocr]
+```
+
+. Please check the [official documentation](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.1/doc/doc_ch/whl.md) for detailed installation instructions. 
 
 ## Known issues
 

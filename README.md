@@ -39,13 +39,53 @@ pip install layoutparser[ocr]
 
 **For Windows Users:** Please read [installation.md](installation.md) for details about installing Detectron2.
 
+## **Recent updates**
+
+2021.6.8 Update new layout detection model (PaddleDetection) and ocr model (PaddleOCR). We test Detectron2 and PaddleDetection models on PubLayNet and TableBank datasets, the  indicators are as follows:
+
+PubLayNet Dataset:
+
+|      Model      |  mAP  | CPU time cost | GPU time cost |
+| :-------------: | :---: | :-----------: | :-----------: |
+|   Detectron2    | 88.98 |   16545.5ms   |    209.5ms    |
+| PaddleDetection | 93.6  |   1713.7ms    |    66.6ms     |
+
+TableBank Dataset:
+
+|      Model      |  mAP  | CPU time cost | GPU time cost |
+| :-------------: | :---: | :-----------: | :-----------: |
+|   Detectron2    | 91.26 |   7623.2ms    |   104.2.ms    |
+| PaddleDetection | 96.2  |   1968.4ms    |    65.1ms     |
+
+**Envrionment：**	
+
+​	**CPU：**  Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz，24core
+
+​	**GPU：**  a single NVIDIA Tesla P40
+
+You can also find detailed installation instructions in [installation.md](installation.md). But generally, it's just `pip install` 
+some libraries: 
+
+```Python
+# Install PaddlePaddle
+# CUDA10.1
+python -m pip install paddlepaddle-gpu==2.1.0.post101 -f https://paddlepaddle.org.cn/whl/mkl/stable.html
+# CPU
+python -m pip install paddlepaddle -i https://mirror.baidu.com/pypi/simple
+
+# Install the paddle ocr components when necessary 
+pip install layoutparser[paddleocr] 
+```
+
+For more PaddlePaddle CUDA version or environment to quick install, please refer to the [PaddlePaddle Quick Installation document](https://www.paddlepaddle.org.cn/install/quick)
+
 ## Quick Start
 
 We provide a series of examples for to help you start using the layout parser library: 
 
 1. [Table OCR and Results Parsing](https://github.com/Layout-Parser/layout-parser/blob/master/examples/OCR%20Tables%20and%20Parse%20the%20Output.ipynb): `layoutparser` can be used for conveniently OCR documents and convert the output in to structured data. 
-
 2. [Deep Layout Parsing Example](https://github.com/Layout-Parser/layout-parser/blob/master/examples/Deep%20Layout%20Parsing.ipynb): With the help of Deep Learning, `layoutparser` supports the analysis very complex documents and processing of the hierarchical structure in the layouts. 
+3. [Deep Layout Parsing using Paddle](examples/Deep%20Layout%20Parsing%20using%20Paddle.ipynb): `layoutparser` supports the analysis very complex documents and processing of the hierarchical structure in the layouts Using Paddle models.
 
 
 ## DL Assisted Layout Prediction Example 
@@ -54,7 +94,7 @@ We provide a series of examples for to help you start using the layout parser li
 
 *The images shown in the figure above are: a screenshot of [this paper](https://arxiv.org/abs/2004.08686), an image from the [PRIMA Layout Analysis Dataset](https://www.primaresearch.org/dataset/), a screenshot of the [WSJ website](http://wsj.com), and an image from the [HJDataset](https://dell-research-harvard.github.io/HJDataset/).*
 
-With only 4 lines of code in `layoutparse`, you can unlock the information from complex documents that existing tools could not provide. You can either choose a deep learning model from the [ModelZoo](https://github.com/Layout-Parser/layout-parser/blob/master/docs/notes/modelzoo.md), or load the model that you trained on your own. And use the following code to predict the layout as well as visualize it: 
+With only 4 lines of code in `layoutparse`, you can unlock the information from complex documents that existing tools could not provide. You can either choose a deep learning model from the [ModelZoo](docs/notes/modelzoo.md), or load the model that you trained on your own. And use the following code to predict the layout as well as visualize it: 
 
 ```python
 >>> import layoutparser as lp
@@ -62,6 +102,19 @@ With only 4 lines of code in `layoutparse`, you can unlock the information from 
 >>> layout = model.detect(image) # You need to load the image somewhere else, e.g., image = cv2.imread(...)
 >>> lp.draw_box(image, layout,) # With extra configurations
 ```
+
+Use PaddleDetection model：
+
+```python
+>>> import layoutparser as lp
+>>> model = lp.PaddleDetectionLayoutModel('lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config')
+>>> layout = model.detect(image) # You need to load the image somewhere else, e.g., image = cv2.imread(...)
+>>> lp.draw_box(image, layout,) # With extra configurations
+```
+
+If you want to train a Paddledetection model yourself, please refer to：[Train PaddleDetection model](https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.1/docs/tutorials/GETTING_STARTED.md)
+
+If you want to learn more about PaddleOCR, please refer to: [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)、[PaddleOCR infer](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.1/doc/doc_ch/whl.md)
 
 ## Contributing
 
@@ -79,3 +132,4 @@ If you find `layoutparser` helpful to your work, please consider citing our tool
   year={2021}
 }
 ```
+

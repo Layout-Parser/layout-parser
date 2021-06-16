@@ -2,7 +2,7 @@
 
 We provide a spectrum of pre-trained models on different datasets.
 
-## Example Usage: 
+## Example Usage using Detectron2: 
 
 ```python
 import layoutparser as lp
@@ -14,22 +14,57 @@ model = lp.Detectron2LayoutModel(
 model.detect(image)
 ```
 
+## Example  Usage using PaddleDetection: 
+
+```python
+import layoutparser as lp
+model = lp.PaddleDetectionLayoutModel(
+  					config_path="lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config", # In model catalog
+            label_map   ={0: "Text", 1: "Title", 2: "List", 3:"Table", 4:"Figure"}, # In model`label_map`
+            threshold =0.5] # Optional
+        )
+model.detect(image)
+```
+
 ## Model Catalog
 
-| Dataset                                                               | Model                                                                                      | Config Path                                            | Eval Result (mAP)                                                         |
-|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------|--------------------------------------------------------|---------------------------------------------------------------------------|
-| [HJDataset](https://dell-research-harvard.github.io/HJDataset/)       | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/j4yseny2u0hn22r/config.yml?dl=1)       | lp://HJDataset/faster_rcnn_R_50_FPN_3x/config          |                                                                           |
-| [HJDataset](https://dell-research-harvard.github.io/HJDataset/)       | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/4jmr3xanmxmjcf8/config.yml?dl=1)         | lp://HJDataset/mask_rcnn_R_50_FPN_3x/config            |                                                                           |
-| [HJDataset](https://dell-research-harvard.github.io/HJDataset/)       | [retinanet_R_50_FPN_3x](https://www.dropbox.com/s/z8a8ywozuyc5c2x/config.yml?dl=1)         | lp://HJDataset/retinanet_R_50_FPN_3x/config            |                                                                           |
-| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)                 | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/f3b12qc4hc0yh4m/config.yml?dl=1)       | lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config          |                                                                           |
-| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)                 | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/u9wbsfwz4y0ziki/config.yml?dl=1)         | lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config            |                                                                           |
-| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)                 | [mask_rcnn_X_101_32x8d_FPN_3x](https://www.dropbox.com/s/nau5ut6zgthunil/config.yaml?dl=1) | lp://PubLayNet/mask_rcnn_X_101_32x8d_FPN_3x/config     | 88.98 [eval.csv](https://www.dropbox.com/s/15ytg3fzmc6l59x/eval.csv?dl=0) |
-| [PrimaLayout](https://www.primaresearch.org/dataset/)                 | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/yc92x97k50abynt/config.yaml?dl=1)        | lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config          | 69.35 [eval.csv](https://www.dropbox.com/s/9uuql57uedvb9mo/eval.csv?dl=0) |
-| [NewspaperNavigator](https://news-navigator.labs.loc.gov/)            | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/wnido8pk4oubyzr/config.yml?dl=1)       | lp://NewspaperNavigator/faster_rcnn_R_50_FPN_3x/config |                                                                           |
-| [TableBank](https://doc-analysis.github.io/tablebank-page/index.html) | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/7cqle02do7ah7k4/config.yaml?dl=1)      | lp://TableBank/faster_rcnn_R_50_FPN_3x/config          | 89.78 [eval.csv](https://www.dropbox.com/s/1uwnz58hxf96iw2/eval.csv?dl=0) |
-| [TableBank](https://doc-analysis.github.io/tablebank-page/index.html) | [faster_rcnn_R_101_FPN_3x](https://www.dropbox.com/s/h63n6nv51kfl923/config.yaml?dl=1)     | lp://TableBank/faster_rcnn_R_101_FPN_3x/config         | 91.26 [eval.csv](https://www.dropbox.com/s/e1kq8thkj2id1li/eval.csv?dl=0) |
+| Dataset                                                      | Model                                                        | Config Path                                                  | Eval Result (mAP)                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [HJDataset](https://dell-research-harvard.github.io/HJDataset/) | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/j4yseny2u0hn22r/config.yml?dl=1) | lp://HJDataset/faster_rcnn_R_50_FPN_3x/config                |                                                              |
+| [HJDataset](https://dell-research-harvard.github.io/HJDataset/) | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/4jmr3xanmxmjcf8/config.yml?dl=1) | lp://HJDataset/mask_rcnn_R_50_FPN_3x/config                  |                                                              |
+| [HJDataset](https://dell-research-harvard.github.io/HJDataset/) | [retinanet_R_50_FPN_3x](https://www.dropbox.com/s/z8a8ywozuyc5c2x/config.yml?dl=1) | lp://HJDataset/retinanet_R_50_FPN_3x/config                  |                                                              |
+| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/f3b12qc4hc0yh4m/config.yml?dl=1) | lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config                |                                                              |
+| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/u9wbsfwz4y0ziki/config.yml?dl=1) | lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config                  |                                                              |
+| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [mask_rcnn_X_101_32x8d_FPN_3x](https://www.dropbox.com/s/nau5ut6zgthunil/config.yaml?dl=1) | lp://PubLayNet/mask_rcnn_X_101_32x8d_FPN_3x/config           | 88.98 [eval.csv](https://www.dropbox.com/s/15ytg3fzmc6l59x/eval.csv?dl=0) |
+| [PubLayNet](https://github.com/ibm-aur-nlp/PubLayNet)        | [ppyolov2_r50vd_dcn_365e_publaynet](https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_publaynet.tar) | lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config      | 93.6 [eval.csv](https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/eval_publaynet.csv) |
+| [PrimaLayout](https://www.primaresearch.org/dataset/)        | [mask_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/yc92x97k50abynt/config.yaml?dl=1) | lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config                | 69.35 [eval.csv](https://www.dropbox.com/s/9uuql57uedvb9mo/eval.csv?dl=0) |
+| [NewspaperNavigator](https://news-navigator.labs.loc.gov/)   | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/wnido8pk4oubyzr/config.yml?dl=1) | lp://NewspaperNavigator/faster_rcnn_R_50_FPN_3x/config       |                                                              |
+| [TableBank](https://doc-analysis.github.io/tablebank-page/index.html) | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/7cqle02do7ah7k4/config.yaml?dl=1) | lp://TableBank/faster_rcnn_R_50_FPN_3x/config                | 89.78 [eval.csv](https://www.dropbox.com/s/1uwnz58hxf96iw2/eval.csv?dl=0) |
+| [TableBank](https://doc-analysis.github.io/tablebank-page/index.html) | [faster_rcnn_R_101_FPN_3x](https://www.dropbox.com/s/h63n6nv51kfl923/config.yaml?dl=1) | lp://TableBank/faster_rcnn_R_101_FPN_3x/config               | 91.26 [eval.csv](https://www.dropbox.com/s/e1kq8thkj2id1li/eval.csv?dl=0) |
+| [TableBank](https://doc-analysis.github.io/tablebank-page/index.html) | [ppyolov2_r50vd_dcn_365e_tableBank_word](https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_tableBank_word.tar) | lp://TableBank/ppyolov2_r50vd_dcn_365e_tableBank_word/config | 96.2 [eval.csv](https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/eval_tablebank.csv) |
 
 * For PubLayNet models, we suggest using `mask_rcnn_X_101_32x8d_FPN_3x` model as it's trained on the whole training set, while others are only trained on the validation set (the size is only around 1/50). You could expect a 15% AP improvement using the `mask_rcnn_X_101_32x8d_FPN_3x` model.
+* Compare the time cost  of **Detectron2** and **PaddleDetection**(ppyolov2_* models in the above table):
+
+PubLayNet Dataset:
+
+|      Model      | CPU time cost | GPU time cost |
+| :-------------: | :-----------: | :-----------: |
+|   Detectron2    |   16545.5ms   |    209.5ms    |
+| PaddleDetection |   1713.7ms    |    66.6ms     |
+
+TableBank Dataset:
+
+|      Model      | CPU time cost | GPU time cost |
+| :-------------: | :-----------: | :-----------: |
+|   Detectron2    |   7623.2ms    |   104.2.ms    |
+| PaddleDetection |   1968.4ms    |    65.1ms     |
+
+**Envrionment：**	
+
+​	**CPU：**  Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz，24core
+
+​	**GPU：**  a single NVIDIA Tesla P40
 
 ## Model `label_map`
 
