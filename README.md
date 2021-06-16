@@ -41,7 +41,30 @@ pip install layoutparser[ocr]
 
 ## **Recent updates**
 
-2021.6.8 Update new layout detection model (PaddleDetection) and ocr model (PaddleOCR).
+2021.6.8 Update new layout detection model (PaddleDetection) and ocr model (PaddleOCR). We test Detectron2 and PaddleDetection models on PubLayNet and TableBank datasets, the  indicators are as follows:
+
+PubLayNet Dataset:
+
+|      Model      |  mAP  | CPU time cost | GPU time cost |
+| :-------------: | :---: | :-----------: | :-----------: |
+|   Detectron2    | 88.98 |   16545.5ms   |    209.5ms    |
+| PaddleDetection | 93.6  |   1713.7ms    |    66.6ms     |
+
+TableBank Dataset:
+
+|      Model      |  mAP  | CPU time cost | GPU time cost |
+| :-------------: | :---: | :-----------: | :-----------: |
+|   Detectron2    | 91.26 |   7623.2ms    |   104.2.ms    |
+| PaddleDetection | 96.2  |   1968.4ms    |    65.1ms     |
+
+**Envrionment：**	
+
+​	**CPU：**  Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz，24core
+
+​	**GPU：**  a single NVIDIA Tesla P40
+
+You can also find detailed installation instructions in [installation.md](installation.md). But generally, it's just `pip install` 
+some libraries: 
 
 ```Python
 # Install PaddlePaddle
@@ -89,7 +112,9 @@ Use PaddleDetection model：
 >>> lp.draw_box(image, layout,) # With extra configurations
 ```
 
-If you want to train Paddledetection model yourself, please refer to：[Train PaddleDetection model](https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.1/docs/tutorials/GETTING_STARTED.md)
+If you want to train a Paddledetection model yourself, please refer to：[Train PaddleDetection model](https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.1/docs/tutorials/GETTING_STARTED.md)
+
+If you want to learn more about PaddleOCR, please refer to: [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)、[PaddleOCR infer](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.1/doc/doc_ch/whl.md)
 
 ## Contributing
 
@@ -107,3 +132,4 @@ If you find `layoutparser` helpful to your work, please consider citing our tool
   year={2021}
 }
 ```
+

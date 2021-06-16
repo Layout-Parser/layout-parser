@@ -46,19 +46,19 @@ model.detect(image)
 * For PubLayNet models, we suggest using `mask_rcnn_X_101_32x8d_FPN_3x` model as it's trained on the whole training set, while others are only trained on the validation set (the size is only around 1/50). You could expect a 15% AP improvement using the `mask_rcnn_X_101_32x8d_FPN_3x` model.
 * Compare the time cost  of **Detectron2** and **PaddleDetection**(ppyolov2_* models in the above table):
 
-PublayNet Dataset:
+PubLayNet Dataset:
 
-| Model           | CPU time cost | GPU time cost |
-| --------------- | ------------- | ------------- |
-| Detectron2      | 16545.5ms     | 209.5ms       |
-| PaddleDetection | 1713.7ms      | 66.6ms        |
+|      Model      | CPU time cost | GPU time cost |
+| :-------------: | :-----------: | :-----------: |
+|   Detectron2    |   16545.5ms   |    209.5ms    |
+| PaddleDetection |   1713.7ms    |    66.6ms     |
 
 TableBank Dataset:
 
-| Model           | CPU time cost | GPU time cost |
-| --------------- | ------------- | ------------- |
-| Detectron2      | 7623.2ms      | 104.2.ms      |
-| PaddleDetection | 1968.4ms      | 65.1ms        |
+|      Model      | CPU time cost | GPU time cost |
+| :-------------: | :-----------: | :-----------: |
+|   Detectron2    |   7623.2ms    |   104.2.ms    |
+| PaddleDetection |   1968.4ms    |    65.1ms     |
 
 **Envrionment：**	
 

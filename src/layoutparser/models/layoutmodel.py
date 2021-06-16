@@ -187,6 +187,7 @@ class PaddleDetectionLayoutModel(object):
     """
     Args:
         config (object): config of model, defined by `Config(model_dir)`
+        model_path (str):The path to the saved weights of the model.
         threshold (float): threshold to reserve the result for output
         input_shape(list): the image shape after reshape
         batch_size(int)：test batch size 
@@ -202,7 +203,8 @@ class PaddleDetectionLayoutModel(object):
     """
 
     def __init__(self,
-                 config_path,
+                 config_path=None,
+                 model_path=None,
                  threshold=0.5,
                  input_shape=[3,640,640],
                  batch_size=1,
@@ -216,22 +218,26 @@ class PaddleDetectionLayoutModel(object):
                  trt_opt_shape=640,
                  min_subgraph_size=3):
         
-        prefix = "lp://"
-        model_name = config_path[len(prefix) :].split('/')[1]
-        url = PathManager.get_local_path(config_path)
-        if label_map is None:
-            dataset_name = config_path.lstrip("lp://").split("/")[0]
-            label_map = LABEL_MAP_CATALOG[dataset_name]
-        
-        BASE_DIR = os.path.expanduser("~/.paddledet/")
-        BASE_INFERENCE_MODEL_DIR = os.path.join(BASE_DIR, 'inference_model')
+        if config_path is not None and config_path.startswith("lp://"):
+            prefix = "lp://"
+            model_name = config_path[len(prefix) :].split('/')[1]
+            url = PathManager.get_local_path(config_path)
+            if label_map is None:
+                dataset_name = config_path.lstrip("lp://").split("/")[0]
+                label_map = LABEL_MAP_CATALOG[dataset_name]
+            
+            BASE_DIR = os.path.expanduser("~/.paddledet/")
+            BASE_INFERENCE_MODEL_DIR = os.path.join(BASE_DIR, 'inference_model')
 
-        model_dir = os.path.join(BASE_INFERENCE_MODEL_DIR, model_name, model_name+'_infer')
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
+            model_dir = os.path.join(BASE_INFERENCE_MODEL_DIR, model_name, model_name+'_infer')
+            if not os.path.exists(model_dir):
+                os.makedirs(model_dir)
 
-        maybe_download(model_storage_directory=model_dir, url=url)
+            maybe_download(model_storage_directory=model_dir, url=url)
         
+        if model_path is not None:
+            model_dir = model_path            
+
         self.predictor = self.load_predictor(
             model_dir,
             batch_size=batch_size,
