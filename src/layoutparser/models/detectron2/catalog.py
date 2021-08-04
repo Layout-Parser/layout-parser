@@ -1,7 +1,6 @@
-from iopath.common.file_io import PathHandler, PathManager, HTTPURLHandler
-from iopath.common.file_io import PathManager as PathManagerBase
+from iopath.common.file_io import PathHandler
 
-# A trick learned from https://github.com/facebookresearch/detectron2/blob/65faeb4779e4c142484deeece18dc958c5c9ad18/detectron2/utils/file_io.py#L3
+from ..base_catalog import PathManager
 
 MODEL_CATALOG = {
     "HJDataset": {
@@ -49,6 +48,7 @@ CONFIG_CATALOG = {
     },
 }
 
+# fmt: off
 LABEL_MAP_CATALOG = {
     "HJDataset": {
         1: "Page Frame",
@@ -59,7 +59,12 @@ LABEL_MAP_CATALOG = {
         6: "Subtitle",
         7: "Other",
     },
-    "PubLayNet": {0: "Text", 1: "Title", 2: "List", 3: "Table", 4: "Figure"},
+    "PubLayNet": {
+        0: "Text", 
+        1: "Title", 
+        2: "List", 
+        3: "Table", 
+        4: "Figure"},
     "PrimaLayout": {
         1: "TextRegion",
         2: "ImageRegion",
@@ -77,34 +82,26 @@ LABEL_MAP_CATALOG = {
         5: "Headline",
         6: "Advertisement",
     },
-    "TableBank": {0: "Table"},
+    "TableBank": {
+        0: "Table"
+    },
 }
+# fmt: on
 
 
-class DropboxHandler(HTTPURLHandler):
-    """
-    Supports download and file check for dropbox links
-    """
-
-    def _get_supported_prefixes(self):
-        return ["https://www.dropbox.com"]
-
-    def _isfile(self, path):
-        return path in self.cache_map
-
-
-class LayoutParserHandler(PathHandler):
+class LayoutParserDetectron2ModelHandler(PathHandler):
     """
     Resolve anything that's in LayoutParser model zoo.
     """
 
-    PREFIX = "lp://"
+    PREFIX = "lp://detectron2/"
 
     def _get_supported_prefixes(self):
         return [self.PREFIX]
 
     def _get_local_path(self, path, **kwargs):
         model_name = path[len(self.PREFIX) :]
+
         dataset_name, *model_name, data_type = model_name.split("/")
 
         if data_type == "weight":
@@ -119,6 +116,4 @@ class LayoutParserHandler(PathHandler):
         return PathManager.open(self._get_local_path(path), mode, **kwargs)
 
 
-PathManager = PathManagerBase()
-PathManager.register_handler(DropboxHandler())
-PathManager.register_handler(LayoutParserHandler())
+PathManager.register_handler(LayoutParserDetectron2ModelHandler())
