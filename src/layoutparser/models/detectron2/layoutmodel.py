@@ -1,56 +1,12 @@
-from abc import ABC, abstractmethod
-import os
-import importlib
-
 from PIL import Image
 import numpy as np
 import torch
 
 from .catalog import PathManager, LABEL_MAP_CATALOG
-from ..elements import *
+from ..base_layoutmodel import BaseLayoutModel
+from ...elements import Rectangle, TextBlock, Layout
 
 __all__ = ["Detectron2LayoutModel"]
-
-
-class BaseLayoutModel(ABC):
-    @abstractmethod
-    def detect(self):
-        pass
-
-    # Add lazy loading mechanisms for layout models, refer to
-    # layoutparser.ocr.BaseOCRAgent
-    # TODO: Build a metaclass for lazy module loader
-    @property
-    @abstractmethod
-    def DEPENDENCIES(self):
-        """DEPENDENCIES lists all necessary dependencies for the class."""
-        pass
-
-    @property
-    @abstractmethod
-    def MODULES(self):
-        """MODULES instructs how to import these necessary libraries."""
-        pass
-
-    @classmethod
-    def _import_module(cls):
-        for m in cls.MODULES:
-            if importlib.util.find_spec(m["module_path"]):
-                setattr(
-                    cls, m["import_name"], importlib.import_module(m["module_path"])
-                )
-            else:
-                raise ModuleNotFoundError(
-                    f"\n "
-                    f"\nPlease install the following libraries to support the class {cls.__name__}:"
-                    f"\n    pip install {' '.join(cls.DEPENDENCIES)}"
-                    f"\n "
-                )
-
-    def __new__(cls, *args, **kwargs):
-
-        cls._import_module()
-        return super().__new__(cls)
 
 
 class Detectron2LayoutModel(BaseLayoutModel):
@@ -93,6 +49,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
         },
         {"import_name": "_config", "module_path": "detectron2.config"},
     ]
+    DETECTOR_NAME = "detectron2"
 
     def __init__(
         self,
@@ -111,17 +68,46 @@ class Detectron2LayoutModel(BaseLayoutModel):
             extra_config.extend(["MODEL.DEVICE", "cpu"])
 
         cfg = self._config.get_cfg()
+        config_path = self._reconstruct_path_with_detector_name(config_path)
         config_path = PathManager.get_local_path(config_path)
         cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
 
         if model_path is not None:
+            model_path = self._reconstruct_path_with_detector_name(model_path)
             cfg.MODEL.WEIGHTS = model_path
         cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
         self.cfg = cfg
 
         self.label_map = label_map
         self._create_model()
+
+    def _reconstruct_path_with_detector_name(self, path: str) -> str:
+        """This function will add the detector name (detectron2) into the
+        lp model config path to get the "canonical" model name.
+
+        For example, for a given config_path `lp://HJDataset/faster_rcnn_R_50_FPN_3x/config`,
+        it will transform it into `lp://detectron2/HJDataset/faster_rcnn_R_50_FPN_3x/config`.
+        However, if the config_path already contains the detector name, we won't change it.
+
+        This function is a general step to support multiple backends in the layout-parser
+        library.
+
+        Args:
+            path (str): The given input path that might or might not contain the detector name.
+
+        Returns:
+            str: a modified path that contains the detector name.
+        """
+        if path.startswith("lp://"):  # TODO: Move "lp://" to a constant
+            model_name = path[len("lp://") :]
+            model_name_segments = model_name.split("/")
+            if (
+                len(model_name_segments) == 3
+                and "detectron2" not in model_name_segments
+            ):
+                return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
+        return path
 
     def gather_output(self, outputs):
 
