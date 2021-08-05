@@ -1,1 +1,2 @@
 from .detectron2.layoutmodel import Detectron2LayoutModel
+from .paddleDetection.layoutmodel import PaddleDetectionLayoutModel
