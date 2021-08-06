@@ -27,7 +27,6 @@ setup(name         = "layoutparser",
         "torch",
         "torchvision",
         "iopath",
-        "tqdm",
       ],
       extras_require={
         "ocr": [

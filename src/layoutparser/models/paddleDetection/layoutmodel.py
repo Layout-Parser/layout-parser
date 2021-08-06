@@ -131,7 +131,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
         if not enforce_cpu:
             # initial GPU memory(M), device ID
-            config.enable_use_gpu(200, 0)
+            config.enable_use_gpu(2000, 0)
             # optimize graph and fuse op
             config.switch_ir_optim(True)
         else:
