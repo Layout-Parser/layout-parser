@@ -45,7 +45,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             "module_path": "paddle.inference",
         },
     ]
-    DETECTOR_NAME = "paddleDetection
+    DETECTOR_NAME = "paddleDetection"
 
     def __init__(self,
                  config_path=None,

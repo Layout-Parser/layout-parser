@@ -533,8 +533,7 @@ class PaddleocrAgent(BaseOCRAgent):
         self.det = det
         self.rec = rec
         self.cls = cls
-        self.configs = kwargs
-        self.ocr = self._paddleocr.PaddleOCR(use_gpu=self.use_gpu, use_angle_cls=self.use_angle_cls, lang=self.lang)
+        self.ocr = self._paddleocr.PaddleOCR(use_gpu=self.use_gpu, use_angle_cls=self.use_angle_cls, lang=self.lang, **kwargs)
 
     def detect(
         self, image, return_response=False, return_only_text=True, agg_output_level=None
