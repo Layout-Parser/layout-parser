@@ -11,8 +11,7 @@ from .visualization import (
 
 from .ocr import (
     GCVFeatureType, GCVAgent, 
-    TesseractFeatureType, TesseractAgent,
-    PaddleocrAgent
+    TesseractFeatureType, TesseractAgent
 )
 
 from .models import (

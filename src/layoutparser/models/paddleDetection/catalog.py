@@ -51,15 +51,14 @@ LABEL_MAP_CATALOG = {
         0: "Table"
     },
 }
-# fmt: on
 
 
-class LayoutParserDetectron2ModelHandler(PathHandler):
+class LayoutParserPaddleModelHandler(PathHandler):
     """
     Resolve anything that's in LayoutParser model zoo.
     """
 
-    PREFIX = "lp://paddlepaddle/"
+    PREFIX = "lp://paddleDetection/"
 
     def _get_supported_prefixes(self):
         return [self.PREFIX]
@@ -81,4 +80,4 @@ class LayoutParserDetectron2ModelHandler(PathHandler):
         return PathManager.open(self._get_local_path(path), mode, **kwargs)
 
 
-PathManager.register_handler(LayoutParserDetectron2ModelHandler())
+PathManager.register_handler(LayoutParserPaddleModelHandler())
