@@ -86,6 +86,7 @@ LABEL_MAP_CATALOG = {
         0: "Table"
     },
 }
+# fmt: on
 
 
 class LayoutParserDetectron2ModelHandler(PathHandler):

@@ -33,12 +33,6 @@ setup(name         = "layoutparser",
           'google-cloud-vision==1',
           'pytesseract'
         ], 
-        "paddlepaddle": [
-          'paddlepaddle>=2.1.0'
-        ],  
-        "paddlepadle-gpu": [
-          'paddlepaddle-gpu>=2.1.0'
-        ],          
       },
       include_package_data=True
       )

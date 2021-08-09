@@ -7,7 +7,7 @@ import numpy as np
 import requests
 from tqdm import tqdm
 
-from .preprocess import preprocess, Resize, NormalizeImage, Permute, PadStride
+from .preprocess import decode_image, resize, normalize_image, permute
 from .catalog import PathManager, LABEL_MAP_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
@@ -34,18 +34,10 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             The map from the model prediction (ids) to realword labels (strings).
         enforce_cpu (bool):
             whether use cpu, if false, indicates use GPU
-        enforce_mkldnn(bool):
+        enable_mkldnn(bool):
             whether use mkldnn to accelerate the computation
         thread_num(int):
             the number of threads
-        use_dynamic_shape (bool):
-            use dynamic shape or not
-        trt_min_shape (int):
-            min shape for dynamic shape in trt
-        trt_max_shape (int):
-            max shape for dynamic shape in trt
-        trt_opt_shape (int):
-            opt shape for dynamic shape in trt.
     Examples::
         >>> import layoutparser as lp
         >>> model = lp.models.PaddleDetectionLayoutModel('
@@ -59,23 +51,14 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             "module_path": "paddle.inference",
         },
     ]
-    DETECTOR_NAME = "paddleDetection"
+    DETECTOR_NAME = "paddledetection"
 
     def __init__(self,
                  config_path=None,
                  model_path=None,
-                 threshold=0.5,
-                 input_shape=[3,640,640],
-                 batch_size=1,
                  label_map=None,
                  enforce_cpu=False,
-                 enable_mkldnn=True,
-                 thread_num=10,
-                 use_dynamic_shape=False,
-                 trt_min_shape=1,
-                 trt_max_shape=1280,
-                 trt_opt_shape=640,
-                 min_subgraph_size=3):
+                 extra_config={}):
         if config_path is not None and config_path.startswith("lp://"):
             prefix = "lp://"
             if label_map is None:
@@ -83,31 +66,30 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
                 label_map = LABEL_MAP_CATALOG[dataset_name]
             model_name = config_path[len(prefix) :].split('/')[1]
             config_path = self._reconstruct_path_with_detector_name(config_path)
-            url = PathManager.get_local_path(config_path)
-            base_dir = os.path.expanduser("~/.paddledet/")
-            base_inference_model_dir = os.path.join(base_dir, 'inference_model')
+            model_tar = PathManager.get_local_path(config_path)
 
-            model_dir = os.path.join(base_inference_model_dir, model_name, model_name+'_infer')
-            if not os.path.exists(model_dir):
-                os.makedirs(model_dir)
-            maybe_download(model_storage_directory=model_dir, url=url)
+            pre_dir = os.path.dirname(model_tar)
+            base_dir = os.path.splitext(os.path.basename(model_tar))[0]
+            model_dir = os.path.join(pre_dir, base_dir)
+            self.untar_files(model_tar, model_dir)
         if model_path is not None:
             model_dir = model_path
         self.predictor = self.load_predictor(
             model_dir,
-            batch_size=batch_size,
+            batch_size=extra_config.get('batch_size',1),
             enforce_cpu=enforce_cpu,
-            enable_mkldnn=enable_mkldnn,
-            thread_num=thread_num,
-            min_subgraph_size=min_subgraph_size,
-            use_dynamic_shape=use_dynamic_shape,
-            trt_min_shape=trt_min_shape,
-            trt_max_shape=trt_max_shape,
-            trt_opt_shape=trt_opt_shape)
+            enable_mkldnn=extra_config.get('enable_mkldnn',True),
+            thread_num=extra_config.get('thread_num',10))
 
-        self.threshold = threshold
-        self.input_shape = input_shape
+        self.threshold = extra_config.get('threshold',0.5)
+        self.input_shape = extra_config.get('input_shape',[3,640,640])
         self.label_map = label_map
+        self.im_info = {
+            'scale_factor': np.array(
+                [1., 1.], dtype=np.float32),
+            'im_shape': None,
+            'input_shape': self.input_shape,
+        }
 
     def _reconstruct_path_with_detector_name(self, path: str) -> str:
         """This function will add the detector name (paddleDetection) into the
@@ -115,7 +97,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
         For example,
         for a given config_path `lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config`,it will
-        transform it into `lp://paddleDetection/PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config`.
+        transform it into `lp://paddledetection/PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config`.
         However, if the config_path already contains the detector name, we won't change it.
 
         This function is a general step to support multiple backends in the layout-parser
@@ -142,20 +124,11 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
                     batch_size=1,
                     enforce_cpu=False,
                     enable_mkldnn=True,
-                    thread_num=10,
-                    min_subgraph_size=3,
-                    use_dynamic_shape=False,
-                    trt_min_shape=1,
-                    trt_max_shape=1280,
-                    trt_opt_shape=640):
+                    thread_num=10):
         """set AnalysisConfig, generate AnalysisPredictor
         Args:
             model_dir (str): root path of __model__ and __params__
             enforce_cpu (bool): whether use cpu
-            use_dynamic_shape (bool): use dynamic shape or not
-            trt_min_shape (int): min shape for dynamic shape in trt
-            trt_max_shape (int): max shape for dynamic shape in trt
-            trt_opt_shape (int): opt shape for dynamic shape in trt
         Returns:
             predictor (PaddlePredictor): AnalysisPredictor
         Raises:
@@ -169,6 +142,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
         if not enforce_cpu:
             # initial GPU memory(M), device ID
+            # 2000 is an appropriate value for PaddleDetection model
             config.enable_use_gpu(2000, 0)
             # optimize graph and fuse op
             config.switch_ir_optim(True)
@@ -187,39 +161,42 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         predictor = self._inference.create_predictor(config)
         return predictor
 
-    def create_inputs(self, image, im_info):
-        """generate input for different model type
+    def preprocess(self, image):
+        """ preprocess image
         Args:
             image (np.ndarray): image (np.ndarray)
-            im_info (dict): info of image
         Returns:
             inputs (dict): input of model
         """
+        # read rgb image
+        image, im_info = decode_image(image, self.im_info)
+        # resize image by target_size and max_size
+        image, im_info = resize(image, im_info)
+        # normalize image
+        image, im_info = normalize_image(image, im_info)
+        # transpose images
+        image, im_info = permute(image, im_info)
+
         inputs = {}
         inputs['image'] = np.array((image, )).astype('float32')
         inputs['im_shape'] = np.array((im_info['im_shape'], )).astype('float32')
         inputs['scale_factor'] = np.array(
             (im_info['scale_factor'], )).astype('float32')
-
         return inputs
 
-    def preprocess(self, image):
-        """ preprocess image"""
-        image, im_info = preprocess(image, self.input_shape)
-        inputs = self.create_inputs(image, im_info)
-        return inputs
-
-    def postprocess(self, np_boxes, np_masks):
-        """ postprocess output of predictor"""
-        results = {}
-        results['boxes'] = np_boxes
-        if np_masks is not None:
-            results['masks'] = np_masks
-        return results
-
-    def gather_output(self, results):
+    def gather_output(self, np_boxes, np_masks):
         """process output"""
         layout = Layout()
+        results = []
+        if reduce(lambda x, y: x * y, np_boxes.shape) < 6:
+            print('[WARNNING] No object detected.')
+            results = {'boxes': np.array([])}
+        else:
+            results = {}
+            results['boxes'] = np_boxes
+            if np_masks is not None:
+                results['masks'] = np_masks
+
         np_boxes = results['boxes']
         expect_boxes = (np_boxes[:, 1] > self.threshold) & (np_boxes[:, 0] > -1)
         np_boxes = np_boxes[expect_boxes, :]
@@ -240,15 +217,18 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
     def detect(self,
                 image):
-        '''
+        """Detect the layout of a given image.
         Args:
-            image (str/np.ndarray): path of image/ np.ndarray read by cv2
+            image (:obj:`np.ndarray` or `PIL.Image`): The input image to detect.
         Returns:
-            results (dict): include 'boxes': np.ndarray: shape:[N,6], N: number of box,
-                            matix element:[class, score, x_min, y_min, x_max, y_max]
-                            MaskRCNN's results include 'masks': np.ndarray:
-                            shape: [N, im_h, im_w]
-        '''
+            :obj:`~layoutparser.Layout`: The detected layout of the input image
+        """
+        # Convert PIL Image Input
+        if isinstance(image, Image.Image):
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+            image = np.array(image)
+
         inputs = self.preprocess(image)
 
         np_boxes, np_masks = None, None
@@ -262,60 +242,32 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         boxes_tensor = self.predictor.get_output_handle(output_names[0])
         np_boxes = boxes_tensor.copy_to_cpu()
 
-        # do not perform postprocess in benchmark mode
-        results = []
-        if reduce(lambda x, y: x * y, np_boxes.shape) < 6:
-            print('[WARNNING] No object detected.')
-            results = {'boxes': np.array([])}
-        else:
-            results = self.postprocess(
-                np_boxes, np_masks)
-
-        layout = self.gather_output(results)
+        layout = self.gather_output(np_boxes, np_masks)
         return layout
 
-
-def download_with_progressbar(url, save_path):
-    """download model"""
-    response = requests.get(url, stream=True)
-    total_size_in_bytes = int(response.headers.get('content-length', 0))
-    block_size = 1024  # 1 Kibibyte
-    progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-    with open(save_path, 'wb') as file:
-        for data in response.iter_content(block_size):
-            progress_bar.update(len(data))
-            file.write(data)
-    progress_bar.close()
-    if total_size_in_bytes == 0 or progress_bar.n != total_size_in_bytes:
-        raise Exception(
-            "Something went wrong while downloading model/image from {}".
-            format(url))
-
-def maybe_download(model_storage_directory, url):
-    """ using custom model """
-    tar_file_name_list = [
-        'inference.pdiparams', 'inference.pdiparams.info', 'inference.pdmodel'
-    ]
-    if not os.path.exists(
-            os.path.join(model_storage_directory, 'inference.pdiparams')
-    ) or not os.path.exists(
-            os.path.join(model_storage_directory, 'inference.pdmodel')):
-        tmp_path = os.path.join(model_storage_directory, url.split('/')[-1])
-        print('download {} to {}'.format(url, tmp_path))
-        os.makedirs(model_storage_directory, exist_ok=True)
-        download_with_progressbar(url, tmp_path)
-        with tarfile.open(tmp_path, 'r') as tarobj:
-            for member in tarobj.getmembers():
-                filename = None
-                for tar_file_name in tar_file_name_list:
-                    if tar_file_name in member.name:
-                        filename = tar_file_name
-                if filename is None:
-                    continue
-                file = tarobj.extractfile(member)
-                with open(
-                        os.path.join(model_storage_directory, filename),
-                        'wb') as file:
-                    file.write(file.read())
-        os.remove(tmp_path)
+    def untar_files(self, model_tar, model_dir):
+        """ untar model files"""
+        # including files after decompression
+        tar_file_name_list = [
+            'inference.pdiparams', 'inference.pdiparams.info', 'inference.pdmodel'
+        ]
+        if not os.path.exists(
+                os.path.join(model_dir, 'inference.pdiparams')
+        ) or not os.path.exists(
+                os.path.join(model_dir, 'inference.pdmodel')):
+            # the path to save the decompressed file
+            os.makedirs(model_dir, exist_ok=True)
+            with tarfile.open(model_tar, 'r') as tarobj:
+                for member in tarobj.getmembers():
+                    filename = None
+                    for tar_file_name in tar_file_name_list:
+                        if tar_file_name in member.name:
+                            filename = tar_file_name
+                    if filename is None:
+                        continue
+                    file = tarobj.extractfile(member)
+                    with open(
+                            os.path.join(model_dir, filename),
+                            'wb') as model_file:
+                        model_file.write(file.read())
         
