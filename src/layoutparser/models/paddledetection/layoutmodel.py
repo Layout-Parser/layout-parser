@@ -135,7 +135,6 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             ValueError: predict by TensorRT need enforce_cpu == False.
         """
 
-        use_calib_mode = False
         config = self._inference.Config(
             os.path.join(model_dir, 'inference.pdmodel'),
             os.path.join(model_dir, 'inference.pdiparams'))
