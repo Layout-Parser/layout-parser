@@ -1,7 +1,15 @@
+import os
+import logging
+from typing import Any,Optional
+from urllib.parse import urlparse
+import tarfile
+import uuid
+
 from iopath.common.file_io import PathHandler
-
-from ..base_catalog import PathManager
-
+from iopath.common.file_io import HTTPURLHandler
+from iopath.common.file_io import PathManager as PathManagerBase
+from iopath.common.file_io import get_cache_dir, file_lock
+from iopath.common.download import download
 
 CONFIG_CATALOG = {
     "PubLayNet": {
@@ -19,13 +27,99 @@ LABEL_MAP_CATALOG = {
         0: "Text",
         1: "Title",
         2: "List",
-        3: "Table", 
+        3: "Table",
         4: "Figure"},
     "TableBank": {
         0: "Table"
     },
 }
 # fmt: on
+
+def untar_function(model_tar):
+    """ untar model files
+    """
+
+    # including files after decompression
+    tar_file_name_list = [
+        'inference.pdiparams', 'inference.pdiparams.info', 'inference.pdmodel'
+    ]
+    pre_dir = os.path.dirname(model_tar)
+    base_dir = os.path.splitext(os.path.basename(model_tar))[0]
+    model_dir = os.path.join(pre_dir, base_dir)
+
+    if not os.path.exists(
+            os.path.join(model_dir, tar_file_name_list[0])
+    ) or not os.path.exists(
+            os.path.join(model_dir, tar_file_name_list[2])):
+        # the path to save the decompressed file
+        os.makedirs(model_dir, exist_ok=True)
+        with tarfile.open(model_tar, 'r') as tarobj:
+            for member in tarobj.getmembers():
+                filename = None
+                for tar_file_name in tar_file_name_list:
+                    if tar_file_name in member.name:
+                        filename = tar_file_name
+                if filename is None:
+                    continue
+                file = tarobj.extractfile(member)
+                with open(
+                        os.path.join(model_dir, filename),
+                        'wb') as model_file:
+                    model_file.write(file.read())
+    return model_dir
+
+
+class PaddleModelURLHandler(HTTPURLHandler):
+    """
+    Supports download and file check for Baidu Cloud links
+    """
+
+    MAX_FILENAME_LEN = 250
+
+    def _get_supported_prefixes(self):
+        return ["https://paddle-model-ecology.bj.bcebos.com"]
+
+    def _isfile(self, path):
+        return path in self.cache_map
+
+    def _get_local_path(
+        self,
+        path: str,
+        force: bool = False,
+        cache_dir: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
+        """
+        This implementation downloads the remote resource and caches it locally.
+        The resource will only be downloaded if not previously requested.
+        """
+        self._check_kwargs(kwargs)
+        if (
+            force
+            or path not in self.cache_map
+            or not os.path.exists(self.cache_map[path])
+        ):
+            logger = logging.getLogger(__name__)
+            parsed_url = urlparse(path)
+            dirname = os.path.join(
+                get_cache_dir(cache_dir), os.path.dirname(parsed_url.path.lstrip("/"))
+            )
+            filename = path.split("/")[-1]
+            if len(filename) > self.MAX_FILENAME_LEN:
+                filename = filename[:100] + "_" + uuid.uuid4().hex
+
+            cached = os.path.join(dirname, filename)
+            with file_lock(cached):
+                if not os.path.isfile(cached):
+                    logger.info("Downloading {} ...".format(path))
+                    cached = download(path, dirname, filename=filename)
+
+                if path.endswith(".tar"):
+                    model_dir = untar_function(cached)
+
+            logger.info("URL {} cached in {}".format(path, model_dir))
+            self.cache_map[path] = model_dir
+        return self.cache_map[path]
 
 
 class LayoutParserPaddleModelHandler(PathHandler):
@@ -52,4 +146,6 @@ class LayoutParserPaddleModelHandler(PathHandler):
         return PathManager.open(self._get_local_path(path), mode, **kwargs)
 
 
+PathManager = PathManagerBase()
+PathManager.register_handler(PaddleModelURLHandler())
 PathManager.register_handler(LayoutParserPaddleModelHandler())

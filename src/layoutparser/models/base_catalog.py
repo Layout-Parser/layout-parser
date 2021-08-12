@@ -10,7 +10,7 @@ class DropboxHandler(HTTPURLHandler):
     """
 
     def _get_supported_prefixes(self):
-        return ["https://www.dropbox.com","https://paddle-model-ecology.bj.bcebos.com"]
+        return ["https://www.dropbox.com"]
 
     def _isfile(self, path):
         return path in self.cache_map

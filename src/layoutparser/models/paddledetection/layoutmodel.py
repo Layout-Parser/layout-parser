@@ -1,13 +1,9 @@
 import os
-import tarfile
 from functools import reduce
 from PIL import Image
 import numpy as np
 
-import requests
-from tqdm import tqdm
-
-from .preprocess import decode_image, resize, normalize_image, permute
+from .preprocess import resize
 from .catalog import PathManager, LABEL_MAP_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
@@ -18,32 +14,51 @@ __all__ = ["PaddleDetectionLayoutModel"]
 
 
 class PaddleDetectionLayoutModel(BaseLayoutModel):
-    """
+    """Create a PaddleDetection-based Layout Detection Model
+
     Args:
-        config (object):
-            config of model, defined by `Config(model_dir)`
-        model_path (str):
+        config_path (:obj:`str`):
+            The path to the configuration file.
+        model_path (:obj:`str`, None):
             The path to the saved weights of the model.
-        threshold (float):
-            threshold to reserve the result for output
-        input_shape(list):
-            the image shape after reshape
-        batch_size(int)：
-            test batch size
+            If set, overwrite the weights in the configuration file.
+            Defaults to `None`.
         label_map (:obj:`dict`, optional):
-            The map from the model prediction (ids) to realword labels (strings).
-        enforce_cpu (bool):
-            whether use cpu, if false, indicates use GPU
-        enable_mkldnn(bool):
-            whether use mkldnn to accelerate the computation
-        thread_num(int):
-            the number of threads
+            The map from the model prediction (ids) to real
+            word labels (strings). If the config is from one of the supported
+            datasets, Layout Parser will automatically initialize the label_map.
+            Defaults to `None`.
+        enforce_cpu(:obj:`bool`, optional):
+            When set to `True`, it will enforce using cpu even if it is on a CUDA
+            available device.
+        extra_config (:obj:`dict`, optional):
+            Extra configuration passed to the PaddleDetection model configuration.
+            Defaults to `{}`.
+            Including arguments:
+            batch_size(:obj:`int`, optional):
+                Test batch size.
+                Defaults to 1.
+            enable_mkldnn (:obj:`bool`, optional):
+                Whether use mkldnn to accelerate the computation.
+                Defaults to False.
+            thread_num (:obj:`int`, optional):
+                The number of threads.
+                Defaults to 10.
+            threshold (:obj:`float`, optional):
+                Threshold to reserve the result for output.
+                Defaults to 0.5.
+            target_size (:obj:`list`, optional):
+                The image shape after resize.
+                Defaults to [640,640].
+
     Examples::
         >>> import layoutparser as lp
         >>> model = lp.models.PaddleDetectionLayoutModel('
                                     lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config')
         >>> model.detect(image)
+
     """
+
     DEPENDENCIES = ["paddlepaddle"]
     MODULES = [
         {
@@ -66,33 +81,25 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
                 label_map = LABEL_MAP_CATALOG[dataset_name]
             model_name = config_path[len(prefix) :].split('/')[1]
             config_path = self._reconstruct_path_with_detector_name(config_path)
-            model_tar = PathManager.get_local_path(config_path)
+            model_dir = PathManager.get_local_path(config_path)
 
-            pre_dir = os.path.dirname(model_tar)
-            base_dir = os.path.splitext(os.path.basename(model_tar))[0]
-            model_dir = os.path.join(pre_dir, base_dir)
-            self.untar_files(model_tar, model_dir)
         if model_path is not None:
             model_dir = model_path
         self.predictor = self.load_predictor(
             model_dir,
-            batch_size=extra_config.get('batch_size',1),
+            batch_size=extra_config.get('batch_size', 1),
             enforce_cpu=enforce_cpu,
-            enable_mkldnn=extra_config.get('enable_mkldnn',True),
-            thread_num=extra_config.get('thread_num',10))
+            enable_mkldnn=extra_config.get('enable_mkldnn', False),
+            thread_num=extra_config.get('thread_num', 10))
 
-        self.threshold = extra_config.get('threshold',0.5)
-        self.input_shape = extra_config.get('input_shape',[3,640,640])
+        self.threshold = extra_config.get('threshold', 0.5)
+        self.target_size = extra_config.get('target_size', [640,640])
+        self.pixel_mean = extra_config.get('pixel_mean', np.array([[[0.485, 0.456, 0.406]]]))
+        self.pixel_std = extra_config.get('pixel_std', np.array([[[0.229, 0.224, 0.225]]]))
         self.label_map = label_map
-        self.im_info = {
-            'scale_factor': np.array(
-                [1., 1.], dtype=np.float32),
-            'im_shape': None,
-            'input_shape': self.input_shape,
-        }
 
     def _reconstruct_path_with_detector_name(self, path: str) -> str:
-        """This function will add the detector name (paddleDetection) into the
+        """This function will add the detector name (paddledetection) into the
         lp model config path to get the "canonical" model name.
 
         For example,
@@ -114,7 +121,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             model_name_segments = model_name.split("/")
             if (
                 len(model_name_segments) == 3
-                and "paddleDetection" not in model_name_segments
+                and "paddledetection" not in model_name_segments
             ):
                 return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
         return path
@@ -123,7 +130,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
                     model_dir,
                     batch_size=1,
                     enforce_cpu=False,
-                    enable_mkldnn=True,
+                    enable_mkldnn=False,
                     thread_num=10):
         """set AnalysisConfig, generate AnalysisPredictor
         Args:
@@ -150,6 +157,15 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             config.set_cpu_math_library_num_threads(thread_num)
             if enable_mkldnn:
                 config.enable_mkldnn()
+                try:
+                    # cache 10 different shapes for mkldnn to avoid memory leak
+                    config.set_mkldnn_cache_capacity(10)
+                    config.enable_mkldnn()
+                except Exception as e:
+                    print(
+                        "The current environment does not support `mkldnn`, so disable mkldnn."
+                    )
+                    pass                
 
         # disable print log when predict
         config.disable_glog_info()
@@ -162,25 +178,26 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
     def preprocess(self, image):
         """ preprocess image
+
         Args:
             image (np.ndarray): image (np.ndarray)
         Returns:
             inputs (dict): input of model
         """
-        # read rgb image
-        image, im_info = decode_image(image, self.im_info)
+
         # resize image by target_size and max_size
-        image, im_info = resize(image, im_info)
+        image, scale_factor = resize(image, self.target_size)
+        input_shape = np.array(image.shape[:2]).astype('float32')
         # normalize image
-        image, im_info = normalize_image(image, im_info)
+        image =  (image / 255.0 - self.pixel_mean) / self.pixel_std
         # transpose images
-        image, im_info = permute(image, im_info)
+        image = image.transpose((2, 0, 1)).copy()
+        shape2 = np.array(image.shape[:2]).astype('float32')
 
         inputs = {}
-        inputs['image'] = np.array((image, )).astype('float32')
-        inputs['im_shape'] = np.array((im_info['im_shape'], )).astype('float32')
-        inputs['scale_factor'] = np.array(
-            (im_info['scale_factor'], )).astype('float32')
+        inputs['image'] = np.array(image)[np.newaxis, :].astype('float32')
+        inputs['im_shape'] = np.array(input_shape)[np.newaxis, :].astype('float32')
+        inputs['scale_factor'] = np.array(scale_factor)[np.newaxis, :].astype('float32')
         return inputs
 
     def gather_output(self, np_boxes, np_masks):
@@ -217,11 +234,14 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
     def detect(self,
                 image):
         """Detect the layout of a given image.
+
         Args:
             image (:obj:`np.ndarray` or `PIL.Image`): The input image to detect.
+
         Returns:
             :obj:`~layoutparser.Layout`: The detected layout of the input image
         """
+
         # Convert PIL Image Input
         if isinstance(image, Image.Image):
             if image.mode != "RGB":
@@ -243,30 +263,4 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
         layout = self.gather_output(np_boxes, np_masks)
         return layout
-
-    def untar_files(self, model_tar, model_dir):
-        """ untar model files"""
-        # including files after decompression
-        tar_file_name_list = [
-            'inference.pdiparams', 'inference.pdiparams.info', 'inference.pdmodel'
-        ]
-        if not os.path.exists(
-                os.path.join(model_dir, 'inference.pdiparams')
-        ) or not os.path.exists(
-                os.path.join(model_dir, 'inference.pdmodel')):
-            # the path to save the decompressed file
-            os.makedirs(model_dir, exist_ok=True)
-            with tarfile.open(model_tar, 'r') as tarobj:
-                for member in tarobj.getmembers():
-                    filename = None
-                    for tar_file_name in tar_file_name_list:
-                        if tar_file_name in member.name:
-                            filename = tar_file_name
-                    if filename is None:
-                        continue
-                    file = tarobj.extractfile(member)
-                    with open(
-                            os.path.join(model_dir, filename),
-                            'wb') as model_file:
-                        model_file.write(file.read())
         
