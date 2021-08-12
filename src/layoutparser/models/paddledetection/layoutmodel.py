@@ -74,7 +74,9 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
                  label_map=None,
                  enforce_cpu=False,
                  extra_config={}):
-        if config_path is not None and config_path.startswith("lp://"):
+        if model_path is not None:
+            model_dir = model_path
+        elif config_path is not None and config_path.startswith("lp://"):
             prefix = "lp://"
             if label_map is None:
                 dataset_name = config_path.lstrip("lp://").split("/")[0]
@@ -82,9 +84,9 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             model_name = config_path[len(prefix) :].split('/')[1]
             config_path = self._reconstruct_path_with_detector_name(config_path)
             model_dir = PathManager.get_local_path(config_path)
+        else:
+            raise Exception("Please set config_path or model_path first")
 
-        if model_path is not None:
-            model_dir = model_path
         self.predictor = self.load_predictor(
             model_dir,
             batch_size=extra_config.get('batch_size', 1),
