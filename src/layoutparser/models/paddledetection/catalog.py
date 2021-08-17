@@ -7,9 +7,10 @@ import uuid
 
 from iopath.common.file_io import PathHandler
 from iopath.common.file_io import HTTPURLHandler
-from iopath.common.file_io import PathManager as PathManagerBase
 from iopath.common.file_io import get_cache_dir, file_lock
 from iopath.common.download import download
+
+from ..base_catalog import PathManager
 
 CONFIG_CATALOG = {
     "PubLayNet": {
@@ -193,6 +194,5 @@ class LayoutParserPaddleModelHandler(PathHandler):
         return PathManager.open(self._get_local_path(path), mode, **kwargs)
 
 
-PathManager = PathManagerBase()
 PathManager.register_handler(PaddleModelURLHandler())
 PathManager.register_handler(LayoutParserPaddleModelHandler())
