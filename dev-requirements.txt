@@ -11,3 +11,4 @@ google-cloud-vision==1
 pytesseract
 pycocotools
 git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=detectron2
+paddlepaddle

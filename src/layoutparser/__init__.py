@@ -15,7 +15,8 @@ from .ocr import (
 )
 
 from .models import (
-    Detectron2LayoutModel
+    Detectron2LayoutModel,
+    PaddleDetectionLayoutModel
 )
 
 from .io import (
