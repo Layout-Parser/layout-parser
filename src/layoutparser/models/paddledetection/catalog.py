@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Any,Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 import tarfile
 import uuid
@@ -35,38 +35,57 @@ LABEL_MAP_CATALOG = {
 }
 # fmt: on
 
-def untar_function(model_tar):
-    """ untar model files
-    """
 
-    # including files after decompression
-    tar_file_name_list = [
-        'inference.pdiparams', 'inference.pdiparams.info', 'inference.pdmodel'
-    ]
-    pre_dir = os.path.dirname(model_tar)
-    base_dir = os.path.splitext(os.path.basename(model_tar))[0]
-    model_dir = os.path.join(pre_dir, base_dir)
+# Paddle model package everything in tar files, and each model's tar file should contain
+# the following files in the list:
+_TAR_FILE_NAME_LIST = [
+    "inference.pdiparams",
+    "inference.pdiparams.info",
+    "inference.pdmodel",
+]
+
+
+def _get_untar_directory(tar_file: str) -> str:
+
+    base_path = os.path.dirname(tar_file)
+    file_name = os.path.splitext(os.path.basename(tar_file))[0]
+    target_folder = os.path.join(base_path, file_name)
+
+    return target_folder
+
+
+def _untar_model_weights(model_tar):
+    """untar model files"""
+
+    model_dir = _get_untar_directory(model_tar)
 
     if not os.path.exists(
-            os.path.join(model_dir, tar_file_name_list[0])
-    ) or not os.path.exists(
-            os.path.join(model_dir, tar_file_name_list[2])):
+        os.path.join(model_dir, _TAR_FILE_NAME_LIST[0])
+    ) or not os.path.exists(os.path.join(model_dir, _TAR_FILE_NAME_LIST[2])):
         # the path to save the decompressed file
         os.makedirs(model_dir, exist_ok=True)
-        with tarfile.open(model_tar, 'r') as tarobj:
+        with tarfile.open(model_tar, "r") as tarobj:
             for member in tarobj.getmembers():
                 filename = None
-                for tar_file_name in tar_file_name_list:
+                for tar_file_name in _TAR_FILE_NAME_LIST:
                     if tar_file_name in member.name:
                         filename = tar_file_name
                 if filename is None:
                     continue
                 file = tarobj.extractfile(member)
-                with open(
-                        os.path.join(model_dir, filename),
-                        'wb') as model_file:
+                with open(os.path.join(model_dir, filename), "wb") as model_file:
                     model_file.write(file.read())
     return model_dir
+
+
+def is_cached_folder_exists_and_valid(cached):
+    possible_extracted_model_folder = _get_untar_directory(cached)
+    if not os.path.exists(possible_extracted_model_folder):
+        return False
+    for tar_file in _TAR_FILE_NAME_LIST:
+        if not os.path.exists(os.path.join(possible_extracted_model_folder, tar_file)):
+            return False
+    return True
 
 
 class PaddleModelURLHandler(HTTPURLHandler):
@@ -90,8 +109,21 @@ class PaddleModelURLHandler(HTTPURLHandler):
         **kwargs: Any,
     ) -> str:
         """
-        This implementation downloads the remote resource and caches it locally.
-        The resource will only be downloaded if not previously requested.
+        As paddle model stores all files in tar files, we need to extract them
+        and get the newly extracted folder path. This function rewrites the base
+        function to support the following situations:
+
+        1. If the tar file is not downloaded, it will download the tar file,
+            extract it to the target folder, delete the downloaded tar file,
+            and return the folder path.
+        2. If the extracted target folder is present, and all the necessary model
+            files are present (specified in _TAR_FILE_NAME_LIST), it will
+            return the folder path.
+        3. If the tar file is downloaded, but the extracted target folder is not
+            present (or it doesn't contain the necessary files in _TAR_FILE_NAME_LIST),
+            it will extract the tar file to the target folder, delete the tar file,
+            and return the folder path.
+
         """
         self._check_kwargs(kwargs)
         if (
@@ -109,16 +141,31 @@ class PaddleModelURLHandler(HTTPURLHandler):
                 filename = filename[:100] + "_" + uuid.uuid4().hex
 
             cached = os.path.join(dirname, filename)
-            with file_lock(cached):
-                if not os.path.isfile(cached):
-                    logger.info("Downloading {} ...".format(path))
-                    cached = download(path, dirname, filename=filename)
 
-                if path.endswith(".tar"):
-                    model_dir = untar_function(cached)
+            if is_cached_folder_exists_and_valid(cached):
+                # When the cached folder exists and valid, we don't need to redownload
+                # the tar file.
+                self.cache_map[path] = _get_untar_directory(cached)
 
-            logger.info("URL {} cached in {}".format(path, model_dir))
-            self.cache_map[path] = model_dir
+            else:
+                with file_lock(cached):
+                    if not os.path.isfile(cached):
+                        logger.info("Downloading {} ...".format(path))
+                        cached = download(path, dirname, filename=filename)
+
+                    if path.endswith(".tar"):
+                        model_dir = _untar_model_weights(cached)
+                        try:
+                            os.remove(cached)  # remove the redundant tar file
+                            # TODO: remove the .lock file .
+                        except:
+                            logger.warning(
+                                f"Not able to remove the cached tar file {cached}"
+                            )
+
+                logger.info("URL {} cached in {}".format(path, model_dir))
+                self.cache_map[path] = model_dir
+
         return self.cache_map[path]
 
 
