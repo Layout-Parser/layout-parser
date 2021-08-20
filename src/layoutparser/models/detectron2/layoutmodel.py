@@ -56,9 +56,12 @@ class Detectron2LayoutModel(BaseLayoutModel):
         config_path,
         model_path=None,
         label_map=None,
-        extra_config=[],
+        extra_config=None,
         enforce_cpu=False,
     ):
+
+        if extra_config is None:
+            extra_config = []
 
         if config_path.startswith("lp://") and label_map is None:
             dataset_name = config_path.lstrip("lp://").split("/")[0]

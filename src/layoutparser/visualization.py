@@ -159,7 +159,7 @@ def draw_box(
             Whether to display `block.id` on the top-left corner of
             the block.
             Defaults to False.
-        show_element_id (bool, optional):
+        show_element_type (bool, optional):
             Whether to display `block.type` on the top-left corner of
             the block.
             Defaults to False.
