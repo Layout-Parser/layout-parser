@@ -92,7 +92,7 @@ LABEL_MAP_CATALOG = {
         0: "Table"
     },
     "MFD": {
-        1: "equation"
+        1: "Equation"
     },
 }
 # fmt: on
