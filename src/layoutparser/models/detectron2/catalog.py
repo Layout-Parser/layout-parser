@@ -23,6 +23,9 @@ MODEL_CATALOG = {
         "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/8v4uqmz1at9v72a/model_final.pth?dl=1",
         "faster_rcnn_R_101_FPN_3x": "https://www.dropbox.com/s/6vzfk8lk9xvyitg/model_final.pth?dl=1",
     },
+    "MFD": {
+        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/7xel0i3iqpm2p8y/model_final.pth?dl=1",
+    },
 }
 
 CONFIG_CATALOG = {
@@ -45,6 +48,9 @@ CONFIG_CATALOG = {
     "TableBank": {
         "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/7cqle02do7ah7k4/config.yaml?dl=1",
         "faster_rcnn_R_101_FPN_3x": "https://www.dropbox.com/s/h63n6nv51kfl923/config.yaml?dl=1",
+    },
+    "MFD": {
+        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/ld9izb95f19369w/config.yaml?dl=1",
     },
 }
 
@@ -84,6 +90,9 @@ LABEL_MAP_CATALOG = {
     },
     "TableBank": {
         0: "Table"
+    },
+    "MFD": {
+        1: "equation"
     },
 }
 # fmt: on
