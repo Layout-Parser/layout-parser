@@ -96,8 +96,12 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         model_path=None,
         label_map=None,
         enforce_cpu=False,
-        extra_config={},
+        extra_config=None,
     ):
+    
+        if extra_config is None:
+            extra_config = {}
+
         if model_path is not None:
             model_dir = model_path
         elif config_path is not None and config_path.startswith(
