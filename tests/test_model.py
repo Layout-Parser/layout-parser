@@ -2,7 +2,7 @@ from layoutparser import load_json
 from layoutparser.models import *
 import cv2
 
-ALL_CONFIGS = [
+ALL_DETECTRON2_MODEL_CONFIGS = [
     "lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config",
     "lp://HJDataset/faster_rcnn_R_50_FPN_3x/config",
     "lp://HJDataset/mask_rcnn_R_50_FPN_3x/config",
@@ -13,9 +13,10 @@ ALL_CONFIGS = [
     "lp://NewspaperNavigator/faster_rcnn_R_50_FPN_3x/config",
     "lp://TableBank/faster_rcnn_R_50_FPN_3x/config",
     "lp://TableBank/faster_rcnn_R_101_FPN_3x/config",
+    "lp://MFD/faster_rcnn_R_50_FPN_3x/config",
 ]
 
-ALL_PADDLE_CONFIGS = [
+ALL_PADDLEDETECTION_MODEL_CONFIGS = [
     "lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config",
     "lp://TableBank/ppyolov2_r50vd_dcn_365e_tableBank_word/config",
     "lp://TableBank/ppyolov2_r50vd_dcn_365e_tableBank_latex/config",
@@ -25,7 +26,7 @@ def test_Detectron2Model(is_large_scale=False):
 
     if is_large_scale:
 
-        for config in ALL_CONFIGS:
+        for config in ALL_DETECTRON2_MODEL_CONFIGS:
             model = Detectron2LayoutModel(config)
 
             image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
@@ -58,7 +59,7 @@ def test_PaddleDetectionModel(is_large_scale=False):
     """ test PaddleDetection model """
     if is_large_scale:
 
-        for config in ALL_PADDLE_CONFIGS:
+        for config in ALL_PADDLEDETECTION_MODEL_CONFIGS:
             model = PaddleDetectionLayoutModel(config)
 
             image = cv2.imread("tests/fixtures/model/test_model_image.jpg")

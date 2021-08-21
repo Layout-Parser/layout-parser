@@ -28,6 +28,8 @@ model.detect(image)
 | [NewspaperNavigator](https://news-navigator.labs.loc.gov/)            | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/wnido8pk4oubyzr/config.yml?dl=1)       | lp://NewspaperNavigator/faster_rcnn_R_50_FPN_3x/config |                                                                           |
 | [TableBank](https://doc-analysis.github.io/tablebank-page/index.html) | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/7cqle02do7ah7k4/config.yaml?dl=1)      | lp://TableBank/faster_rcnn_R_50_FPN_3x/config          | 89.78 [eval.csv](https://www.dropbox.com/s/1uwnz58hxf96iw2/eval.csv?dl=0) |
 | [TableBank](https://doc-analysis.github.io/tablebank-page/index.html) | [faster_rcnn_R_101_FPN_3x](https://www.dropbox.com/s/h63n6nv51kfl923/config.yaml?dl=1)     | lp://TableBank/faster_rcnn_R_101_FPN_3x/config         | 91.26 [eval.csv](https://www.dropbox.com/s/e1kq8thkj2id1li/eval.csv?dl=0) |
+| [Math Formula Detection(MFD)](http://transcriptorium.eu/~htrcontest/MathsICDAR2021/) | [faster_rcnn_R_50_FPN_3x](https://www.dropbox.com/s/ld9izb95f19369w/config.yaml?dl=1)     | lp://MFD/faster_rcnn_R_50_FPN_3x/config         | 79.68 [eval.csv](https://www.dropbox.com/s/1yvrs29jjybrlpw/eval.csv?dl=0) |
+
 
 * For PubLayNet models, we suggest using `mask_rcnn_X_101_32x8d_FPN_3x` model as it's trained on the whole training set, while others are only trained on the validation set (the size is only around 1/50). You could expect a 15% AP improvement using the `mask_rcnn_X_101_32x8d_FPN_3x` model.
 
@@ -40,3 +42,4 @@ model.detect(image)
 | [PrimaLayout](https://www.primaresearch.org/dataset/)        | `{1:"TextRegion", 2:"ImageRegion", 3:"TableRegion", 4:"MathsRegion", 5:"SeparatorRegion", 6:"OtherRegion"}` |
 | [NewspaperNavigator](https://news-navigator.labs.loc.gov/)        | `{0: "Photograph", 1: "Illustration", 2: "Map", 3: "Comics/Cartoon", 4: "Editorial Cartoon", 5: "Headline", 6: "Advertisement"}` |
 | [TableBank](https://doc-analysis.github.io/tablebank-page/index.html)         | `{0: "Table"}` |
+| [MFD](http://transcriptorium.eu/~htrcontest/MathsICDAR2021/)         | `{1: "Equation"}` |
