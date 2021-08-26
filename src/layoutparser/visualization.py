@@ -9,7 +9,14 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw, ImageColor
 
 import layoutparser
-from .elements import *
+from .elements import (
+    Layout,
+    Interval,
+    Rectangle,
+    TextBlock,
+    Quadrilateral,
+    _cvt_coordinates_to_points,
+)
 
 # We need to fix this ugly hack some time in the future
 _lib_path = os.path.dirname(sys.modules[layoutparser.__package__].__file__)
@@ -49,8 +56,8 @@ def _draw_vertical_text(
     text_width = max([image_font.getsize(c)[0] for c in text])
     text_height = sum(char_heights) + character_spacing * len(text)
 
-    txt_img = Image.new("RGB", (text_width, text_height), color=text_background_color)
-    txt_mask = Image.new("RGB", (text_width, text_height), color=text_background_color)
+    txt_img = Image.new("RGBA", (text_width, text_height), color=text_background_color)
+    txt_mask = Image.new("RGBA", (text_width, text_height), color=text_background_color)
 
     txt_img_draw = ImageDraw.Draw(txt_img)
     txt_mask_draw = ImageDraw.Draw(txt_mask)
@@ -84,7 +91,7 @@ def _create_new_canvas(canvas, arrangement, text_background_color):
 
     if arrangement == "lr":
         new_canvas = Image.new(
-            "RGB",
+            "RGBA",
             (canvas.width * 2, canvas.height),
             color=text_background_color or DEFAULT_TEXT_BACKGROUND,
         )
@@ -92,7 +99,7 @@ def _create_new_canvas(canvas, arrangement, text_background_color):
 
     elif arrangement == "ud":
         new_canvas = Image.new(
-            "RGB",
+            "RGBA",
             (canvas.width, canvas.height * 2),
             color=text_background_color or DEFAULT_TEXT_BACKGROUND,
         )
@@ -111,7 +118,7 @@ def _create_color_palette(types):
     }
 
 
-def _get_color_rgb(color_string: str, alpha: float) -> Tuple[int, int, int, int]:
+def _get_color_rgb(color_string: Any, alpha: float) -> Tuple[int, int, int, int]:
     if color_string[0] == "#" and len(color_string) == 7:
         # When color string is a hex string
         color_hex = color_string.lstrip("#")
@@ -120,9 +127,44 @@ def _get_color_rgb(color_string: str, alpha: float) -> Tuple[int, int, int, int]
             int(255 * alpha),
         )
     else:
-        rgb = ImageColor.getrgb(color_string)
-        # It will throw an ValueError when the color is incorrect.
-        return rgb + (int(255 * alpha),)
+        try:
+            rgb = ImageColor.getrgb(color_string)
+            return rgb + (int(255 * alpha),)
+        except:
+            # ImageColor.getrgb will throw an ValueError when the color is not
+            # a valid color string, even if it is in other formats supported by
+            # PIL. As such, we return the color as it is if the first two cases
+            # are not valid.
+            return color_string
+
+
+def _draw_box_outline_on_handler(draw, block, color, width):
+    
+    if not hasattr(block, "points"):
+        points = _cvt_coordinates_to_points(block.coordinates),
+    else:
+        points = block.points
+        
+    vertices = points.ravel().tolist()
+    drawing_vertices = vertices + vertices[:2]
+
+    draw.line(
+        drawing_vertices,
+        width=width,
+        fill=color,
+    )
+
+def _draw_transparent_box_on_handler(draw, block, color, alpha):
+
+    if hasattr(block, "points"):
+        vertices = [tuple(block) for block in block.points.tolist()]
+    else:
+        vertices = _cvt_coordinates_to_points(block.coordinates)
+
+    draw.polygon(
+        vertices,
+        _get_color_rgb(color, alpha),
+    )
 
 
 def image_loader(func):
@@ -142,6 +184,30 @@ def image_loader(func):
 
 
 @image_loader
+def draw_transparent_box(
+    canvas: "Image",
+    blocks: Layout,
+    color_map: Dict = None,
+    alpha: float = 0.25,
+) -> "Image":
+    """Given the image, draw a series of transparent boxes based on the blocks,
+    coloring using the specified color_map.
+    """
+
+    if color_map is None:
+        all_types = set([b.type for b in blocks if hasattr(b, "type")])
+        color_map = _create_color_palette(all_types)
+
+    canvas = canvas.copy()
+    draw = ImageDraw.Draw(canvas, "RGBA")
+
+    for block in blocks:
+        _draw_transparent_box_on_handler(draw, block, color_map[block.type], alpha)
+
+    return canvas
+
+
+@image_loader
 def draw_box(
     canvas,
     layout,
@@ -154,6 +220,7 @@ def draw_box(
     id_font_path=None,
     id_text_color=None,
     id_text_background_color=None,
+    id_text_background_alpha=0,
 ):
     """Draw the layout region on the input canvas(image).
 
@@ -200,6 +267,10 @@ def draw_box(
             Set to change the text region background used for drawing `block.id`.
             Defaults to None, when the color is set to
             :const:`DEFAULT_TEXT_BACKGROUND`.
+        id_text_background_alpha (:obj:`float`, optional):
+            A float range from 0 to 1. Set to change the alpha of the
+            drawn text.
+            Defaults to 0 - the text box will be transparent.
     Returns:
         :obj:`PIL.Image.Image`:
             A Image object containing the `layout` draw upon the input `canvas`.
@@ -209,8 +280,11 @@ def draw_box(
         f"The box_alpha value {box_alpha} is not within range [0,1]."
     )
 
-    draw = ImageDraw.Draw(canvas)
+    draw = ImageDraw.Draw(canvas, mode="RGBA")
 
+    id_text_background_color = id_text_background_color or DEFAULT_TEXT_BACKGROUND
+    id_text_color = id_text_color or DEFAULT_TEXT_COLOR
+        
     if box_width is None:
         box_width = _calculate_default_box_width(canvas)
 
@@ -232,20 +306,9 @@ def draw_box(
             else color_map.get(ele.type, DEFAULT_OUTLINE_COLOR)
         )
 
-        if not isinstance(ele, Quadrilateral):
-            draw.rectangle(
-                ele.coordinates,
-                width=box_width,
-                outline=_get_color_rgb(outline_color, box_alpha),
-            )
+        _draw_box_outline_on_handler(draw, ele, outline_color, box_width)
 
-        else:
-            p = ele.points.ravel().tolist()
-            draw.line(
-                p + p[:2],
-                width=box_width,
-                fill=_get_color_rgb(outline_color, box_alpha),
-            )
+        _draw_transparent_box_on_handler(draw, ele, outline_color, box_alpha)
 
         if show_element_id or show_element_type:
             text = ""
@@ -257,21 +320,20 @@ def draw_box(
 
             start_x, start_y = ele.coordinates[:2]
             text_w, text_h = font_obj.getsize(text)
-
+            
+            text_box_object = Rectangle(start_x, start_y, start_x + text_w, start_y + text_h)
             # Add a small background for the text
-            draw.rectangle(
-                (start_x, start_y, start_x + text_w, start_y + text_h),
-                fill=id_text_background_color or DEFAULT_TEXT_BACKGROUND,
-            )
+            
+            _draw_transparent_box_on_handler(draw, text_box_object, id_text_background_color, id_text_background_alpha)
 
             # Draw the ids
             draw.text(
                 (start_x, start_y),
                 text,
-                fill=id_text_color or DEFAULT_TEXT_COLOR,
+                fill=id_text_color,
                 font=font_obj,
             )
-
+        
     return canvas
 
 
@@ -284,10 +346,12 @@ def draw_text(
     font_path=None,
     text_color=None,
     text_background_color=None,
+    text_background_alpha=1,
     vertical_text=False,
     with_box_on_text=False,
     text_box_width=None,
     text_box_color=None,
+    text_box_alpha=0,
     with_layout=False,
     **kwargs,
 ):
@@ -361,29 +425,38 @@ def draw_text(
     text_color = text_color or DEFAULT_TEXT_COLOR
     text_background_color = text_background_color or DEFAULT_TEXT_BACKGROUND
 
-    canvas = _create_new_canvas(canvas, arrangement, text_background_color)
-    draw = ImageDraw.Draw(canvas)
+    canvas = _create_new_canvas(
+        canvas,
+        arrangement,
+        _get_color_rgb(text_background_color, text_background_alpha),
+    )
+    draw = ImageDraw.Draw(canvas, "RGBA")
 
     for idx, ele in enumerate(layout):
 
         if with_box_on_text:
-            p = (
-                ele.pad(right=text_box_width, bottom=text_box_width)
-                .points.ravel()
-                .tolist()
-            )
-
-            draw.line(p + p[:2], width=text_box_width, fill=text_box_color)
+            modified_box = ele.pad(right=text_box_width, bottom=text_box_width)
+            
+            _draw_box_outline_on_handler(draw, modified_box, text_box_color, text_box_width)
+            _draw_transparent_box_on_handler(draw, modified_box, text_box_color, text_box_alpha)
 
         if not hasattr(ele, "text") or ele.text == "":
             continue
 
         (start_x, start_y) = ele.coordinates[:2]
         if not vertical_text:
-            draw.text((start_x, start_y), ele.text, font=font_obj, fill=text_color)
+            draw.text(
+                (start_x, start_y),
+                ele.text,
+                font=font_obj,
+                fill=text_color,
+            )
         else:
             text_segment = _draw_vertical_text(
-                ele.text, font_obj, text_color, text_background_color
+                ele.text,
+                font_obj,
+                text_color,
+                _get_color_rgb(text_background_color, text_background_alpha),
             )
 
             if with_box_on_text:
