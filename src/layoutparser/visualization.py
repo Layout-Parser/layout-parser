@@ -1,12 +1,15 @@
-from PIL import Image, ImageFont, ImageDraw
-from .elements import *
 import numpy as np
 import functools
 import os
 import sys
 import warnings
-import layoutparser
 from itertools import cycle
+
+from PIL import Image, ImageFont, ImageDraw, ImageColor
+
+import layoutparser
+
+from .elements import *
 
 # We need to fix this ugly hack some time in the future
 _lib_path = os.path.dirname(sys.modules[layoutparser.__package__].__file__)
@@ -108,6 +111,17 @@ def _create_color_palette(types):
     }
 
 
+def _get_color_rgb(color_string:str, alpha:float) -> Tuple[int, int, int, int]:
+    if color_string[0] == "#" and len(color_string) == 7:
+        # When color string is a hex string
+        color_hex = color_string.lstrip("#")
+        return (*tuple(int(color_hex[i : i + 2], 16) for i in (0, 2, 4)), int(255 * alpha))
+    else:
+        rgb = ImageColor.getrgb(color_string)
+        # It will throw an ValueError when the color is incorrect.
+        return rgb + (int(255 * alpha),)
+
+
 def image_loader(func):
     @functools.wraps(func)
     def wrap(canvas, layout, *args, **kwargs):
@@ -129,6 +143,7 @@ def draw_box(
     canvas,
     layout,
     box_width=None,
+    box_alpha=0,
     color_map=None,
     show_element_id=False,
     show_element_type=False,
@@ -149,6 +164,10 @@ def draw_box(
             Defaults to None, when the boundary is automatically
             calculated as the the :const:`DEFAULT_BOX_WIDTH_RATIO`
             * the maximum of (height, width) of the canvas.
+        box_alpha (:obj:`float`, optional):
+            A float range from 0 to 1. Set to change the alpah of the 
+            drawn layout box. 
+            Defaults to 0 - the layout box will be fully transparent. 
         color_map (dict, optional):
             A map from `block.type` to the colors, e.g., `{1: 'red'}`.
             You can set it to `{}` to use only the
@@ -183,6 +202,8 @@ def draw_box(
             A Image object containing the `layout` draw upon the input `canvas`.
     """
 
+    assert 0<=box_alpha<=1, ValueError(f"The box_alpha value {box_alpha} is not within range [0,1]."
+
     draw = ImageDraw.Draw(canvas)
 
     if box_width is None:
@@ -207,11 +228,11 @@ def draw_box(
         )
 
         if not isinstance(ele, Quadrilateral):
-            draw.rectangle(ele.coordinates, width=box_width, outline=outline_color)
+            draw.rectangle(ele.coordinates, width=box_width, outline=_get_color_rgb(outline_color, box_alpha))
 
         else:
             p = ele.points.ravel().tolist()
-            draw.line(p + p[:2], width=box_width, fill=outline_color)
+            draw.line(p + p[:2], width=box_width, fill=_get_color_rgb(outline_color, box_alpha))
 
         if show_element_id or show_element_type:
             text = ""
