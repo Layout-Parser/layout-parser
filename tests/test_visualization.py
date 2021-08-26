@@ -57,14 +57,18 @@ def test_viz():
             font_size=15,
             text_color="pink",
             text_background_color="grey",
+            text_background_alpha=0.1,
             with_box_on_text=True,
             text_box_width=2,
             text_box_color="yellow",
+            text_box_alpha=0.2,
             with_layout=True,
             box_width=1,
             color_map={None: "blue"},
             show_element_id=True,
             id_font_size=8,
+            box_alpha=0.25,
+            id_text_background_alpha=0.25
         )
 
         draw_box(image, layout)
