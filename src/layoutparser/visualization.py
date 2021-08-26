@@ -139,12 +139,12 @@ def _get_color_rgb(color_string: Any, alpha: float) -> Tuple[int, int, int, int]
 
 
 def _draw_box_outline_on_handler(draw, block, color, width):
-    
+
     if not hasattr(block, "points"):
-        points = _cvt_coordinates_to_points(block.coordinates),
+        points = (_cvt_coordinates_to_points(block.coordinates),)
     else:
         points = block.points
-        
+
     vertices = points.ravel().tolist()
     drawing_vertices = vertices + vertices[:2]
 
@@ -153,6 +153,7 @@ def _draw_box_outline_on_handler(draw, block, color, width):
         width=width,
         fill=color,
     )
+
 
 def _draw_transparent_box_on_handler(draw, block, color, alpha):
 
@@ -220,7 +221,7 @@ def draw_box(
     id_font_path=None,
     id_text_color=None,
     id_text_background_color=None,
-    id_text_background_alpha=0,
+    id_text_background_alpha=1,
 ):
     """Draw the layout region on the input canvas(image).
 
@@ -235,7 +236,7 @@ def draw_box(
             calculated as the the :const:`DEFAULT_BOX_WIDTH_RATIO`
             * the maximum of (height, width) of the canvas.
         box_alpha (:obj:`float`, optional):
-            A float range from 0 to 1. Set to change the alpah of the
+            A float range from 0 to 1. Set to change the alpha of the
             drawn layout box.
             Defaults to 0 - the layout box will be fully transparent.
         color_map (dict, optional):
@@ -270,7 +271,7 @@ def draw_box(
         id_text_background_alpha (:obj:`float`, optional):
             A float range from 0 to 1. Set to change the alpha of the
             drawn text.
-            Defaults to 0 - the text box will be transparent.
+            Defaults to 1 - the text box will be solid.
     Returns:
         :obj:`PIL.Image.Image`:
             A Image object containing the `layout` draw upon the input `canvas`.
@@ -279,12 +280,15 @@ def draw_box(
     assert 0 <= box_alpha <= 1, ValueError(
         f"The box_alpha value {box_alpha} is not within range [0,1]."
     )
+    assert 0 <= id_text_background_alpha <= 1, ValueError(
+        f"The id_text_background_alpha value {id_text_background_alpha} is not within range [0,1]."
+    )
 
     draw = ImageDraw.Draw(canvas, mode="RGBA")
 
     id_text_background_color = id_text_background_color or DEFAULT_TEXT_BACKGROUND
     id_text_color = id_text_color or DEFAULT_TEXT_COLOR
-        
+
     if box_width is None:
         box_width = _calculate_default_box_width(canvas)
 
@@ -320,11 +324,18 @@ def draw_box(
 
             start_x, start_y = ele.coordinates[:2]
             text_w, text_h = font_obj.getsize(text)
-            
-            text_box_object = Rectangle(start_x, start_y, start_x + text_w, start_y + text_h)
+
+            text_box_object = Rectangle(
+                start_x, start_y, start_x + text_w, start_y + text_h
+            )
             # Add a small background for the text
-            
-            _draw_transparent_box_on_handler(draw, text_box_object, id_text_background_color, id_text_background_alpha)
+
+            _draw_transparent_box_on_handler(
+                draw,
+                text_box_object,
+                id_text_background_color,
+                id_text_background_alpha,
+            )
 
             # Draw the ids
             draw.text(
@@ -333,7 +344,7 @@ def draw_box(
                 fill=id_text_color,
                 font=font_obj,
             )
-        
+
     return canvas
 
 
@@ -387,6 +398,10 @@ def draw_text(
             `block.text`.
             Defaults to None, when the color is set to
             :const:`DEFAULT_TEXT_BACKGROUND`.
+        text_background_alpha (:obj:`float`, optional):
+            A float range from 0 to 1. Set to change the alpha of the
+            background of the canvas.
+            Defaults to 1 - the text box will be solid.
         vertical_text (bool, optional):
             Whether the text in a block should be drawn vertically.
             Defaults to False.
@@ -399,10 +414,15 @@ def draw_text(
             Defaults to None, when the boundary is automatically
             calculated as the the :const:`DEFAULT_BOX_WIDTH_RATIO`
             * the maximum of (height, width) of the canvas.
+        text_box_alpha (:obj:`float`, optional):
+            A float range from 0 to 1. Set to change the alpha of the
+            drawn text box.
+            Defaults to 0 - the text box will be fully transparent.
         text_box_color (:obj:`int`, optional):
             Set to change the color of the drawn layout box boundary.
             Defaults to None, when the color is set to
             :const:`DEFAULT_OUTLINE_COLOR`.
+        
         with_layout (bool, optional):
             Whether to draw the layout boxes on the input (image) canvas.
             Defaults to False.
@@ -413,6 +433,14 @@ def draw_text(
         :obj:`PIL.Image.Image`:
             A Image object containing the drawn text from `layout`.
     """
+
+    assert 0 <= text_background_color <= 1, ValueError(
+        f"The text_background_color value {text_background_color} is not within range [0,1]."
+    )
+    assert 0 <= text_box_alpha <= 1, ValueError(
+        f"The text_box_alpha value {text_box_alpha} is not within range [0,1]."
+    )
+
     if with_box_on_text:
         if text_box_width is None:
             text_box_width = _calculate_default_box_width(canvas)
@@ -436,9 +464,13 @@ def draw_text(
 
         if with_box_on_text:
             modified_box = ele.pad(right=text_box_width, bottom=text_box_width)
-            
-            _draw_box_outline_on_handler(draw, modified_box, text_box_color, text_box_width)
-            _draw_transparent_box_on_handler(draw, modified_box, text_box_color, text_box_alpha)
+
+            _draw_box_outline_on_handler(
+                draw, modified_box, text_box_color, text_box_width
+            )
+            _draw_transparent_box_on_handler(
+                draw, modified_box, text_box_color, text_box_alpha
+            )
 
         if not hasattr(ele, "text") or ele.text == "":
             continue
