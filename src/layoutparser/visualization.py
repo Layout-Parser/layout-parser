@@ -434,8 +434,8 @@ def draw_text(
             A Image object containing the drawn text from `layout`.
     """
 
-    assert 0 <= text_background_color <= 1, ValueError(
-        f"The text_background_color value {text_background_color} is not within range [0,1]."
+    assert 0 <= text_background_alpha <= 1, ValueError(
+        f"The text_background_color value {text_background_alpha} is not within range [0,1]."
     )
     assert 0 <= text_box_alpha <= 1, ValueError(
         f"The text_box_alpha value {text_box_alpha} is not within range [0,1]."
