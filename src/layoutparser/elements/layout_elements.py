@@ -448,24 +448,6 @@ class Interval(BaseCoordElement):
         """
         return Quadrilateral(self.points)
 
-    @classmethod
-    def from_series(cls, series):
-        series = series.dropna()
-        if series.get("x_1") and series.get("x_2"):
-            axis = "x"
-            start, end = series.get("x_1"), series.get("x_2")
-        else:
-            axis = "y"
-            start, end = series.get("y_1"), series.get("y_2")
-
-        return cls(
-            start,
-            end,
-            axis=axis,
-            canvas_height=series.get("height") or 0,
-            canvas_width=series.get("width") or 0,
-        )
-
 
 @inherit_docstrings
 class Rectangle(BaseCoordElement):
@@ -779,11 +761,6 @@ class Rectangle(BaseCoordElement):
 
     def to_quadrilateral(self):
         return Quadrilateral(self.points)
-
-    @classmethod
-    def from_series(cls, series):
-        series = series.dropna()
-        return cls(*[series[fname] for fname in cls.feature_names])
 
 
 @inherit_docstrings
@@ -1138,16 +1115,6 @@ class Quadrilateral(BaseCoordElement):
     def to_rectangle(self):
         return Rectangle(*self.coordinates)
 
-    @classmethod
-    def from_series(cls, series):
-        series = series.dropna()
-
-        points = pd.to_numeric(series[cls.feature_names[:8]]).values.reshape(4, -2)
-
-        return cls(
-            points=points, height=series.get("height"), width=series.get("width")
-        )
-
     def __eq__(self, other):
         if other.__class__ is not self.__class__:
             return False
@@ -1335,22 +1302,6 @@ class TextBlock(BaseLayoutElement):
             return self
         else:
             return self.set(block=self.block.to_quadrilateral())
-
-    @classmethod
-    def from_series(cls, series):
-
-        features = {fname: series.get(fname) for fname in cls.feature_names}
-        series = series.dropna()
-        if set(Quadrilateral.feature_names[:8]).issubset(series.index):
-            target_type = Quadrilateral
-        elif set(Interval.feature_names).issubset(series.index):
-            target_type = Interval
-        elif set(Rectangle.feature_names).issubset(series.index):
-            target_type = Rectangle
-        else:
-            target_type = Interval
-
-        return cls(block=target_type.from_series(series), **features)
 
     def to_dict(self) -> Dict[str, Any]:
         """
