@@ -20,5 +20,8 @@ from .models import (
 )
 
 from .io import (
-    load_json
+    load_json,
+    load_dict,
+    load_csv,
+    load_dataframe
 )

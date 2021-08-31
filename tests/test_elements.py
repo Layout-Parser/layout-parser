@@ -7,10 +7,9 @@ from layoutparser.elements import (
     Rectangle,
     Quadrilateral,
     TextBlock,
-    Layout,
-    InvalidShapeError,
-    NotSupportedShapeError,
+    Layout
 )
+from layoutparser.elements.errors import InvalidShapeError, NotSupportedShapeError
 
 
 def test_interval():

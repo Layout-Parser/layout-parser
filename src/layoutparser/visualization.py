@@ -15,8 +15,8 @@ from .elements import (
     Rectangle,
     TextBlock,
     Quadrilateral,
-    _cvt_coordinates_to_points,
 )
+from .elements.utils import cvt_coordinates_to_points
 
 # We need to fix this ugly hack some time in the future
 _lib_path = os.path.dirname(sys.modules[layoutparser.__package__].__file__)
@@ -141,7 +141,7 @@ def _get_color_rgb(color_string: Any, alpha: float) -> Tuple[int, int, int, int]
 def _draw_box_outline_on_handler(draw, block, color, width):
 
     if not hasattr(block, "points"):
-        points = (_cvt_coordinates_to_points(block.coordinates),)
+        points = (cvt_coordinates_to_points(block.coordinates),)
     else:
         points = block.points
 
@@ -160,7 +160,7 @@ def _draw_transparent_box_on_handler(draw, block, color, alpha):
     if hasattr(block, "points"):
         vertices = [tuple(block) for block in block.points.tolist()]
     else:
-        vertices = _cvt_coordinates_to_points(block.coordinates)
+        vertices = cvt_coordinates_to_points(block.coordinates)
 
     draw.polygon(
         vertices,

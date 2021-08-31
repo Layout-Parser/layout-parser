@@ -1,7 +1,6 @@
-from typing import List, Union, Dict, Dict, Any, Optional
-from abc import ABC, abstractmethod
-from collections.abc import Iterable, MutableSequence
-from copy import copy, deepcopy
+from typing import List, Union, Dict, Dict, Any, Optional, Tuple
+from collections.abc import Iterable
+from copy import copy
 from inspect import getmembers, isfunction
 import warnings
 import functools
@@ -12,69 +11,15 @@ from PIL import Image
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
 
-__all__ = ["Interval", "Rectangle", "Quadrilateral", "TextBlock", "Layout"]
-
-
-def _cvt_coordinates_to_points(coords):
-
-    x_1, y_1, x_2, y_2 = coords
-    return np.array(
-        [
-            [x_1, y_1],  # Top Left
-            [x_2, y_1],  # Top Right
-            [x_2, y_2],  # Bottom Right
-            [x_1, y_2],  # Bottom Left
-        ]
-    )
-
-
-def _cvt_points_to_coordinates(points):
-    x_1 = points[:, 0].min()
-    y_1 = points[:, 1].min()
-    x_2 = points[:, 0].max()
-    y_2 = points[:, 1].max()
-    return (x_1, y_1, x_2, y_2)
-
-
-def _perspective_transformation(M, points, is_inv=False):
-
-    if is_inv:
-        M = np.linalg.inv(M)
-
-    src_mid = np.hstack([points, np.ones((points.shape[0], 1))]).T  # 3x4
-    dst_mid = np.matmul(M, src_mid)
-
-    dst = (dst_mid / dst_mid[-1]).T[:, :2]  # 4x2
-
-    return dst
-
-
-def _vertice_in_polygon(vertice, polygon_points):
-    # The polygon_points are ordered clockwise
-
-    # The implementation is based on the algorithm from
-    # https://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/
-
-    points = polygon_points - vertice  # shift the coordinates origin to the vertice
-    edges = np.append(points, points[0:1, :], axis=0)
-    return all([np.linalg.det([e1, e2]) >= 0 for e1, e2 in zip(edges, edges[1:])])
-    # If the points are ordered clockwise, the det should <=0
-
-
-def _polygon_area(xs, ys):
-    """Calculate the area of polygons using
-    `Shoelace Formula <https://en.wikipedia.org/wiki/Shoelace_formula>`_.
-
-    Args:
-        xs (`np.ndarray`): The x coordinates of the points
-        ys (`np.ndarray`): The y coordinates of the points
-    """
-
-    # Refer to: https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
-    # The formula is equivalent to the original one indicated in the wikipedia
-    # page.
-
-    return 0.5 * np.abs(np.dot(xs, np.roll(ys, 1)) - np.dot(ys, np.roll(xs, 1)))
+from .base import BaseCoordElement, BaseLayoutElement
+from .utils import (
+    cvt_coordinates_to_points,
+    cvt_points_to_coordinates,
+    perspective_transformation,
+    vertice_in_polygon,
+    polygon_area,
+)
+from .errors import NotSupportedShapeError, InvalidShapeError
 
 
 def mixin_textblock_meta(func):
@@ -119,278 +64,6 @@ def support_textblock(func):
         return out
 
     return wrap
-
-
-class NotSupportedShapeError(Exception):
-    """For now (v0.2), if the created shape might be a polygon (shapes with more than 4 vertices),
-    layoutparser will raise NotSupportedShapeError. It is expected to be fixed in the future versions.
-    See
-    :ref:`shape_operations:problems-related-to-the-quadrilateral-class`.
-    """
-
-
-class InvalidShapeError(Exception):
-    """For shape operations like intersection of union, lp will raise the InvalidShapeError when
-    invalid shapes are created (e.g., intersecting a rectangle and an interval).
-    """
-
-
-class BaseLayoutElement:
-    def set(self, inplace=False, **kwargs):
-
-        obj = self if inplace else copy(self)
-        var_dict = vars(obj)
-        for key, val in kwargs.items():
-            if key in var_dict:
-                var_dict[key] = val
-            elif f"_{key}" in var_dict:
-                var_dict[f"_{key}"] = val
-            else:
-                raise ValueError(f"Unknown attribute name: {key}")
-
-        return obj
-
-    def __repr__(self):
-
-        info_str = ", ".join([f"{key}={val}" for key, val in vars(self).items()])
-        return f"{self.__class__.__name__}({info_str})"
-
-    def __eq__(self, other):
-
-        if other.__class__ is not self.__class__:
-            return False
-
-        return vars(self) == vars(other)
-
-
-class BaseCoordElement(ABC, BaseLayoutElement):
-    @property
-    @abstractmethod
-    def _name(self) -> str:
-        """The name of the class"""
-        pass
-
-    @property
-    @abstractmethod
-    def _features(self) -> List[str]:
-        """A list of features names used for initializing the class object"""
-        pass
-
-    #######################################################################
-    #########################  Layout Properties  #########################
-    #######################################################################
-
-    @property
-    @abstractmethod
-    def width(self):
-        pass
-
-    @property
-    @abstractmethod
-    def height(self):
-        pass
-
-    @property
-    @abstractmethod
-    def coordinates(self):
-        pass
-
-    @property
-    @abstractmethod
-    def points(self):
-        pass
-
-    @property
-    @abstractmethod
-    def area(self):
-        pass
-
-    #######################################################################
-    ###   Geometric Relations (relative to, condition on, and is in)    ###
-    #######################################################################
-
-    @abstractmethod
-    def condition_on(self, other):
-        """
-        Given the current element in relative coordinates to another element which is in absolute coordinates,
-        generate a new element of the current element in absolute coordinates.
-
-        Args:
-            other (:obj:`BaseCoordElement`):
-                The other layout element involved in the geometric operations.
-
-        Raises:
-            Exception: Raise error when the input type of the other element is invalid.
-
-        Returns:
-            :obj:`BaseCoordElement`:
-                The BaseCoordElement object of the original element in the absolute coordinate system.
-        """
-
-        pass
-
-    @abstractmethod
-    def relative_to(self, other):
-        """
-        Given the current element and another element both in absolute coordinates,
-        generate a new element of the current element in relative coordinates to the other element.
-
-        Args:
-            other (:obj:`BaseCoordElement`): The other layout element involved in the geometric operations.
-
-        Raises:
-            Exception: Raise error when the input type of the other element is invalid.
-
-        Returns:
-            :obj:`BaseCoordElement`:
-                The BaseCoordElement object of the original element in the relative coordinate system.
-        """
-
-        pass
-
-    @abstractmethod
-    def is_in(self, other, soft_margin={}, center=False):
-        """
-        Identify whether the current element is within another element.
-
-        Args:
-            other (:obj:`BaseCoordElement`):
-                The other layout element involved in the geometric operations.
-            soft_margin (:obj:`dict`, `optional`, defaults to `{}`):
-                Enlarge the other element with wider margins to relax the restrictions.
-            center (:obj:`bool`, `optional`, defaults to `False`):
-                The toggle to determine whether the center (instead of the four corners)
-                of the current element is in the other element.
-
-        Returns:
-            :obj:`bool`: Returns `True` if the current element is in the other element and `False` if not.
-        """
-
-        pass
-
-    #######################################################################
-    ################# Shape Operations (intersect, union)  ################
-    #######################################################################
-
-    @abstractmethod
-    def intersect(self, other: "BaseCoordElement", strict: bool = True):
-        """Intersect the current shape with the other object, with operations defined in
-        :doc:`../notes/shape_operations`.
-        """
-
-    @abstractmethod
-    def union(self, other: "BaseCoordElement", strict: bool = True):
-        """Union the current shape with the other object, with operations defined in
-        :doc:`../notes/shape_operations`.
-        """
-
-    #######################################################################
-    ############### Geometric Operations (pad, shift, scale) ##############
-    #######################################################################
-
-    @abstractmethod
-    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
-        """Pad the layout element on the four sides of the polygon with the user-defined pixels. If
-        safe_mode is set to True, the function will cut off the excess padding that falls on the negative
-        side of the coordinates.
-
-        Args:
-            left (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the upper side of the polygon.
-            right (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the lower side of the polygon.
-            top (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the left side of the polygon.
-            bottom (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the right side of the polygon.
-            safe_mode (:obj:`bool`, `optional`, defaults to True): A bool value to toggle the safe_mode.
-
-        Returns:
-            :obj:`BaseCoordElement`: The padded BaseCoordElement object.
-        """
-
-        pass
-
-    @abstractmethod
-    def shift(self, shift_distance=0):
-        """
-        Shift the layout element by user specified amounts on x and y axis respectively. If shift_distance is one
-        numeric value, the element will by shifted by the same specified amount on both x and y axis.
-
-        Args:
-            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`):
-                The number of pixels used to shift the element.
-
-        Returns:
-            :obj:`BaseCoordElement`: The shifted BaseCoordElement of the same shape-specific class.
-        """
-
-        pass
-
-    @abstractmethod
-    def scale(self, scale_factor=1):
-        """
-        Scale the layout element by a user specified amount on x and y axis respectively. If scale_factor is one
-        numeric value, the element will by scaled by the same specified amount on both x and y axis.
-
-        Args:
-            scale_factor (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): The amount for downscaling or upscaling the element.
-
-        Returns:
-            :obj:`BaseCoordElement`: The scaled BaseCoordElement of the same shape-specific class.
-        """
-
-        pass
-
-    #######################################################################
-    ################################# MISC ################################
-    #######################################################################
-
-    @abstractmethod
-    def crop_image(self, image):
-        """
-        Crop the input image according to the coordinates of the element.
-
-        Args:
-            image (:obj:`Numpy array`): The array of the input image.
-
-        Returns:
-            :obj:`Numpy array`: The array of the cropped image.
-        """
-
-        pass
-
-    #######################################################################
-    ########################## Import and Export ##########################
-    #######################################################################
-
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Generate a dictionary representation of the current object:
-            {
-                "block_type": <"interval", "rectangle", "quadrilateral"> ,
-                "non_empty_block_attr1": value1,
-                ...
-            }
-        """
-
-        data = {
-            key: getattr(self, key)
-            for key in self._features
-            if getattr(self, key) is not None
-        }
-        data["block_type"] = self._name
-        return data
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BaseCoordElement":
-        """Initialize an instance based on the dictionary representation
-
-        Args:
-            data (:obj:`dict`): The dictionary representation of the object
-        """
-
-        assert (
-            cls._name == data["block_type"]
-        ), f"Incompatible block types {data['block_type']}"
-
-        return cls(**{f: data[f] for f in cls._features})
 
 
 @inherit_docstrings
@@ -485,7 +158,7 @@ class Interval(BaseCoordElement):
             :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
         """
 
-        return _cvt_coordinates_to_points(self.coordinates)
+        return cvt_coordinates_to_points(self.coordinates)
 
     @property
     def center(self):
@@ -775,24 +448,6 @@ class Interval(BaseCoordElement):
         """
         return Quadrilateral(self.points)
 
-    @classmethod
-    def from_series(cls, series):
-        series = series.dropna()
-        if series.get("x_1") and series.get("x_2"):
-            axis = "x"
-            start, end = series.get("x_1"), series.get("x_2")
-        else:
-            axis = "y"
-            start, end = series.get("y_1"), series.get("y_2")
-
-        return cls(
-            start,
-            end,
-            axis=axis,
-            canvas_height=series.get("height") or 0,
-            canvas_width=series.get("width") or 0,
-        )
-
 
 @inherit_docstrings
 class Rectangle(BaseCoordElement):
@@ -869,7 +524,7 @@ class Rectangle(BaseCoordElement):
             :obj:`Numpy array`: A Numpy array of shape 4x2 containing the coordinates.
         """
 
-        return _cvt_coordinates_to_points(self.coordinates)
+        return cvt_coordinates_to_points(self.coordinates)
 
     @property
     def center(self):
@@ -910,7 +565,7 @@ class Rectangle(BaseCoordElement):
             )
 
         elif isinstance(other, Quadrilateral):
-            transformed_points = _perspective_transformation(
+            transformed_points = perspective_transformation(
                 other.perspective_matrix, self.points, is_inv=True
             )
 
@@ -939,7 +594,7 @@ class Rectangle(BaseCoordElement):
             )
 
         elif isinstance(other, Quadrilateral):
-            transformed_points = _perspective_transformation(
+            transformed_points = perspective_transformation(
                 other.perspective_matrix, self.points, is_inv=False
             )
 
@@ -977,13 +632,12 @@ class Rectangle(BaseCoordElement):
                 # This is equivalent to determine all the points of the
                 # rectangle is in the quadrilateral.
                 is_vertice_in = [
-                    _vertice_in_polygon(vertice, other.points)
-                    for vertice in self.points
+                    vertice_in_polygon(vertice, other.points) for vertice in self.points
                 ]
                 return all(is_vertice_in)
             else:
                 center = np.array(self.center)
-                return _vertice_in_polygon(center, other.points)
+                return vertice_in_polygon(center, other.points)
 
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
@@ -1108,11 +762,6 @@ class Rectangle(BaseCoordElement):
     def to_quadrilateral(self):
         return Quadrilateral(self.points)
 
-    @classmethod
-    def from_series(cls, series):
-        series = series.dropna()
-        return cls(*[series[fname] for fname in cls.feature_names])
-
 
 @inherit_docstrings
 class Quadrilateral(BaseCoordElement):
@@ -1208,7 +857,7 @@ class Quadrilateral(BaseCoordElement):
             :obj:`Tuple(numeric)`: Output the numeric values of the coordinates in a Tuple of size four.
         """
 
-        return _cvt_points_to_coordinates(self.points)
+        return cvt_points_to_coordinates(self.points)
 
     @property
     def points(self):
@@ -1238,7 +887,7 @@ class Quadrilateral(BaseCoordElement):
         """
         Return the area of the quadrilateral.
         """
-        return _polygon_area(self.points[:, 0], self.points[:, 1])
+        return polygon_area(self.points[:, 0], self.points[:, 1])
 
     @property
     def mapped_rectangle_points(self):
@@ -1283,7 +932,7 @@ class Quadrilateral(BaseCoordElement):
 
         elif isinstance(other, Quadrilateral):
 
-            transformed_points = _perspective_transformation(
+            transformed_points = perspective_transformation(
                 other.perspective_matrix, self.points, is_inv=True
             )
             return self.__class__(transformed_points, self.height, self.width)
@@ -1307,7 +956,7 @@ class Quadrilateral(BaseCoordElement):
 
         elif isinstance(other, Quadrilateral):
 
-            transformed_points = _perspective_transformation(
+            transformed_points = perspective_transformation(
                 other.perspective_matrix, self.points, is_inv=False
             )
             return self.__class__(transformed_points, self.height, self.width)
@@ -1344,13 +993,12 @@ class Quadrilateral(BaseCoordElement):
                 # This is equivalent to determine all the points of the
                 # rectangle is in the quadrilateral.
                 is_vertice_in = [
-                    _vertice_in_polygon(vertice, other.points)
-                    for vertice in self.points
+                    vertice_in_polygon(vertice, other.points) for vertice in self.points
                 ]
                 return all(is_vertice_in)
             else:
                 center = np.array(self.center)
-                return _vertice_in_polygon(center, other.points)
+                return vertice_in_polygon(center, other.points)
 
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
@@ -1466,16 +1114,6 @@ class Quadrilateral(BaseCoordElement):
 
     def to_rectangle(self):
         return Rectangle(*self.coordinates)
-
-    @classmethod
-    def from_series(cls, series):
-        series = series.dropna()
-
-        points = pd.to_numeric(series[cls.feature_names[:8]]).values.reshape(4, -2)
-
-        return cls(
-            points=points, height=series.get("height"), width=series.get("width")
-        )
 
     def __eq__(self, other):
         if other.__class__ is not self.__class__:
@@ -1665,22 +1303,6 @@ class TextBlock(BaseLayoutElement):
         else:
             return self.set(block=self.block.to_quadrilateral())
 
-    @classmethod
-    def from_series(cls, series):
-
-        features = {fname: series.get(fname) for fname in cls.feature_names}
-        series = series.dropna()
-        if set(Quadrilateral.feature_names[:8]).issubset(series.index):
-            target_type = Quadrilateral
-        elif set(Interval.feature_names).issubset(series.index):
-            target_type = Interval
-        elif set(Rectangle.feature_names).issubset(series.index):
-            target_type = Rectangle
-        else:
-            target_type = Interval
-
-        return cls(block=target_type.from_series(series), **features)
-
     def to_dict(self) -> Dict[str, Any]:
         """
         Generate a dictionary representation of the current textblock of the format::
@@ -1714,307 +1336,3 @@ class TextBlock(BaseLayoutElement):
         block = BASECOORD_ELEMENT_NAMEMAP[data["block_type"]].from_dict(data)
 
         return cls(block, **{f: data.get(f, None) for f in cls._features})
-
-
-class Layout(MutableSequence):
-    """
-    The :obj:`Layout` class id designed for processing a list of layout elements
-    on a page. It stores the layout elements in a list and the related `page_data`,
-    and provides handy APIs for processing all the layout elements in batch. `
-
-    Args:
-        blocks (:obj:`list`):
-            A list of layout element blocks
-        page_data (Dict, optional):
-            A dictionary storing the page (canvas) related information
-            like `height`, `width`, etc. It should be passed in as a
-            keyword argument to avoid any confusion.
-            Defaults to None.
-    """
-
-    def __init__(self, blocks: Optional[List] = None, *, page_data: Dict = None):
-        self._blocks = blocks if blocks is not None else []
-        self.page_data = page_data or {}
-
-    def __getitem__(self, key):
-        blocks = self._blocks[key]
-        if isinstance(key, slice):
-            return self.__class__(self._blocks[key], page_data=self.page_data)
-        else:
-            return blocks
-
-    def __setitem__(self, key, newvalue):
-        self._blocks[key] = newvalue
-
-    def __delitem__(self, key):
-        del self._blocks[key]
-
-    def __len__(self):
-        return len(self._blocks)
-
-    def __iter__(self):
-        for ele in self._blocks:
-            yield ele
-
-    def __repr__(self):
-        info_str = ", ".join([f"{key}={val}" for key, val in vars(self).items()])
-        return f"{self.__class__.__name__}({info_str})"
-
-    def __eq__(self, other):
-        if isinstance(other, Layout):
-            return (
-                all((a, b) for a, b in zip(self, other))
-                and self.page_data == other.page_data
-            )
-        else:
-            return False
-
-    def __add__(self, other):
-        if isinstance(other, Layout):
-            if self.page_data == other.page_data:
-                return self.__class__(
-                    self._blocks + other._blocks, page_data=self.page_data
-                )
-            elif self.page_data == {} or other.page_data == {}:
-                return self.__class__(
-                    self._blocks + other._blocks,
-                    page_data=self.page_data or other.page_data,
-                )
-            else:
-                raise ValueError(
-                    f"Incompatible page_data for two innputs: {self.page_data} vs {other.page_data}."
-                )
-        elif isinstance(other, list):
-            return self.__class__(self._blocks + other, page_data=self.page_data)
-        else:
-            raise ValueError(
-                f"Invalid input type for other {other.__class__.__name__}."
-            )
-
-    def insert(self, key, value):
-        self._blocks.insert(key, value)
-
-    def copy(self):
-        return self.__class__(copy(self._blocks), page_data=self.page_data)
-
-    def relative_to(self, other):
-        return self.__class__(
-            [ele.relative_to(other) for ele in self], page_data=self.page_data
-        )
-
-    def condition_on(self, other):
-        return self.__class__(
-            [ele.condition_on(other) for ele in self], page_data=self.page_data
-        )
-
-    def is_in(self, other, soft_margin={}, center=False):
-        return self.__class__(
-            [ele.is_in(other, soft_margin, center) for ele in self],
-            page_data=self.page_data,
-        )
-
-    def sort(self, key=None, reverse=False, inplace=False) -> Optional["Layout"]:
-        """Sort the list of blocks based on the given 
-
-        Args:
-            key ([type], optional): key specifies a function of one argument that 
-            is used to extract a comparison key from each list element. 
-            Defaults to None.
-            reverse (bool, optional): reverse is a boolean value. If set to True, 
-            then the list elements are sorted as if each comparison were reversed. 
-            Defaults to False.
-            inplace (bool, optional): whether to perform the sort inplace. If set 
-            to False, it will return another object instance with _block sorted in
-            the order. Defaults to False.
-
-        Examples::
-            >>> import layoutparser as lp
-            >>> i = lp.Interval(4, 5, axis="y")
-            >>> l = lp.Layout([i, i.shift(2)])
-            >>> l.sort(key=lambda x: x.coordinates[1], reverse=True)
-
-        """
-        if not inplace:
-            return self.__class__(sorted(self._blocks, key=key, reverse=reverse), page_data=self.page_data)
-        else:
-            self._blocks.sort(key=key, reverse=reverse)
-
-    def filter_by(self, other, soft_margin={}, center=False):
-        """
-        Return a `Layout` object containing the elements that are in the `other` object.
-
-        Args:
-            other (:obj:`BaseCoordElement`):
-                The block to filter the current elements.
-
-        Returns:
-            :obj:`Layout`:
-                A new layout object after filtering.
-        """
-        return self.__class__(
-            [ele for ele in self if ele.is_in(other, soft_margin, center)],
-            page_data=self.page_data,
-        )
-
-    def shift(self, shift_distance):
-        """
-        Shift all layout elements by user specified amounts on x and y axis respectively. If shift_distance is one
-        numeric value, the element will by shifted by the same specified amount on both x and y axis.
-
-        Args:
-            shift_distance (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`):
-                The number of pixels used to shift the element.
-
-        Returns:
-            :obj:`Layout`:
-                A new layout object with all the elements shifted in the specified values.
-        """
-        return self.__class__(
-            [ele.shift(shift_distance) for ele in self], page_data=self.page_data
-        )
-
-    def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
-        """Pad all layout elements on the four sides of the polygon with the user-defined pixels. If
-        safe_mode is set to True, the function will cut off the excess padding that falls on the negative
-        side of the coordinates.
-
-        Args:
-            left (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the upper side of the polygon.
-            right (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the lower side of the polygon.
-            top (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the left side of the polygon.
-            bottom (:obj:`int`, `optional`, defaults to 0): The number of pixels to pad on the right side of the polygon.
-            safe_mode (:obj:`bool`, `optional`, defaults to True): A bool value to toggle the safe_mode.
-
-        Returns:
-            :obj:`Layout`:
-                A new layout object with all the elements padded in the specified values.
-        """
-        return self.__class__(
-            [ele.pad(left, right, top, bottom, safe_mode) for ele in self],
-            page_data=self.page_data,
-        )
-
-    def scale(self, scale_factor):
-        """
-        Scale all layout element by a user specified amount on x and y axis respectively. If scale_factor is one
-        numeric value, the element will by scaled by the same specified amount on both x and y axis.
-
-        Args:
-            scale_factor (:obj:`numeric` or :obj:`Tuple(numeric)` or :obj:`List[numeric]`): The amount for downscaling or upscaling the element.
-
-        Returns:
-            :obj:`Layout`:
-                A new layout object with all the elements scaled in the specified values.
-        """
-        return self.__class__(
-            [ele.scale(scale_factor) for ele in self], page_data=self.page_data
-        )
-
-    def crop_image(self, image):
-        return [ele.crop_image(image) for ele in self]
-
-    def get_texts(self):
-        """
-        Iterate through all the text blocks in the list and append their ocr'ed text results.
-
-        Returns:
-            :obj:`List[str]`: A list of text strings of the text blocks in the list of layout elements.
-        """
-
-        return [ele.text for ele in self if hasattr(ele, "text")]
-
-    def get_info(self, attr_name):
-        """Given user-provided attribute name, check all the elements in the list and return the corresponding
-        attribute values.
-
-        Args:
-            attr_name (:obj:`str`): The text string of certain attribute name.
-
-        Returns:
-            :obj:`List`:
-                The list of the corresponding attribute value (if exist) of each element in the list.
-        """
-        return [getattr(ele, attr_name) for ele in self if hasattr(ele, attr_name)]
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Generate a dict representation of the layout object with
-        the page_data and all the blocks in its dict representation.
-
-        Returns:
-            :obj:`Dict`:
-                The dictionary representation of the layout object.
-        """
-        return {"page_data": self.page_data, "blocks": [ele.to_dict() for ele in self]}
-
-    def get_homogeneous_blocks(self) -> List[BaseLayoutElement]:
-        """Convert all elements into blocks of the same type based
-        on the type casting rule::
-
-            Interval < Rectangle < Quadrilateral < TextBlock
-
-        Returns:
-            List[BaseLayoutElement]:
-                A list of base layout elements of the maximal compatible
-                type
-        """
-
-        # Detect the maximal compatible type
-        has_textblock = False
-        max_coord_level = -1
-        for ele in self:
-
-            if isinstance(ele, TextBlock):
-                has_textblock = True
-                block = ele.block
-            else:
-                block = ele
-
-            max_coord_level = max(
-                max_coord_level, BASECOORD_ELEMENT_INDEXMAP[block._name]
-            )
-        target_coord_name = ALL_BASECOORD_ELEMENTS[max_coord_level]._name
-
-        if has_textblock:
-            new_blocks = []
-            for ele in self:
-                if isinstance(ele, TextBlock):
-                    ele = copy(ele)
-                    if ele.block._name != target_coord_name:
-                        ele.block = getattr(ele.block, f"to_{target_coord_name}")()
-                else:
-                    if ele._name != target_coord_name:
-                        ele = getattr(ele, f"to_{target_coord_name}")()
-                    ele = TextBlock(block)
-                new_blocks.append(ele)
-        else:
-            new_blocks = [
-                getattr(ele, f"to_{target_coord_name}")()
-                if ele._name != target_coord_name
-                else ele
-                for ele in self
-            ]
-
-        return new_blocks
-
-    def to_dataframe(self, enforce_same_type=False) -> pd.DataFrame:
-        """Convert the layout object into the dataframe.
-        Warning: the page data won't be exported.
-
-        Args:
-            enforce_same_type (:obj:`bool`, optional):
-                If true, it will convert all the contained blocks to
-                the maximal compatible data type.
-                Defaults to False.
-
-        Returns:
-            pd.DataFrame:
-                The dataframe representation of layout object
-        """
-        if enforce_same_type:
-            blocks = self.get_homogeneous_blocks()
-        else:
-            blocks = self
-
-        df = pd.DataFrame([ele.to_dict() for ele in blocks])
-
-        return df
