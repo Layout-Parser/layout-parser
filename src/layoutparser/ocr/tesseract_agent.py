@@ -3,6 +3,7 @@ import csv
 import pickle
 
 import pandas as pd
+import pytesseract
 
 from .base import BaseOCRAgent, BaseOCRElementType
 from ..io import load_dataframe
@@ -40,9 +41,7 @@ class TesseractAgent(BaseOCRAgent):
     A wrapper for `Tesseract <https://github.com/tesseract-ocr/tesseract>`_ Text
     Detection APIs based on `PyTesseract <https://github.com/tesseract-ocr/tesseract>`_.
     """
-
     DEPENDENCIES = ["pytesseract"]
-    MODULES = [{"import_name": "_pytesseract", "module_path": "pytesseract"}]
 
     def __init__(self, languages="eng", **kwargs):
         """Create a Tesseract OCR Agent.
@@ -63,15 +62,15 @@ class TesseractAgent(BaseOCRAgent):
     @classmethod
     def with_tesseract_executable(cls, tesseract_cmd_path, **kwargs):
 
-        cls._pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
+        pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
         return cls(**kwargs)
 
     def _detect(self, img_content):
         res = {}
-        res["text"] = self._pytesseract.image_to_string(
+        res["text"] = pytesseract.image_to_string(
             img_content, lang=self.lang, **self.configs
         )
-        _data = self._pytesseract.image_to_data(
+        _data = pytesseract.image_to_data(
             img_content, lang=self.lang, **self.configs
         )
         res["data"] = pd.read_csv(

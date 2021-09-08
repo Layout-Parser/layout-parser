@@ -1,4 +1,4 @@
-from layoutparser.ocr import (
+from layoutparser import (
     GCVAgent,
     GCVFeatureType,
     TesseractAgent,

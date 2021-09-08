@@ -124,7 +124,7 @@ BACKENDS_MAPPING = dict(
         ("detectron2", (is_detectron2_available, DETECTRON2_IMPORT_ERROR)),
         ("paddlepaddle", (is_paddlepaddle_available, PADDLEPADDLE_IMPORT_ERROR)),
         ("pytesseract", (is_pytesseract_available, PYTESSERACT_IMPORT_ERROR)),
-        ("gcv", (is_gcv_available, GCV_IMPORT_ERROR)),
+        ("google-cloud-vision", (is_gcv_available, GCV_IMPORT_ERROR)),
     ]
 )
 

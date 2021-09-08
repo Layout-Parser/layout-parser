@@ -28,6 +28,15 @@ _import_structure = {
         "load_csv", 
         "load_dataframe"
     ],
+    "file_utils":[
+        "is_torch_available",
+        "is_torch_cuda_available",
+        "is_detectron2_available",
+        "is_paddlepaddle_available",
+        "is_pytesseract_available",
+        "is_gcv_available",
+        "requires_backends"
+    ]
 }
 
 if is_detectron2_available():
