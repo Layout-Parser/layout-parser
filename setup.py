@@ -35,6 +35,12 @@ setup(name         = "layoutparser",
           "torch",
           "torchvision",
           "effdet"
+        ],
+        "detectron2": [
+          "detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=detectron2"
+        ],
+        "paddledetection": [
+          "paddlepaddle==2.1.0"
         ]
       },
       include_package_data=True
