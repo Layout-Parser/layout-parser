@@ -1,17 +1,23 @@
+from typing import Union
 from abc import ABC, abstractmethod
 
 from ..file_utils import requires_backends
 
 
 class BaseLayoutModel(ABC):
-    
     @property
     @abstractmethod
     def DETECTOR_NAME(self):
         pass
-    
+
     @abstractmethod
-    def detect(self):
+    def detect(self, image):
+        pass
+
+    @abstractmethod
+    def image_loader(self, image: Union["ndarray", "Image"]):
+        """It will process the input images appropriately to the target format. 
+        """
         pass
 
     # Add lazy loading mechanisms for layout models, refer to

@@ -39,10 +39,17 @@ try:
     # The name of the paddlepaddle library:
     # Install name: pip install paddlepaddle
     # Import name: import paddle
-    _paddle_version = importlib_metadata.version("paddlepaddle") 
+    _paddle_version = importlib_metadata.version("paddlepaddle")
     logger.debug(f"Paddle version {_paddle_version} available.")
 except importlib_metadata.PackageNotFoundError:
     _paddle_available = False
+
+_effdet_available = importlib.util.find_spec("effdet") is not None
+try:
+    _effdet_version = importlib_metadata.version("effdet")
+    logger.debug(f"Effdet version {_effdet_version} available.")
+except importlib_metadata.PackageNotFoundError:
+    _effdet_version = False
 
 ###########################################
 ############## OCR Tool Deps ##############
@@ -78,12 +85,16 @@ def is_torch_cuda_available():
         return False
 
 
+def is_detectron2_available():
+    return _detectron2_available
+
+
 def is_paddle_available():
     return _paddle_available
 
 
-def is_detectron2_available():
-    return _detectron2_available
+def is_effdet_available():
+    return _effdet_available
 
 
 def is_pytesseract_available():
@@ -111,6 +122,11 @@ PADDLE_IMPORT_ERROR = """
 installation page: https://github.com/PaddlePaddle/Paddle and follow the ones that match your environment.
 """
 
+EFFDET_IMPORT_ERROR = """
+{0} requires the effdet library but it was not found in your environment. You can install it with pip:
+`pip install effdet`
+"""
+
 PYTESSERACT_IMPORT_ERROR = """
 {0} requires the PyTesseract library but it was not found in your environment. You can install it with pip:
 `pip install pytesseract`
@@ -126,6 +142,7 @@ BACKENDS_MAPPING = dict(
         ("torch", (is_torch_available, PYTORCH_IMPORT_ERROR)),
         ("detectron2", (is_detectron2_available, DETECTRON2_IMPORT_ERROR)),
         ("paddle", (is_paddle_available, PADDLE_IMPORT_ERROR)),
+        ("effdet", (is_effdet_available, )),
         ("pytesseract", (is_pytesseract_available, PYTESSERACT_IMPORT_ERROR)),
         ("google-cloud-vision", (is_gcv_available, GCV_IMPORT_ERROR)),
     ]
@@ -172,7 +189,7 @@ class _LazyModule(ModuleType):
         self._import_structure = import_structure
 
         # Following [PEP 366](https://www.python.org/dev/peps/pep-0366/)
-        # The __package__ variable should be set 
+        # The __package__ variable should be set
         # https://docs.python.org/3/reference/import.html#__package__
         self.__package__ = self.__name__
 

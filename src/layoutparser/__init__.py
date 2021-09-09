@@ -6,6 +6,7 @@ from .file_utils import (
     _LazyModule,
     is_detectron2_available,
     is_paddle_available,
+    is_effdet_available,
     is_pytesseract_available,
     is_gcv_available,
 )
@@ -44,6 +45,9 @@ if is_detectron2_available():
 
 if is_paddle_available():
     _import_structure["models.paddledetection"] = ["PaddleDetectionLayoutModel"]
+
+if is_effdet_available():
+    _import_structure["models.effdet"] = ["EfficientDetLayoutModel"]
 
 if is_pytesseract_available():
     _import_structure["ocr.tesseract_agent"] = [

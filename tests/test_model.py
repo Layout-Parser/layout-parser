@@ -22,6 +22,13 @@ ALL_PADDLEDETECTION_MODEL_CONFIGS = [
     "lp://TableBank/ppyolov2_r50vd_dcn_365e_tableBank_latex/config",
 ]
 
+ALL_EFFDET_MODEL_CONFIGS = [
+    "lp://PubLayNet/tf_efficientdet_d0/config",
+    "lp://PubLayNet/tf_efficientdet_d1/config",
+    "lp://MFD/tf_efficientdet_d0/config",
+    "lp://MFD/tf_efficientdet_d1/config",
+]
+
 def test_Detectron2Model(is_large_scale=False):
 
     if is_large_scale:
@@ -73,3 +80,17 @@ def test_PaddleDetectionModel(is_large_scale=False):
     model = PaddleDetectionLayoutModel("lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config", enforce_cpu=True)
     image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
     layout = model.detect(image)
+
+def test_EffDetModel(is_large_scale=False):
+
+    if is_large_scale:
+
+        for config in ALL_EFFDET_MODEL_CONFIGS:
+            model = EfficientDetLayoutModel(config)
+
+            image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
+            layout = model.detect(image)
+    else:
+        model = EfficientDetLayoutModel("lp://PubLayNet/tf_efficientdet_d0/config")
+        image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
+        layout = model.detect(image)
