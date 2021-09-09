@@ -41,7 +41,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
 
     Examples::
         >>> import layoutparser as lp
-        >>> model = lp.models.Detectron2LayoutModel('lp://HJDataset/faster_rcnn_R_50_FPN_3x/config')
+        >>> model = lp.Detectron2LayoutModel('lp://HJDataset/faster_rcnn_R_50_FPN_3x/config')
         >>> model.detect(image)
 
     """
@@ -108,7 +108,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
             model_name_segments = model_name.split("/")
             if (
                 len(model_name_segments) == 3
-                and "detectron2" not in model_name_segments
+                and self.DETECTOR_NAME not in model_name_segments
             ):
                 return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
         return path

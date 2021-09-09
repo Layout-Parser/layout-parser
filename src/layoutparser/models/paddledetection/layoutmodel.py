@@ -81,7 +81,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
     Examples::
         >>> import layoutparser as lp
         >>> model = lp.models.PaddleDetectionLayoutModel('
-                                    lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config')
+                                    lp://PubLayNet/ppyolov2_r50vd_dcn_365e/config')
         >>> model.detect(image)
 
     """
@@ -155,7 +155,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             model_name_segments = model_name.split("/")
             if (
                 len(model_name_segments) == 3
-                and "paddledetection" not in model_name_segments
+                and self.DETECTOR_NAME not in model_name_segments
             ):
                 return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
         return path
