@@ -62,13 +62,16 @@ try:
 except importlib_metadata.PackageNotFoundError:
     _pytesseract_available = False
 
-_gcv_available = importlib.util.find_spec("google.cloud.vision") is not None
 try:
-    _gcv_version = importlib_metadata.version(
-        "google-cloud-vision"
-    )  # This is slightly different
-    logger.debug(f"Google Cloud Vision Utils version {_gcv_version} available.")
-except importlib_metadata.PackageNotFoundError:
+    _gcv_available = importlib.util.find_spec("google.cloud.vision") is not None
+    try:
+        _gcv_version = importlib_metadata.version(
+            "google-cloud-vision"
+        )  # This is slightly different
+        logger.debug(f"Google Cloud Vision Utils version {_gcv_version} available.")
+    except importlib_metadata.PackageNotFoundError:
+        _gcv_available = False
+except ModuleNotFoundError:
     _gcv_available = False
 
 
@@ -142,7 +145,7 @@ BACKENDS_MAPPING = dict(
         ("torch", (is_torch_available, PYTORCH_IMPORT_ERROR)),
         ("detectron2", (is_detectron2_available, DETECTRON2_IMPORT_ERROR)),
         ("paddle", (is_paddle_available, PADDLE_IMPORT_ERROR)),
-        ("effdet", (is_effdet_available, )),
+        ("effdet", (is_effdet_available, EFFDET_IMPORT_ERROR)),
         ("pytesseract", (is_pytesseract_available, PYTESSERACT_IMPORT_ERROR)),
         ("google-cloud-vision", (is_gcv_available, GCV_IMPORT_ERROR)),
     ]
