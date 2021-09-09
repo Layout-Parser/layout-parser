@@ -24,7 +24,6 @@ setup(name         = "layoutparser",
         "pandas",
         "pillow",
         "pyyaml>=5.1",
-        "torchvision",
         "iopath",
       ],
       extras_require={
@@ -34,6 +33,7 @@ setup(name         = "layoutparser",
         ], 
         "effdet": [
           "torch",
+          "torchvision",
           "effdet"
         ]
       },
