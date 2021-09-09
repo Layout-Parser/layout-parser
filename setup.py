@@ -31,17 +31,29 @@ setup(name         = "layoutparser",
           'google-cloud-vision==1',
           'pytesseract'
         ], 
+        "gcv": [
+          'google-cloud-vision==1',
+        ],
+        "tesseract": [
+          'pytesseract'
+        ],
+        "layoutmodels": [
+          "torch",
+          "torchvision",
+          "effdet"
+        ],
         "effdet": [
           "torch",
           "torchvision",
           "effdet"
         ],
         "detectron2": [
-          "detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=detectron2"
+          "detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
+          # Supporting detectron0.5 for compatibility with newer torch versions 
         ],
         "paddledetection": [
           "paddlepaddle==2.1.0"
-        ]
+        ],
       },
       include_package_data=True
       )
