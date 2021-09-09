@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-import os
-import importlib
+
+from ..file_utils import requires_backends
 
 
 class BaseLayoutModel(ABC):
@@ -23,28 +23,7 @@ class BaseLayoutModel(ABC):
         """DEPENDENCIES lists all necessary dependencies for the class."""
         pass
 
-    @property
-    @abstractmethod
-    def MODULES(self):
-        """MODULES instructs how to import these necessary libraries."""
-        pass
-
-    @classmethod
-    def _import_module(cls):
-        for m in cls.MODULES:
-            if importlib.util.find_spec(m["module_path"]):
-                setattr(
-                    cls, m["import_name"], importlib.import_module(m["module_path"])
-                )
-            else:
-                raise ModuleNotFoundError(
-                    f"\n "
-                    f"\nPlease install the following libraries to support the class {cls.__name__}:"
-                    f"\n    pip install {' '.join(cls.DEPENDENCIES)}"
-                    f"\n "
-                )
-
     def __new__(cls, *args, **kwargs):
 
-        cls._import_module()
+        requires_backends(cls, cls.DEPENDENCIES)
         return super().__new__(cls)
