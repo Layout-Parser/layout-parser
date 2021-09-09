@@ -24,7 +24,6 @@ setup(name         = "layoutparser",
         "pandas",
         "pillow",
         "pyyaml>=5.1",
-        "torch",
         "torchvision",
         "iopath",
       ],
@@ -33,6 +32,10 @@ setup(name         = "layoutparser",
           'google-cloud-vision==1',
           'pytesseract'
         ], 
+        "effdet": [
+          "torch",
+          "effdet"
+        ]
       },
       include_package_data=True
       )
