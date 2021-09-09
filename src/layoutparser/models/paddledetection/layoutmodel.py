@@ -10,6 +10,11 @@ from .catalog import PathManager, LABEL_MAP_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
 
+from ...file_utils import is_paddle_available
+
+if is_paddle_available():
+    import paddle.inference
+
 
 __all__ = ["PaddleDetectionLayoutModel"]
 
@@ -81,13 +86,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
     """
 
-    DEPENDENCIES = ["paddlepaddle"]
-    MODULES = [
-        {
-            "import_name": "_inference",
-            "module_path": "paddle.inference",
-        },
-    ]
+    DEPENDENCIES = ["paddle"]
     DETECTOR_NAME = "paddledetection"
 
     def __init__(
@@ -178,7 +177,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             ValueError: predict by TensorRT need enforce_cpu == False.
         """
 
-        config = self._inference.Config(
+        config = paddle.inference.Config(
             os.path.join(
                 model_dir, "inference.pdmodel"
             ),  # TODO: Move them to some constants
@@ -211,7 +210,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         config.enable_memory_optim()
         # disable feed, fetch OP, needed by zero_copy_run
         config.switch_use_feed_fetch_ops(False)
-        predictor = self._inference.create_predictor(config)
+        predictor = paddle.inference.create_predictor(config)
         return predictor
 
     def preprocess(self, image):

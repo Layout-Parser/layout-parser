@@ -8,6 +8,12 @@ from cv2 import imencode
 
 from .base import BaseOCRAgent, BaseOCRElementType
 from ..elements import Layout, TextBlock, Quadrilateral, TextBlock
+from ..file_utils import is_gcv_available
+
+if is_gcv_available():
+    import google.protobuf.json_format as _json_format
+    import google.cloud.vision as _vision
+
 
 
 def _cvt_GCV_vertices_to_points(vertices):
@@ -72,11 +78,7 @@ class GCVAgent(BaseOCRAgent):
     """
 
     DEPENDENCIES = ["google-cloud-vision"]
-    MODULES = [
-        {"import_name": "_vision", "module_path": "google.cloud.vision"},
-        {"import_name": "_json_format", "module_path": "google.protobuf.json_format"},
-    ]
-
+    
     def __init__(self, languages=None, ocr_image_decode_type=".png"):
         """Create a Google Cloud Vision OCR Agent.
 
@@ -95,12 +97,12 @@ class GCVAgent(BaseOCRAgent):
                     * But `".jpg"` could also be a good choice if the input image is very large.
         """
         try:
-            self._client = self._vision.ImageAnnotatorClient()
+            self._client = _vision.ImageAnnotatorClient()
         except:
             warnings.warn(
                 "The GCV credential has not been set. You could not run the detect command."
             )
-        self._context = self._vision.types.ImageContext(language_hints=languages)
+        self._context = _vision.types.ImageContext(language_hints=languages)
         self.ocr_image_decode_type = ocr_image_decode_type
 
     @classmethod
@@ -114,7 +116,7 @@ class GCVAgent(BaseOCRAgent):
         return cls(**kwargs)
 
     def _detect(self, img_content):
-        img_content = self._vision.types.Image(content=img_content)
+        img_content = _vision.types.Image(content=img_content)
         response = self._client.document_text_detection(
             image=img_content, image_context=self._context
         )
@@ -260,12 +262,12 @@ class GCVAgent(BaseOCRAgent):
     def load_response(self, filename):
         with open(filename, "r") as f:
             data = f.read()
-        return self._json_format.Parse(
-            data, self._vision.types.AnnotateImageResponse(), ignore_unknown_fields=True
+        return _json_format.Parse(
+            data, _vision.types.AnnotateImageResponse(), ignore_unknown_fields=True
         )
 
     def save_response(self, res, file_name):
-        res = self._json_format.MessageToJson(res)
+        res = _json_format.MessageToJson(res)
 
         with open(file_name, "w") as f:
             json_file = json.loads(res)

@@ -6,6 +6,11 @@ import pandas as pd
 
 from .base import BaseOCRAgent, BaseOCRElementType
 from ..io import load_dataframe
+from ..file_utils import is_pytesseract_available
+
+if is_pytesseract_available():
+    import pytesseract
+
 
 class TesseractFeatureType(BaseOCRElementType):
     """
@@ -42,7 +47,6 @@ class TesseractAgent(BaseOCRAgent):
     """
 
     DEPENDENCIES = ["pytesseract"]
-    MODULES = [{"import_name": "_pytesseract", "module_path": "pytesseract"}]
 
     def __init__(self, languages="eng", **kwargs):
         """Create a Tesseract OCR Agent.
@@ -63,17 +67,15 @@ class TesseractAgent(BaseOCRAgent):
     @classmethod
     def with_tesseract_executable(cls, tesseract_cmd_path, **kwargs):
 
-        cls._pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
+        pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
         return cls(**kwargs)
 
     def _detect(self, img_content):
         res = {}
-        res["text"] = self._pytesseract.image_to_string(
+        res["text"] = pytesseract.image_to_string(
             img_content, lang=self.lang, **self.configs
         )
-        _data = self._pytesseract.image_to_data(
-            img_content, lang=self.lang, **self.configs
-        )
+        _data = pytesseract.image_to_data(img_content, lang=self.lang, **self.configs)
         res["data"] = pd.read_csv(
             io.StringIO(_data), quoting=csv.QUOTE_NONE, encoding="utf-8", sep="\t"
         )
@@ -150,7 +152,11 @@ class TesseractAgent(BaseOCRAgent):
                     "index": "id",
                 }
             )
-            .assign(x_2=lambda x: x.x_1 + x.w, y_2=lambda x: x.y_1 + x.h, block_type="rectangle")
+            .assign(
+                x_2=lambda x: x.x_1 + x.w,
+                y_2=lambda x: x.y_1 + x.h,
+                block_type="rectangle",
+            )
             .drop(columns=["w", "h"])
         )
 

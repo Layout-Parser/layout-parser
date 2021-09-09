@@ -1,10 +1,15 @@
 from PIL import Image
 import numpy as np
-import torch
 
 from .catalog import PathManager, LABEL_MAP_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
+from ...file_utils import is_torch_cuda_available, is_detectron2_available
+
+if is_detectron2_available():
+    import detectron2.engine
+    import detectron2.config
+
 
 __all__ = ["Detectron2LayoutModel"]
 
@@ -42,13 +47,6 @@ class Detectron2LayoutModel(BaseLayoutModel):
     """
 
     DEPENDENCIES = ["detectron2"]
-    MODULES = [
-        {
-            "import_name": "_engine",
-            "module_path": "detectron2.engine",
-        },
-        {"import_name": "_config", "module_path": "detectron2.config"},
-    ]
     DETECTOR_NAME = "detectron2"
 
     def __init__(
@@ -70,7 +68,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
         if enforce_cpu:
             extra_config.extend(["MODEL.DEVICE", "cpu"])
 
-        cfg = self._config.get_cfg()
+        cfg = detectron2.config.get_cfg()
         config_path = self._reconstruct_path_with_detector_name(config_path)
         config_path = PathManager.get_local_path(config_path)
         cfg.merge_from_file(config_path)
@@ -79,7 +77,10 @@ class Detectron2LayoutModel(BaseLayoutModel):
         if model_path is not None:
             model_path = self._reconstruct_path_with_detector_name(model_path)
             cfg.MODEL.WEIGHTS = model_path
-        cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+        
+        if not enforce_cpu:
+            cfg.MODEL.DEVICE = "cuda" if is_torch_cuda_available() else "cpu"
+
         self.cfg = cfg
 
         self.label_map = label_map
@@ -135,7 +136,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
         return layout
 
     def _create_model(self):
-        self.model = self._engine.DefaultPredictor(self.cfg)
+        self.model = detectron2.engine.DefaultPredictor(self.cfg)
 
     def detect(self, image):
         """Detect the layout of a given image.
