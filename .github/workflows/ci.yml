@@ -33,6 +33,7 @@ jobs:
     - name: Test Dependency Support 
       run: |
         # Install additional requirements when running tests
+        pip install pytest
         pytest tests_deps
 
     - name: Test with pytest
