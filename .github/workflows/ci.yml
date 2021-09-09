@@ -39,5 +39,6 @@ jobs:
     - name: Test with pytest
       run: |
         # Install additional requirements when running tests
+        pip install .[effdet]
         pip install -r dev-requirements.txt
         pytest tests
