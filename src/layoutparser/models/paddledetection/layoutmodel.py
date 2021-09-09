@@ -132,34 +132,6 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         )
         self.label_map = label_map
 
-    def _reconstruct_path_with_detector_name(self, path: str) -> str:
-        """This function will add the detector name (paddledetection) into the
-        lp model config path to get the "canonical" model name.
-
-        For example,
-        for a given config_path `lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config`,it will
-        transform it into `lp://paddledetection/PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config`.
-        However, if the config_path already contains the detector name, we won't change it.
-
-        This function is a general step to support multiple backends in the layout-parser
-        library.
-
-        Args:
-            path (str): The given input path that might or might not contain the detector name.
-
-        Returns:
-            str: a modified path that contains the detector name.
-        """
-        if path.startswith("lp://"):  # TODO: Move "lp://" to a constant
-            model_name = path[len("lp://") :]
-            model_name_segments = model_name.split("/")
-            if (
-                len(model_name_segments) == 3
-                and self.DETECTOR_NAME not in model_name_segments
-            ):
-                return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
-        return path
-
     def load_predictor(
         self,
         model_dir,

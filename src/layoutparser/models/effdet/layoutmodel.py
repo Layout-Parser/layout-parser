@@ -181,26 +181,6 @@ class EfficientDetLayoutModel(BaseLayoutModel):
         self.config = self.model.config
         self.label_map = label_map if label_map is not None else {}
 
-    def _reconstruct_path_with_detector_name(self, path: str) -> str:
-        """This function will add the detector name (efficientdet) into the
-        lp model config path to get the "canonical" model name.
-
-        Args:
-            path (str): The given input path that might or might not contain the detector name.
-
-        Returns:
-            str: a modified path that contains the detector name.
-        """
-        if path.startswith("lp://"):  # TODO: Move "lp://" to a constant
-            model_name = path[len("lp://") :]
-            model_name_segments = model_name.split("/")
-            if (
-                len(model_name_segments) == 3
-                and self.DETECTOR_NAME not in model_name_segments
-            ):
-                return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
-        return path
-
     def detect(self, image: Union["np.ndarray", "Image.Image"]):
 
         image = self.image_loader(image)
