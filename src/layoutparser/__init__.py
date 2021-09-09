@@ -5,7 +5,7 @@ import sys
 from .file_utils import (
     _LazyModule,
     is_detectron2_available,
-    is_paddlepaddle_available,
+    is_paddle_available,
     is_pytesseract_available,
     is_gcv_available,
 )
@@ -32,7 +32,7 @@ _import_structure = {
         "is_torch_available",
         "is_torch_cuda_available",
         "is_detectron2_available",
-        "is_paddlepaddle_available",
+        "is_paddle_available",
         "is_pytesseract_available",
         "is_gcv_available",
         "requires_backends"
@@ -42,7 +42,7 @@ _import_structure = {
 if is_detectron2_available():
     _import_structure["models.detectron2"] = ["Detectron2LayoutModel"]
 
-if is_paddlepaddle_available():
+if is_paddle_available():
     _import_structure["models.paddledetection"] = ["PaddleDetectionLayoutModel"]
 
 if is_pytesseract_available():

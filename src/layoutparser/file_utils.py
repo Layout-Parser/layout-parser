@@ -30,16 +30,19 @@ except importlib_metadata.PackageNotFoundError:
 _detectron2_available = importlib.util.find_spec("detectron2") is not None
 try:
     _detectron2_version = importlib_metadata.version("detectron2")
-    logger.debug(f"Successfully imported detectron2 version {_detectron2_version}")
+    logger.debug(f"Detectron2 version {_detectron2_version} available")
 except importlib_metadata.PackageNotFoundError:
     _detectron2_available = False
 
-_paddlepaddle_available = importlib.util.find_spec("paddlepaddle") is not None
+_paddle_available = importlib.util.find_spec("paddle") is not None
 try:
-    _paddlepaddle_version = importlib_metadata.version("paddlepaddle")
-    logger.debug(f"PaddlePaddle version {_paddlepaddle_version} available.")
+    # The name of the paddlepaddle library:
+    # Install name: pip install paddlepaddle
+    # Import name: import paddle
+    _paddle_version = importlib_metadata.version("paddlepaddle") 
+    logger.debug(f"Paddle version {_paddle_version} available.")
 except importlib_metadata.PackageNotFoundError:
-    _paddlepaddle_available = False
+    _paddle_available = False
 
 ###########################################
 ############## OCR Tool Deps ##############
@@ -75,8 +78,8 @@ def is_torch_cuda_available():
         return False
 
 
-def is_paddlepaddle_available():
-    return _paddlepaddle_available
+def is_paddle_available():
+    return _paddle_available
 
 
 def is_detectron2_available():
@@ -103,7 +106,7 @@ that match your environment. Typically the following would work for MacOS or Lin
     pip install 'git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=detectron2' 
 """
 
-PADDLEPADDLE_IMPORT_ERROR = """
+PADDLE_IMPORT_ERROR = """
 {0} requires the PaddlePaddle library but it was not found in your environment. Checkout the instructions on the
 installation page: https://github.com/PaddlePaddle/Paddle and follow the ones that match your environment.
 """
@@ -122,7 +125,7 @@ BACKENDS_MAPPING = dict(
     [
         ("torch", (is_torch_available, PYTORCH_IMPORT_ERROR)),
         ("detectron2", (is_detectron2_available, DETECTRON2_IMPORT_ERROR)),
-        ("paddlepaddle", (is_paddlepaddle_available, PADDLEPADDLE_IMPORT_ERROR)),
+        ("paddle", (is_paddle_available, PADDLE_IMPORT_ERROR)),
         ("pytesseract", (is_pytesseract_available, PYTESSERACT_IMPORT_ERROR)),
         ("google-cloud-vision", (is_gcv_available, GCV_IMPORT_ERROR)),
     ]
