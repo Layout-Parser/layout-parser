@@ -276,10 +276,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         """
 
         # Convert PIL Image Input
-        if isinstance(image, Image.Image):
-            if image.mode != "RGB":
-                image = image.convert("RGB")
-            image = np.array(image)
+        image = self.image_loader(image)
 
         inputs = self.preprocess(image)
         
@@ -296,3 +293,12 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
         layout = self.gather_output(np_boxes)
         return layout
+
+    def image_loader(self, image: Union["np.ndarray", "Image.Image"]):
+        
+        if isinstance(image, Image.Image):
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+            image = np.array(image)
+
+        return image

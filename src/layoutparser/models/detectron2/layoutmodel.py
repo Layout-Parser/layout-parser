@@ -1,3 +1,4 @@
+from typing import Union
 from PIL import Image
 import numpy as np
 
@@ -148,12 +149,16 @@ class Detectron2LayoutModel(BaseLayoutModel):
             :obj:`~layoutparser.Layout`: The detected layout of the input image
         """
 
+        image = self.image_loader(image)
+        outputs = self.model(image)
+        layout = self.gather_output(outputs)
+        return layout
+
+    def image_loader(self, image: Union["np.ndarray", "Image.Image"]):
         # Convert PIL Image Input
         if isinstance(image, Image.Image):
             if image.mode != "RGB":
                 image = image.convert("RGB")
             image = np.array(image)
 
-        outputs = self.model(image)
-        layout = self.gather_output(outputs)
-        return layout
+        return image

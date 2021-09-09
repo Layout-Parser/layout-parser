@@ -1,6 +1,7 @@
 from typing import List, Optional, Union, Dict, Any, Tuple
 
 from PIL import Image
+import numpy as np
 
 from .catalog import PathManager, LABEL_MAP_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
@@ -200,7 +201,9 @@ class EfficientDetLayoutModel(BaseLayoutModel):
                 return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
         return path
 
-    def detect(self, image: Image.Image):
+    def detect(self, image: Union["np.ndarray", "Image.Image"]):
+
+        image = self.image_loader(image)
 
         model_inputs, image_info = self.preprocessor.preprocess(image)
 
@@ -242,3 +245,14 @@ class EfficientDetLayoutModel(BaseLayoutModel):
                 )
 
         return box_predictions
+
+    def image_loader(self, image: Union["np.ndarray", "Image.Image"]):
+        
+        # Convert cv2 Image Input
+        if isinstance(image, np.ndarray):
+            # In this case, we assume the image is loaded by cv2
+            # and the channel order is BGR
+            image = image[..., ::-1]
+            image = Image.fromarray(image, mode="RGB")
+
+        return image
