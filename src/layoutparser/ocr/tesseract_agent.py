@@ -3,10 +3,14 @@ import csv
 import pickle
 
 import pandas as pd
-import pytesseract
 
 from .base import BaseOCRAgent, BaseOCRElementType
 from ..io import load_dataframe
+from ..file_utils import is_pytesseract_available
+
+if is_pytesseract_available():
+    import pytesseract
+
 
 class TesseractFeatureType(BaseOCRElementType):
     """
@@ -41,6 +45,7 @@ class TesseractAgent(BaseOCRAgent):
     A wrapper for `Tesseract <https://github.com/tesseract-ocr/tesseract>`_ Text
     Detection APIs based on `PyTesseract <https://github.com/tesseract-ocr/tesseract>`_.
     """
+
     DEPENDENCIES = ["pytesseract"]
 
     def __init__(self, languages="eng", **kwargs):
@@ -70,9 +75,7 @@ class TesseractAgent(BaseOCRAgent):
         res["text"] = pytesseract.image_to_string(
             img_content, lang=self.lang, **self.configs
         )
-        _data = pytesseract.image_to_data(
-            img_content, lang=self.lang, **self.configs
-        )
+        _data = pytesseract.image_to_data(img_content, lang=self.lang, **self.configs)
         res["data"] = pd.read_csv(
             io.StringIO(_data), quoting=csv.QUOTE_NONE, encoding="utf-8", sep="\t"
         )
@@ -149,7 +152,11 @@ class TesseractAgent(BaseOCRAgent):
                     "index": "id",
                 }
             )
-            .assign(x_2=lambda x: x.x_1 + x.w, y_2=lambda x: x.y_1 + x.h, block_type="rectangle")
+            .assign(
+                x_2=lambda x: x.x_1 + x.w,
+                y_2=lambda x: x.y_1 + x.h,
+                block_type="rectangle",
+            )
             .drop(columns=["w", "h"])
         )
 

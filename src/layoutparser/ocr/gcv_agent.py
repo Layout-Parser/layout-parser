@@ -6,11 +6,14 @@ import warnings
 import numpy as np
 from cv2 import imencode
 
-import google.protobuf.json_format as _json_format
-import google.cloud.vision as _vision
-
 from .base import BaseOCRAgent, BaseOCRElementType
 from ..elements import Layout, TextBlock, Quadrilateral, TextBlock
+from ..file_utils import is_gcv_available
+
+if is_gcv_available():
+    import google.protobuf.json_format as _json_format
+    import google.cloud.vision as _vision
+
 
 
 def _cvt_GCV_vertices_to_points(vertices):
