@@ -4,12 +4,11 @@ from ..file_utils import requires_backends
 
 
 class BaseLayoutModel(ABC):
-    
     @property
     @abstractmethod
     def DETECTOR_NAME(self):
         pass
-    
+
     @abstractmethod
     def detect(self):
         pass
