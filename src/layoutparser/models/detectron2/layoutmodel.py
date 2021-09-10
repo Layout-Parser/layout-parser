@@ -2,7 +2,7 @@ from typing import Union
 from PIL import Image
 import numpy as np
 
-from .catalog import PathManager, LABEL_MAP_CATALOG
+from .catalog import MODEL_CATALOG, PathManager, LABEL_MAP_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
 from ...file_utils import is_torch_cuda_available, is_detectron2_available
@@ -49,6 +49,7 @@ class Detectron2LayoutModel(BaseLayoutModel):
 
     DEPENDENCIES = ["detectron2"]
     DETECTOR_NAME = "detectron2"
+    MODEL_CATALOG = MODEL_CATALOG
 
     def __init__(
         self,
@@ -57,35 +58,38 @@ class Detectron2LayoutModel(BaseLayoutModel):
         label_map=None,
         extra_config=None,
         enforce_cpu=False,
+        device=None
     ):
 
         if extra_config is None:
             extra_config = []
 
-        if config_path.startswith("lp://") and label_map is None:
-            dataset_name = config_path.lstrip("lp://").split("/")[0]
-            label_map = LABEL_MAP_CATALOG[dataset_name]
-
-        if enforce_cpu:
-            extra_config.extend(["MODEL.DEVICE", "cpu"])
+        config_path, model_path = self.config_parser(config_path, model_path, allow_empty_path=True)
+        config_path = PathManager.get_local_path(config_path)
 
         cfg = detectron2.config.get_cfg()
-        config_path = self._reconstruct_path_with_detector_name(config_path)
-        config_path = PathManager.get_local_path(config_path)
         cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
-
-        if model_path is not None:
-            model_path = self._reconstruct_path_with_detector_name(model_path)
-            cfg.MODEL.WEIGHTS = model_path
         
-        if not enforce_cpu:
-            cfg.MODEL.DEVICE = "cuda" if is_torch_cuda_available() else "cpu"
+        if model_path is not None:
+            model_path = PathManager.get_local_path(model_path) 
+            # Because it will be forwarded to the detectron2 paths
+            cfg.MODEL.WEIGHTS = model_path
+
+        if is_torch_cuda_available():
+            if device is None:
+                device = "cuda"
+        else:
+            device = "cpu"
+        cfg.MODEL.DEVICE = device
 
         self.cfg = cfg
 
         self.label_map = label_map
         self._create_model()
+
+    def _create_model(self):
+        self.model = detectron2.engine.DefaultPredictor(self.cfg)
 
     def gather_output(self, outputs):
 
@@ -108,9 +112,6 @@ class Detectron2LayoutModel(BaseLayoutModel):
             layout.append(cur_block)
 
         return layout
-
-    def _create_model(self):
-        self.model = detectron2.engine.DefaultPredictor(self.cfg)
 
     def detect(self, image):
         """Detect the layout of a given image.

@@ -3,7 +3,7 @@ from typing import List, Optional, Union, Dict, Any, Tuple
 from PIL import Image
 import numpy as np
 
-from .catalog import PathManager, LABEL_MAP_CATALOG
+from .catalog import PathManager, LABEL_MAP_CATALOG, MODEL_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
 
@@ -91,6 +91,7 @@ class EfficientDetLayoutModel(BaseLayoutModel):
 
     DEPENDENCIES = ["effdet"]
     DETECTOR_NAME = "efficientdet"
+    MODEL_CATALOG = MODEL_CATALOG
 
     DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD = 0.25
 
@@ -129,21 +130,17 @@ class EfficientDetLayoutModel(BaseLayoutModel):
         extra_config: Optional[Dict],
     ):
 
+        config_path, model_path = self.config_parser(config_path, model_path)
+
         if config_path.startswith("lp://"):
             # If it's officially supported by layoutparser
-            dataset_name, model_name = config_path.lstrip("lp://").split("/")[0:2]
+            dataset_name, model_name = config_path.lstrip("lp://").split("/")[1:3]
 
             if label_map is None:
                 label_map = LABEL_MAP_CATALOG[dataset_name]
             num_classes = len(label_map)
 
-            if model_path is None:
-                # Download the models when it model_path is not specified
-                model_path = PathManager.get_local_path(
-                    self._reconstruct_path_with_detector_name(
-                        config_path.replace("config", "weight")
-                    )
-                )
+            model_path = PathManager.get_local_path(model_path)
 
             self.model = create_model(
                 model_name,

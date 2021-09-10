@@ -12,13 +12,14 @@ from iopath.common.download import download
 
 from ..base_catalog import PathManager
 
-CONFIG_CATALOG = {
+MODEL_CATALOG = {
     "PubLayNet": {
-        "ppyolov2_r50vd_dcn_365e_publaynet": "https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_publaynet.tar",
+        "ppyolov2_r50vd_dcn_365e": "https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_publaynet.tar",
     },
     "TableBank": {
-        "ppyolov2_r50vd_dcn_365e_tableBank_word": "https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_tableBank_word.tar",
-        "ppyolov2_r50vd_dcn_365e_tableBank_latex": "https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_tableBank_latex.tar",
+        "ppyolov2_r50vd_dcn_365e": "https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_tableBank_word.tar",
+        # "ppyolov2_r50vd_dcn_365e_tableBank_latex": "https://paddle-model-ecology.bj.bcebos.com/model/layout-parser/ppyolov2_r50vd_dcn_365e_tableBank_latex.tar",
+        # TODO: Train a single tablebank model for paddlepaddle
     },
 }
 
@@ -184,8 +185,8 @@ class LayoutParserPaddleModelHandler(PathHandler):
         model_name = path[len(self.PREFIX) :]
         dataset_name, *model_name, data_type = model_name.split("/")
 
-        if data_type == "config":
-            model_url = CONFIG_CATALOG[dataset_name]["/".join(model_name)]
+        if data_type == "weight":
+            model_url = MODEL_CATALOG[dataset_name]["/".join(model_name)]
         else:
             raise ValueError(f"Unknown data_type {data_type}")
         return PathManager.get_local_path(model_url, **kwargs)
