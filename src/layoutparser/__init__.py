@@ -40,6 +40,8 @@ _import_structure = {
     ]
 }
 
+_import_structure["models"] = ["AutoLayoutModel"]
+
 if is_detectron2_available():
     _import_structure["models.detectron2"] = ["Detectron2LayoutModel"]
 
