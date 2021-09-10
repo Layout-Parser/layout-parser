@@ -68,7 +68,7 @@ class LayoutModelConfig:
 def is_lp_layout_model_config_any_format(config: str) -> bool:
     if not config.startswith(LAYOUT_PARSER_MODEL_PREFIX):
         return False
-    if len(config[len(LAYOUT_PARSER_MODEL_PREFIX) :].split("/")) not in [2, 3, 4]:
+    if len(config[len(LAYOUT_PARSER_MODEL_PREFIX) :].split("/")) not in [1, 2, 3, 4]:
         return False
     return True
 
@@ -91,10 +91,23 @@ def layout_model_config_parser(
         backend_name, dataset_name, model_arch, identifier = parts
     elif len(parts) == 3:  # Short format
         assert backend_name != None
-        dataset_name, model_arch, identifier = parts
+        
+        if parts[0] == backend_name:
+            # lp://<backend-name>/<dataset-name>/<identifier>
+            assert model_arch != None
+            _, dataset_name, identifier = parts
+        else:
+            # lp://<dataset-name>/<model-arch>/<identifier>
+            dataset_name, model_arch, identifier = parts
+            
     elif len(parts) == 2:  # brief format
         assert backend_name != None
         assert model_arch != None
+        if parts[0] == backend_name:
+            # lp://<backend-name>/<identifier>    
+            raise ValueError(f"Invalid LP Model Config {config}")
+            
+        # lp://<dataset-name>/<identifier>    
         dataset_name, identifier = parts
     else:
         raise ValueError(f"Invalid LP Model Config {config}")
