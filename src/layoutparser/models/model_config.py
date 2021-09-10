@@ -87,7 +87,6 @@ def layout_model_config_parser(
     )
 
     parts = config[len(LAYOUT_PARSER_MODEL_PREFIX) :].split("/")
-    print(parts)
     if len(parts) == 4:  # Full format
         backend_name, dataset_name, model_arch, identifier = parts
     elif len(parts) == 3:  # Short format

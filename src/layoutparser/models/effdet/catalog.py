@@ -22,6 +22,9 @@ LABEL_MAP_CATALOG = {
         3: "List", 
         4: "Table", 
         5: "Figure"
+    },
+    "MFD": {
+        1: "Equation",
     }
 }
 
