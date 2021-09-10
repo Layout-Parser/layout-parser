@@ -1,6 +1,7 @@
 from typing import List, Union, Dict, Any, Tuple
 import os
 from functools import reduce
+import warnings
 
 from PIL import Image
 import cv2
@@ -58,9 +59,9 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             word labels (strings). If the config is from one of the supported
             datasets, Layout Parser will automatically initialize the label_map.
             Defaults to `None`.
-        enforce_cpu(:obj:`bool`, optional):
-            When set to `True`, it will enforce using cpu even if it is on a CUDA
-            available device.
+        device(:obj:`str`, optional):
+            Whether to use cuda or cpu devices. If not set, LayoutParser will
+            automatically determine the device to initialize the models on.
         extra_config (:obj:`dict`, optional):
             Extra configuration passed to the PaddleDetection model configuration.
             Defaults to `{}`.
@@ -95,11 +96,17 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         config_path=None,
         model_path=None,
         label_map=None,
-        enforce_cpu=False,
+        device=None,
+        enforce_cpu=None,
         extra_config=None,
-        device=None
     ):
-    
+
+        if enforce_cpu is not None:
+            warnings.warn(
+                "Setting enforce_cpu is deprecated. Please set `device` instead.",
+                DeprecationWarning,
+            )
+
         if extra_config is None:
             extra_config = {}
 
@@ -156,7 +163,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             os.path.join(model_dir, "inference.pdiparams"),
         )
 
-        if device == 'cuda':
+        if device == "cuda":
             # initial GPU memory(M), device ID
             # 2000 is an appropriate value for PaddleDetection model
             config.enable_use_gpu(2000, 0)
@@ -227,9 +234,10 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             clsid, bbox, score = int(np_box[0]), np_box[2:], np_box[1]
             x_1, y_1, x_2, y_2 = bbox
 
-
             cur_block = TextBlock(
-                Rectangle(x_1, y_1, x_2, y_2), type= self.label_map.get(clsid, clsid), score=score
+                Rectangle(x_1, y_1, x_2, y_2),
+                type=self.label_map.get(clsid, clsid),
+                score=score,
             )
             layout.append(cur_block)
 
@@ -249,7 +257,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         image = self.image_loader(image)
 
         inputs = self.preprocess(image)
-        
+
         input_names = self.predictor.get_input_names()
 
         for input_name in input_names:
@@ -265,7 +273,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         return layout
 
     def image_loader(self, image: Union["np.ndarray", "Image.Image"]):
-        
+
         if isinstance(image, Image.Image):
             if image.mode != "RGB":
                 image = image.convert("RGB")

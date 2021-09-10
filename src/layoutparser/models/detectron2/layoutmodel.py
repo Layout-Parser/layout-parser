@@ -1,6 +1,7 @@
 from typing import Union
 from PIL import Image
 import numpy as np
+import warnings
 
 from .catalog import MODEL_CATALOG, PathManager, LABEL_MAP_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
@@ -30,9 +31,9 @@ class Detectron2LayoutModel(BaseLayoutModel):
             word labels (strings). If the config is from one of the supported
             datasets, Layout Parser will automatically initialize the label_map.
             Defaults to `None`.
-        enforce_cpu(:obj:`bool`, optional):
-            When set to `True`, it will enforce using cpu even if it is on a CUDA
-            available device.
+        device(:obj:`str`, optional):
+            Whether to use cuda or cpu devices. If not set, LayoutParser will
+            automatically determine the device to initialize the models on.
         extra_config (:obj:`list`, optional):
             Extra configuration passed to the Detectron2 model
             configuration. The argument will be used in the `merge_from_list
@@ -57,22 +58,30 @@ class Detectron2LayoutModel(BaseLayoutModel):
         model_path=None,
         label_map=None,
         extra_config=None,
-        enforce_cpu=False,
-        device=None
+        enforce_cpu=None,
+        device=None,
     ):
+
+        if enforce_cpu is not None:
+            warnings.warn(
+                "Setting enforce_cpu is deprecated. Please set `device` instead.",
+                DeprecationWarning,
+            )
 
         if extra_config is None:
             extra_config = []
 
-        config_path, model_path = self.config_parser(config_path, model_path, allow_empty_path=True)
+        config_path, model_path = self.config_parser(
+            config_path, model_path, allow_empty_path=True
+        )
         config_path = PathManager.get_local_path(config_path)
 
         cfg = detectron2.config.get_cfg()
         cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
-        
+
         if model_path is not None:
-            model_path = PathManager.get_local_path(model_path) 
+            model_path = PathManager.get_local_path(model_path)
             # Because it will be forwarded to the detectron2 paths
             cfg.MODEL.WEIGHTS = model_path
 
