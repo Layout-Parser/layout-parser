@@ -1,12 +1,13 @@
 from typing import List, Union, Dict, Any, Tuple
 import os
 from functools import reduce
+import warnings
 
 from PIL import Image
 import cv2
 import numpy as np
 
-from .catalog import PathManager, LABEL_MAP_CATALOG
+from .catalog import PathManager, LABEL_MAP_CATALOG, MODEL_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
 
@@ -58,9 +59,9 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             word labels (strings). If the config is from one of the supported
             datasets, Layout Parser will automatically initialize the label_map.
             Defaults to `None`.
-        enforce_cpu(:obj:`bool`, optional):
-            When set to `True`, it will enforce using cpu even if it is on a CUDA
-            available device.
+        device(:obj:`str`, optional):
+            Whether to use cuda or cpu devices. If not set, LayoutParser will
+            automatically determine the device to initialize the models on.
         extra_config (:obj:`dict`, optional):
             Extra configuration passed to the PaddleDetection model configuration.
             Defaults to `{}`.
@@ -88,36 +89,43 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
 
     DEPENDENCIES = ["paddle"]
     DETECTOR_NAME = "paddledetection"
+    MODEL_CATALOG = MODEL_CATALOG
 
     def __init__(
         self,
         config_path=None,
         model_path=None,
         label_map=None,
-        enforce_cpu=False,
+        device=None,
+        enforce_cpu=None,
         extra_config=None,
     ):
-    
+
+        if enforce_cpu is not None:
+            warnings.warn(
+                "Setting enforce_cpu is deprecated. Please set `device` instead.",
+                DeprecationWarning,
+            )
+
         if extra_config is None:
             extra_config = {}
 
-        if model_path is not None:
-            model_dir = model_path
-        elif config_path is not None and config_path.startswith(
-            "lp://"
-        ):  # TODO: Move "lp://" to a constant
-            if label_map is None:
-                dataset_name = config_path.lstrip("lp://").split("/")[0]
+        _, model_path = self.config_parser(config_path, model_path)
+        model_dir = PathManager.get_local_path(model_path)
+
+        if label_map is None:
+            if model_path.startswith("lp://"):
+                dataset_name = model_path.lstrip("lp://").split("/")[1]
                 label_map = LABEL_MAP_CATALOG[dataset_name]
-            config_path = self._reconstruct_path_with_detector_name(config_path)
-            model_dir = PathManager.get_local_path(config_path)
-        else:
-            raise Exception("Please set config_path or model_path first")
+            else:
+                label_map = {}
+
+        self.label_map = label_map
 
         # TODO: rethink how to save store the default constants
         self.predictor = self.load_predictor(
             model_dir,
-            enforce_cpu=enforce_cpu,
+            device=device,
             enable_mkldnn=extra_config.get("enable_mkldnn", False),
             thread_num=extra_config.get("thread_num", 10),
         )
@@ -130,47 +138,18 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         self.pixel_std = extra_config.get(
             "pixel_std", np.array([[[0.229, 0.224, 0.225]]])
         )
-        self.label_map = label_map
-
-    def _reconstruct_path_with_detector_name(self, path: str) -> str:
-        """This function will add the detector name (paddledetection) into the
-        lp model config path to get the "canonical" model name.
-
-        For example,
-        for a given config_path `lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config`,it will
-        transform it into `lp://paddledetection/PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config`.
-        However, if the config_path already contains the detector name, we won't change it.
-
-        This function is a general step to support multiple backends in the layout-parser
-        library.
-
-        Args:
-            path (str): The given input path that might or might not contain the detector name.
-
-        Returns:
-            str: a modified path that contains the detector name.
-        """
-        if path.startswith("lp://"):  # TODO: Move "lp://" to a constant
-            model_name = path[len("lp://") :]
-            model_name_segments = model_name.split("/")
-            if (
-                len(model_name_segments) == 3
-                and self.DETECTOR_NAME not in model_name_segments
-            ):
-                return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
-        return path
 
     def load_predictor(
         self,
         model_dir,
-        enforce_cpu=False,
+        device=None,
         enable_mkldnn=False,
         thread_num=10,
     ):
         """set AnalysisConfig, generate AnalysisPredictor
         Args:
             model_dir (str): root path of __model__ and __params__
-            enforce_cpu (bool): whether use cpu
+            device (str): cuda or cpu
         Returns:
             predictor (PaddlePredictor): AnalysisPredictor
         Raises:
@@ -184,7 +163,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             os.path.join(model_dir, "inference.pdiparams"),
         )
 
-        if not enforce_cpu:
+        if device == "cuda":
             # initial GPU memory(M), device ID
             # 2000 is an appropriate value for PaddleDetection model
             config.enable_use_gpu(2000, 0)
@@ -255,11 +234,10 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
             clsid, bbox, score = int(np_box[0]), np_box[2:], np_box[1]
             x_1, y_1, x_2, y_2 = bbox
 
-            if self.label_map is not None:
-                label = self.label_map[clsid]
-
             cur_block = TextBlock(
-                Rectangle(x_1, y_1, x_2, y_2), type=label, score=score
+                Rectangle(x_1, y_1, x_2, y_2),
+                type=self.label_map.get(clsid, clsid),
+                score=score,
             )
             layout.append(cur_block)
 
@@ -279,7 +257,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         image = self.image_loader(image)
 
         inputs = self.preprocess(image)
-        
+
         input_names = self.predictor.get_input_names()
 
         for input_name in input_names:
@@ -295,7 +273,7 @@ class PaddleDetectionLayoutModel(BaseLayoutModel):
         return layout
 
     def image_loader(self, image: Union["np.ndarray", "Image.Image"]):
-        
+
         if isinstance(image, Image.Image):
             if image.mode != "RGB":
                 image = image.convert("RGB")

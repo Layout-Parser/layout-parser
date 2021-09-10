@@ -3,7 +3,7 @@ from typing import List, Optional, Union, Dict, Any, Tuple
 from PIL import Image
 import numpy as np
 
-from .catalog import PathManager, LABEL_MAP_CATALOG
+from .catalog import PathManager, LABEL_MAP_CATALOG, MODEL_CATALOG
 from ..base_layoutmodel import BaseLayoutModel
 from ...elements import Rectangle, TextBlock, Layout
 
@@ -91,6 +91,7 @@ class EfficientDetLayoutModel(BaseLayoutModel):
 
     DEPENDENCIES = ["effdet"]
     DETECTOR_NAME = "efficientdet"
+    MODEL_CATALOG = MODEL_CATALOG
 
     DEFAULT_OUTPUT_CONFIDENCE_THRESHOLD = 0.25
 
@@ -129,21 +130,17 @@ class EfficientDetLayoutModel(BaseLayoutModel):
         extra_config: Optional[Dict],
     ):
 
+        config_path, model_path = self.config_parser(config_path, model_path)
+
         if config_path.startswith("lp://"):
             # If it's officially supported by layoutparser
-            dataset_name, model_name = config_path.lstrip("lp://").split("/")[0:2]
+            dataset_name, model_name = config_path.lstrip("lp://").split("/")[1:3]
 
             if label_map is None:
                 label_map = LABEL_MAP_CATALOG[dataset_name]
             num_classes = len(label_map)
 
-            if model_path is None:
-                # Download the models when it model_path is not specified
-                model_path = PathManager.get_local_path(
-                    self._reconstruct_path_with_detector_name(
-                        config_path.replace("config", "weight")
-                    )
-                )
+            model_path = PathManager.get_local_path(model_path)
 
             self.model = create_model(
                 model_name,
@@ -180,26 +177,6 @@ class EfficientDetLayoutModel(BaseLayoutModel):
         self.model.eval()
         self.config = self.model.config
         self.label_map = label_map if label_map is not None else {}
-
-    def _reconstruct_path_with_detector_name(self, path: str) -> str:
-        """This function will add the detector name (efficientdet) into the
-        lp model config path to get the "canonical" model name.
-
-        Args:
-            path (str): The given input path that might or might not contain the detector name.
-
-        Returns:
-            str: a modified path that contains the detector name.
-        """
-        if path.startswith("lp://"):  # TODO: Move "lp://" to a constant
-            model_name = path[len("lp://") :]
-            model_name_segments = model_name.split("/")
-            if (
-                len(model_name_segments) == 3
-                and self.DETECTOR_NAME not in model_name_segments
-            ):
-                return "lp://" + self.DETECTOR_NAME + "/" + path[len("lp://") :]
-        return path
 
     def detect(self, image: Union["np.ndarray", "Image.Image"]):
 
