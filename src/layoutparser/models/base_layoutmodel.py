@@ -42,7 +42,8 @@ class BaseLayoutModel(ABC):
                     default_model_arch = list(self.MODEL_CATALOG[dataset_name].keys())[0]
                     # Use the first model_name for the dataset as the default_model_arch
                     return layout_model_config_parser(config_path, self.DETECTOR_NAME, default_model_arch)
-            raise ValueError(f"The config {config_path} is not a valid config for {self.__class__}")
+            raise ValueError(f"The config {config_path} is not a valid config for {self.__class__}, "
+                             f"possibly because there aren't models trained for the specified dataset.")
         else:
             return config_path
 
