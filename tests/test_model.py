@@ -30,6 +30,11 @@ ALL_EFFDET_MODEL_CONFIGS = [
     "lp://MFD/tf_efficientdet_d1/config",
 ]
 
+AUTOMODEL_CONFIGS = [
+    "lp://detectron2/PubLayNet/faster_rcnn_R_50_FPN_3x/config",
+    "lp://paddledetection/PubLayNet/ppyolov2_r50vd_dcn_365e/config",
+    "lp://efficientdet/PubLayNet/tf_efficientdet_d0/config",
+]
 
 def _construct_valid_config_variations(config, backend_name):
     dataset_name, arch_name, identifier = config[len("lp://") :].split("/")
@@ -132,3 +137,9 @@ def test_EffDetModel(is_large_scale=False):
         _single_config_test_pipeline(
             EfficientDetLayoutModel, ALL_EFFDET_MODEL_CONFIGS[0]
         )
+
+def test_AutoModel():
+    for config in AUTOMODEL_CONFIGS:
+        model = AutoLayoutModel(config)
+        image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
+        layout = model.detect(image)
