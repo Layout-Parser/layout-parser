@@ -17,9 +17,8 @@ ALL_DETECTRON2_MODEL_CONFIGS = [
 ]
 
 ALL_PADDLEDETECTION_MODEL_CONFIGS = [
-    "lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config",
-    "lp://TableBank/ppyolov2_r50vd_dcn_365e_tableBank_word/config",
-    "lp://TableBank/ppyolov2_r50vd_dcn_365e_tableBank_latex/config",
+    "lp://PubLayNet/ppyolov2_r50vd_dcn_365e/config",
+    "lp://TableBank/ppyolov2_r50vd_dcn_365e/config",
 ]
 
 ALL_EFFDET_MODEL_CONFIGS = [
@@ -44,7 +43,7 @@ def test_Detectron2Model(is_large_scale=False):
         layout = model.detect(image)
         
     # Test in enforce CPU mode
-    model = Detectron2LayoutModel("tests/fixtures/model/config.yml", enforce_cpu=True)
+    model = Detectron2LayoutModel("tests/fixtures/model/config.yml")
     image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
     layout = model.detect(image)
     
@@ -72,12 +71,12 @@ def test_PaddleDetectionModel(is_large_scale=False):
             image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
             layout = model.detect(image)
     else:
-        model = PaddleDetectionLayoutModel("lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config")
+        model = PaddleDetectionLayoutModel("lp://PubLayNet/ppyolov2_r50vd_dcn_365e/config")
         image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
         layout = model.detect(image)
         
     # Test in enforce CPU mode
-    model = PaddleDetectionLayoutModel("lp://PubLayNet/ppyolov2_r50vd_dcn_365e_publaynet/config", enforce_cpu=True)
+    model = PaddleDetectionLayoutModel("lp://PubLayNet/ppyolov2_r50vd_dcn_365e/config", enforce_cpu=True)
     image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
     layout = model.detect(image)
 
