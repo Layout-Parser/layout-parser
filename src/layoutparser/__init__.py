@@ -41,7 +41,8 @@ _import_structure = {
         "load_json", 
         "load_dict", 
         "load_csv", 
-        "load_dataframe"
+        "load_dataframe",
+        "load_pdf"
     ],
     "file_utils":[
         "is_torch_available",
