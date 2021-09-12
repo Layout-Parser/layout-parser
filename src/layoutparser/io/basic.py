@@ -18,12 +18,8 @@ from typing import List, Union, Dict, Dict, Any
 
 import pandas as pd
 
-from .elements import (
-    BaseCoordElement,
+from ..elements import (
     BaseLayoutElement,
-    Interval,
-    Rectangle,
-    Quadrilateral,
     TextBlock,
     Layout,
     BASECOORD_ELEMENT_NAMEMAP,
