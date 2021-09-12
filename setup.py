@@ -41,6 +41,8 @@ setup(name         = "layoutparser",
         "pillow",
         "pyyaml>=5.1",
         "iopath",
+        "pdfplumber",
+        "pdf2image",
       ],
       extras_require={
         "ocr": [
