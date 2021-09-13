@@ -2,32 +2,39 @@
 
 ## Install Python
 
-Layout Parser is a Python package that requires Python >= 3.6. If you do not have Python installed on your computer, you might want to turn to [the official instruction](https://www.python.org/downloads/) to download and install the appropriate version of Python.
+LayoutParser is a Python package that requires Python >= 3.6. If you do not have Python installed on your computer, you might want to turn to [the official instruction](https://www.python.org/downloads/) to download and install the appropriate version of Python.
 
-## Install the Layout Parser main library
 
-Installing the Layout Parser library is very straightforward: you just need to run the following command: 
+
+## Install the LayoutParser library
+
+After several major updates, LayoutParser provides various functionalities and deep learning models from different backends. However, you might only need a fraction of the functions, and it would be redundant for you to install all the dependencies when they are not required. Therefore, we design highly customizable ways for installing the LayoutParser library: 
+
+
+| Command | Description |
+| --- | --- |
+| `pip install layoutparser`                   | **Install the base LayoutParser Library**<br>It will support all key functions in LayoutParser, including:<br />1. Layout Data Structure and operations<br />2. Layout Visualization <br />3. Load/export the layout data |
+| `pip install layoutparser[effdet]`           | **Install LayoutParser with Layout Detection Model Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for the ***EfficientDet***-based layout detection models. |
+| `pip install torch && pip install layoutparser[detectron2]` | **Install LayoutParser with Layout Detection Model Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for the ***Detectron2***-based layout detection models. See details in [Additional Instruction: Install Detectron2 Layout Model Backend](#additional-instruction-install-detectron2-layout-model-backend). |
+| `pip install layoutparser[paddledetection]`  | **Install LayoutParser with Layout Detection Model Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for the ***PaddleDetection***-based layout detection models.  |
+| `pip install layoutparser[ocr]`              | **Install LayoutParser with OCR Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for performing OCRs. See details in [Additional Instruction: Install OCR utils](#additional-instruction-install-ocr-utils).  |
+
+### Additional Instruction: Install Detectron2 Layout Model Backend
+
+#### For Mac OS and Linux Users 
+
+If you would like to use the Detectron2 models for layout detection, you might need to run the following command: 
 
 ```bash
-pip3 install -U layoutparser
+pip install torch && pip install layoutparser[detectron2]
 ```
 
-## [Optional] Install Detectron2 for Using Layout Models
-
-### For Mac OS and Linux Users 
-
-If you would like to use deep learning models for layout detection, you also need to install Detectron2 on your computer. This could be done by running the following command: 
-
-```bash
-pip3 install 'git+https://github.com/facebookresearch/detectron2.git@v0.4#egg=detectron2' 
-```
-
-This might take some time as the command will *compile* the library. You might also want to install a Detectron2 version 
-with GPU support or encounter some issues during the installation process. Please refer to the official Detectron2 
+This might take some time as the command will *compile* the library. If you also want to install a Detectron2 version 
+with GPU support or encounter some issues during the installation process, please refer to the official Detectron2 
 [installation instruction](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md) for detailed
 information. 
 
-### For Windows users
+#### For Windows users
 
 As reported by many users, the installation of Detectron2 can be rather tricky on Windows platforms. In our extensive tests, we find that it is nearly impossible to provide a one-line installation command for Windows users. As a workaround solution, for now we list the possible challenges for installing Detectron2 on Windows, and attach helpful resources for solving them. We are also investigating other possibilities to avoid installing Detectron2 to use pre-trained models. If you have any suggestions or ideas, please feel free to [submit an issue](https://github.com/Layout-Parser/layout-parser/issues) in our repo. 
 
@@ -39,12 +46,12 @@ As reported by many users, the installation of Detectron2 can be rather tricky o
     - `Detectron2` maintainers claim that they won't provide official support for Windows (see [1](https://github.com/facebookresearch/detectron2/issues/9#issuecomment-540974288) and [2](https://detectron2.readthedocs.io/en/latest/tutorials/install.html)), but Detectron2 is continuously built on windows with CircleCI (see [3](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md#common-installation-issues)). Hopefully this situation will be improved in the future.
 
 
-## [Optional] Install OCR utils
+### Additional Instructions: Install OCR utils
 
 Layout Parser also comes with supports for OCR functions. In order to use them, you need to install the OCR utils via: 
 
 ```bash
-pip3 install -U layoutparser[ocr]
+pip install layoutparser[ocr]
 ```
 
 Additionally, if you want to use the Tesseract-OCR engine, you also need to install it on your computer. Please check the 
