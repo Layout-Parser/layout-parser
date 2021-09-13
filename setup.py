@@ -66,10 +66,6 @@ setup(name         = "layoutparser",
           "torchvision",
           "effdet"
         ],
-        "detectron2": [
-          "detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
-          # Supporting detectron0.5 for compatibility with newer torch versions 
-        ],
         "paddledetection": [
           "paddlepaddle==2.1.0"
         ],
