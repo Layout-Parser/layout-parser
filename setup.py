@@ -37,6 +37,7 @@ setup(name         = "layoutparser",
       install_requires=[
         "numpy", 
         "opencv-python",
+        "scipy",
         "pandas",
         "pillow",
         "pyyaml>=5.1",
