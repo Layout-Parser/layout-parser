@@ -1,8 +1,8 @@
 <p align="center">
   <img src="https://github.com/Layout-Parser/layout-parser/raw/master/.github/layout-parser.png" alt="Layout Parser Logo" width="35%">
-  <h2 align="center">
+  <h3 align="center">
   A unified toolkit for Deep Learning Based Document Image Analysis
-  </h2>
+  </h3>
 </p>
 
 <p align=center>
