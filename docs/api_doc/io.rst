@@ -2,7 +2,7 @@ Load and Export Layout Data
 ================================
 
 
-DataFrame and CSV
+`Dataframe` and CSV
 --------------------------------
 
 .. autofunction:: layoutparser.io.load_dataframe
@@ -10,12 +10,18 @@ DataFrame and CSV
 .. autofunction:: layoutparser.io.load_csv
 
 
-Dictionary and JSON 
+`Dict` and JSON 
 --------------------------------
 
 .. autofunction:: layoutparser.io.load_dict
 
 .. autofunction:: layoutparser.io.load_json
+
+
+PDF
+--------------------------------
+
+.. autofunction:: layoutparser.io.load_pdf
 
 
 Other Formats

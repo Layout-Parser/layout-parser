@@ -18,12 +18,8 @@ from typing import List, Union, Dict, Dict, Any
 
 import pandas as pd
 
-from .elements import (
-    BaseCoordElement,
+from ..elements import (
     BaseLayoutElement,
-    Interval,
-    Rectangle,
-    Quadrilateral,
     TextBlock,
     Layout,
     BASECOORD_ELEMENT_NAMEMAP,
@@ -143,5 +139,8 @@ def load_dataframe(df: pd.DataFrame, block_type: str = None) -> Layout:
             )
     else:
         df["block_type"] = block_type
+
+    if "id" not in df.columns:
+        df["id"] = df.index
 
     return load_dict(df.apply(lambda x: x.dropna().to_dict(), axis=1).to_list())
