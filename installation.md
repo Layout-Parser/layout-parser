@@ -2,13 +2,13 @@
 
 ## Install Python
 
-Layout Parser is a Python package that requires Python >= 3.6. If you do not have Python installed on your computer, you might want to turn to [the official instruction](https://www.python.org/downloads/) to download and install the appropriate version of Python.
+LayoutParser is a Python package that requires Python >= 3.6. If you do not have Python installed on your computer, you might want to turn to [the official instruction](https://www.python.org/downloads/) to download and install the appropriate version of Python.
 
 
 
 ## Install the LayoutParser library
 
-After several major updates, LayoutParser provides various functionalities and deep learning models from different backends. However, you might only need a fraction of the functions, and it would be redundant for you to install all the dependencies when they are not required. Therefore, we also design highly customizable ways for installing the LayoutParser library: 
+After several major updates, LayoutParser provides various functionalities and deep learning models from different backends. However, you might only need a fraction of the functions, and it would be redundant for you to install all the dependencies when they are not required. Therefore, we design highly customizable ways for installing the LayoutParser library: 
 
 
 | Command | Description |
@@ -29,8 +29,8 @@ If you would like to use the Detectron2 models for layout detection, you might n
 pip install torch && pip install layoutparser[detectron2]
 ```
 
-This might take some time as the command will *compile* the library. You might also want to install a Detectron2 version 
-with GPU support or encounter some issues during the installation process. Please refer to the official Detectron2 
+This might take some time as the command will *compile* the library. If you also want to install a Detectron2 version 
+with GPU support or encounter some issues during the installation process, please refer to the official Detectron2 
 [installation instruction](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md) for detailed
 information. 
 
@@ -46,7 +46,7 @@ As reported by many users, the installation of Detectron2 can be rather tricky o
     - `Detectron2` maintainers claim that they won't provide official support for Windows (see [1](https://github.com/facebookresearch/detectron2/issues/9#issuecomment-540974288) and [2](https://detectron2.readthedocs.io/en/latest/tutorials/install.html)), but Detectron2 is continuously built on windows with CircleCI (see [3](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md#common-installation-issues)). Hopefully this situation will be improved in the future.
 
 
-### Additional Instruction: Install OCR utils
+### Additional Instructions: Install OCR utils
 
 Layout Parser also comes with supports for OCR functions. In order to use them, you need to install the OCR utils via: 
 
