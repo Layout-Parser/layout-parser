@@ -90,6 +90,13 @@ class Detectron2LayoutModel(BaseLayoutModel):
         )
         config_path = PathManager.get_local_path(config_path)
 
+        if label_map is None:
+            if config_path.startswith("lp://"):
+                dataset_name = config_path.lstrip("lp://").split("/")[1]
+                label_map = LABEL_MAP_CATALOG[dataset_name]
+            else:
+                label_map = {}
+
         cfg = detectron2.config.get_cfg()
         cfg.merge_from_file(config_path)
         cfg.merge_from_list(extra_config)
@@ -126,8 +133,8 @@ class Detectron2LayoutModel(BaseLayoutModel):
         for score, box, label in zip(scores, boxes, labels):
             x_1, y_1, x_2, y_2 = box
 
-            if self.label_map is not None:
-                label = self.label_map.get(label, label)
+
+            label = self.label_map.get(label, label)
 
             cur_block = TextBlock(
                 Rectangle(x_1, y_1, x_2, y_2), type=label, score=score
