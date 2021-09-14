@@ -32,7 +32,6 @@ after them:
     - Brief format: lp://<dataset-name>/<config, weight>
 """
 
-from typing import List, OrderedDict, Union, Dict, Any, Tuple, Optional, NamedTuple
 from dataclasses import dataclass
 
 LAYOUT_PARSER_MODEL_PREFIX = "lp://"
