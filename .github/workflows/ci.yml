@@ -21,6 +21,7 @@ jobs:
 
     - name: Install only effdet deps 
       run: |
+        pip install pytest
         pip install -e ".[effdet]"
         pytest tests_deps/test_only_effdet.py
 
@@ -35,6 +36,7 @@ jobs:
 
     - name: Install only Detectron2 deps 
       run: |
+        pip install pytest
         pip install -e .
         pip install torch && pip install "git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
         pytest tests_deps/test_only_detectron2.py
@@ -48,8 +50,9 @@ jobs:
       with:
         python-version: '3.7'
 
-    - name: Install only Detectron2 deps 
+    - name: Install only PaddleDetection deps 
       run: |
+        pip install pytest
         pip install -e ".[paddledetection]"
         pytest tests_deps/test_only_paddledetection.py
 
