@@ -3,15 +3,36 @@ name: CI
 on: [push]
 
 jobs:
-  build:
 
+  test_effdet_backend:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+  
+    - name: Test Dependency Support 
+      run: |
+        # Install additional requirements when running tests
+        pip install pytest
+        pytest tests_deps/test_file_utils.py
+
+    - name: Install only effdet deps 
+      run: |
+        pip install -e ".[effdet]"
+        pytest tests_deps/test_only_effdet.py
+
+  test_all_methods_all_backends:
+    needs: test_effdet_backend
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.7, 3.8]
-      
     steps:
     - uses: actions/checkout@v2
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -29,16 +50,10 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --ignore F821
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Test Dependency Support 
-      run: |
-        # Install additional requirements when running tests
-        pip install pytest
-        pytest tests_deps
 
     - name: Test with pytest
       run: |
         # Install additional requirements when running tests
-        pip install .[effdet]
+        pip install ".[effdet]"
         pip install -r dev-requirements.txt
         pytest tests
