@@ -63,7 +63,7 @@ class InputTransform:
         self.mean_tensor = torch.tensor([x * 255 for x in mean]).view(1, 3, 1, 1)
         self.std_tensor = torch.tensor([x * 255 for x in std]).view(1, 3, 1, 1)
 
-    def preprocess(self, image: Image) -> Tuple[torch.Tensor, Dict]:
+    def preprocess(self, image: Image) -> Tuple["torch.Tensor", Dict]:
 
         image = image.convert("RGB")
         image_info = {"img_size": image.size}
@@ -213,7 +213,7 @@ class EfficientDetLayoutModel(BaseLayoutModel):
         layout = self.gather_output(model_outputs)
         return layout
 
-    def gather_output(self, model_outputs: torch.Tensor) -> Layout:
+    def gather_output(self, model_outputs: "torch.Tensor") -> Layout:
 
         model_outputs = model_outputs.cpu().detach()
         box_predictions = Layout()
