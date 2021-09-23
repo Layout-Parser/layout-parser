@@ -31,6 +31,13 @@ if is_effdet_available():
         IMAGENET_DEFAULT_STD,
         transforms_coco_eval,
     )
+else:
+    # Copied from https://github.com/rwightman/efficientdet-pytorch/blob/c5b694aa34900fdee6653210d856ca8320bf7d4e/effdet/data/transforms.py#L13 
+    # Such that when effdet is not loaded, we'll still have default values for IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+    IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
+    IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
+    # IMAGENET_INCEPTION_MEAN = (0.5, 0.5, 0.5)
+    # IMAGENET_INCEPTION_STD = (0.5, 0.5, 0.5)
 
 
 class InputTransform:
@@ -56,7 +63,7 @@ class InputTransform:
         self.mean_tensor = torch.tensor([x * 255 for x in mean]).view(1, 3, 1, 1)
         self.std_tensor = torch.tensor([x * 255 for x in std]).view(1, 3, 1, 1)
 
-    def preprocess(self, image: Image) -> Tuple[torch.Tensor, Dict]:
+    def preprocess(self, image: Image) -> Tuple["torch.Tensor", Dict]:
 
         image = image.convert("RGB")
         image_info = {"img_size": image.size}
@@ -206,7 +213,7 @@ class EfficientDetLayoutModel(BaseLayoutModel):
         layout = self.gather_output(model_outputs)
         return layout
 
-    def gather_output(self, model_outputs: torch.Tensor) -> Layout:
+    def gather_output(self, model_outputs: "torch.Tensor") -> Layout:
 
         model_outputs = model_outputs.cpu().detach()
         box_predictions = Layout()
