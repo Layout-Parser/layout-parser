@@ -15,8 +15,8 @@ jobs:
   
     - name: Test Dependency Support 
       run: |
-        # Install additional requirements when running tests
         pip install pytest
+        pip install -e . # The bare layoutparser module 
         pytest tests_deps/test_file_utils.py
 
     - name: Install only effdet deps 
