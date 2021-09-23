@@ -21,7 +21,7 @@ def test_only_effdet_model():
     # When all the backeds are not installed, it should 
     # elicit only ImportErrors
     
-    config = "lp://PubLayNet/ppyolov2_r50vd_dcn_365e/config"
+    config = "lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config"
     model = Detectron2LayoutModel(config)
     image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
     layout = model.detect(image)

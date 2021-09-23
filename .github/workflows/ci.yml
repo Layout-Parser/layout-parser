@@ -38,7 +38,7 @@ jobs:
       run: |
         pip install pytest
         pip install -e .
-        pip install torch && pip install "git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
+        pip install torchvision && pip install "git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
         pytest tests_deps/test_only_detectron2.py
 
   test_only_paddledetection_backend:
