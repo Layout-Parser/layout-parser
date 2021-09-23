@@ -101,11 +101,11 @@ After several major updates, layoutparser provides various functionalities and d
 
 ```bash
 pip install layoutparser # Install the base layoutparser library with  
-pip install layoutparser[layoutmodels] # Install DL layout model toolkit 
-pip install layoutparser[ocr] # Install OCR toolkit
+pip install "layoutparser[layoutmodels]" # Install DL layout model toolkit 
+pip install "layoutparser[ocr]" # Install OCR toolkit
 ```
 
-Please check [installation.md](installation.md) for additional details on layoutparser installation. 
+Extra steps are needed if you want to use Detectron2-based models. Please check [installation.md](installation.md) for additional details on layoutparser installation. 
 
 ## Examples 
 
