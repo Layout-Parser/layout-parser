@@ -15,7 +15,7 @@ After several major updates, LayoutParser provides various functionalities and d
 | --- | --- |
 | `pip install layoutparser`                   | **Install the base LayoutParser Library**<br>It will support all key functions in LayoutParser, including:<br />1. Layout Data Structure and operations<br />2. Layout Visualization <br />3. Load/export the layout data |
 | `pip install "layoutparser[effdet]"`           | **Install LayoutParser with Layout Detection Model Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for the ***EfficientDet***-based layout detection models. |
-| `pip install layoutparser torch && pip install "git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"` | **Install LayoutParser with Layout Detection Model Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for the ***Detectron2***-based layout detection models. See details in [Additional Instruction: Install Detectron2 Layout Model Backend](#additional-instruction-install-detectron2-layout-model-backend). |
+| `pip install layoutparser torchvision && pip install "git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"` | **Install LayoutParser with Layout Detection Model Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for the ***Detectron2***-based layout detection models. See details in [Additional Instruction: Install Detectron2 Layout Model Backend](#additional-instruction-install-detectron2-layout-model-backend). |
 | `pip install "layoutparser[paddledetection]"`  | **Install LayoutParser with Layout Detection Model Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for the ***PaddleDetection***-based layout detection models.  |
 | `pip install "layoutparser[ocr]"`              | **Install LayoutParser with OCR Support**<br />It will install the LayoutParser base library as well as<br />supporting dependencies for performing OCRs. See details in [Additional Instruction: Install OCR utils](#additional-instruction-install-ocr-utils).  |
 
@@ -26,7 +26,7 @@ After several major updates, LayoutParser provides various functionalities and d
 If you would like to use the Detectron2 models for layout detection, you might need to run the following command: 
 
 ```bash
-pip install layoutparser torch && pip install "detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
+pip install layoutparser torchvision && pip install "detectron2@git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
 ```
 
 This might take some time as the command will *compile* the library. If you also want to install a Detectron2 version 
