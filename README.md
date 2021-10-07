@@ -25,6 +25,9 @@
 
 LayoutParser aims to provide a wide range of tools that aims to streamline Document Image Analysis (DIA) tasks. Please check the LayoutParser [demo video](https://youtu.be/8yA5xB4Dg8c) (1 min) or [full talk](https://www.youtube.com/watch?v=YG0qepPgyGY) (15 min) for details. And here are some key features:
 
+## New
+Integrated to [Huggingface Spaces](https://huggingface.co/spaces) with [Gradio](https://github.com/gradio-app/gradio). See demo: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/akhaliq/layout-parser)
+
 - LayoutParser provides a rich repository of deep learning models for layout detection as well as a set of unified APIs for using them. For example, 
   
   <details>
