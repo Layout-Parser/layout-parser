@@ -24,6 +24,7 @@ from ..file_utils import is_pytesseract_available
 
 if is_pytesseract_available():
     import pytesseract
+    from pytesseract import Output
 
 
 class TesseractFeatureType(BaseOCRElementType):
@@ -89,10 +90,13 @@ class TesseractAgent(BaseOCRAgent):
         res["text"] = pytesseract.image_to_string(
             img_content, lang=self.lang, **self.configs
         )
-        _data = pytesseract.image_to_data(img_content, lang=self.lang, **self.configs)
-        res["data"] = pd.read_csv(
-            io.StringIO(_data), quoting=csv.QUOTE_NONE, encoding="utf-8", sep="\t"
-        )
+        _data = pytesseract.image_to_data(img_content, lang=self.lang, output_type=Output.DICT, **self.configs)
+        _df = pd.DataFrame(_data, dtype=str)
+        _cols = list(_df.columns())
+        _cols.remove('text')
+        for col in _cols:
+            _df[col] = _df[col].astype(int)
+        res['data'] = _df
         return res
 
     def detect(
