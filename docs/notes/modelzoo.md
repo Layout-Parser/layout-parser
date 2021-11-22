@@ -48,17 +48,18 @@ model.detect(image)
 
 PubLayNet Dataset:
 
-|      Model      | CPU time cost | GPU time cost |
-| :-------------: | :-----------: | :-----------: |
-|   Detectron2    |   16545.5ms   |    209.5ms    |
-| PaddleDetection |   1713.7ms    |    66.6ms     |
+|      Model      | model | mAP |  CPU time cost | GPU time cost |
+| :-------------: | :---: | :-----------: | :-----------: | :-----------: |
+|   Detectron2    | mask_rcnn_X_101_32x8d_FPN_3x | 89.0 |  16545.5ms   |    209.5ms    |
+| PaddleDetection | ppyolov2_r50vd_dcn_365e | 93.6 |  1713.7ms    |    66.6ms     |
+
 
 TableBank Dataset:
 
-|      Model      | CPU time cost | GPU time cost |
-| :-------------: | :-----------: | :-----------: |
-|   Detectron2    |   7623.2ms    |   104.2.ms    |
-| PaddleDetection |   1968.4ms    |    65.1ms     |
+|      Model      | model | mAP | CPU time cost | GPU time cost |
+| :-------------: | :---: | :-----------: | :-----------: | :-----------: |
+|   Detectron2    | faster_rcnn_R_101_FPN_3x | 91.3 |  7623.2ms    |   104.2.ms    |
+| PaddleDetection | ppyolov2_r50vd_dcn_365e | 96.2 |  1968.4ms    |    65.1ms     |
 
 **Envrionment：**	
 
