@@ -118,10 +118,10 @@ Finally sort the text regions and assign ids:
     left_interval = lp.Interval(0, w/2*1.05, axis='x').put_on_canvas(image)
     
     left_blocks = text_blocks.filter_by(left_interval, center=True)
-    left_blocks.sort(key = lambda b:b.coordinates[1])
+    left_blocks.sort(key = lambda b:b.coordinates[1], inplace=True)
     
     right_blocks = [b for b in text_blocks if b not in left_blocks]
-    right_blocks.sort(key = lambda b:b.coordinates[1])
+    right_blocks.sort(key = lambda b:b.coordinates[1], inplace=True)
     
     # And finally combine the two list and add the index
     # according to the order
