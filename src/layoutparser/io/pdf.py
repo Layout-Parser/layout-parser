@@ -53,6 +53,10 @@ def extract_words_for_page(
     )
 
     df = pd.DataFrame(tokens)
+    
+    if len(df) == 0:
+        return Layout()
+    
     df[["x0", "x1"]] = (
         df[["x0", "x1"]].clip(lower=0, upper=int(page.width)).astype("float")
     )
