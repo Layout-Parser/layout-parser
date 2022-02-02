@@ -79,3 +79,10 @@ def test_pdf():
 
     assert len(set(ele.type for ele in page_layout)) == 3
     # Only three types of font show-up in the file
+    
+def test_empty_pdf():
+    pdf_layout = load_pdf("tests/fixtures/io/empty.pdf")
+    assert len(pdf_layout) == 1 # Only one page
+    
+    page_layout = pdf_layout[0]
+    assert len(page_layout) == 0 # No selectable tokens on the page
