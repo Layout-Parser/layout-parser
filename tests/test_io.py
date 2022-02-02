@@ -82,4 +82,7 @@ def test_pdf():
     
 def test_empty_pdf():
     pdf_layout = load_pdf("tests/fixtures/io/empty.pdf")
-    assert len(pdf_layout) == 0
+    assert len(pdf_layout) == 1 # Only one page
+    
+    page_layout = pdf_layout[0]
+    assert len(page_layout) == 0 # No selectable tokens on the page
