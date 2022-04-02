@@ -1,3 +1,6 @@
+# Examples files 
+examples/Customizing Layout Models with Label Studio Annotation/downloaded-annotations
+
 *.bak
 .gitattributes
 .last_checked
