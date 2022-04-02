@@ -77,7 +77,7 @@ class Layout(MutableSequence):
     def __eq__(self, other):
         if isinstance(other, Layout):
             return (
-                all((a, b) for a, b in zip(self, other))
+                self._blocks == other._blocks 
                 and self.page_data == other.page_data
             )
         else:
