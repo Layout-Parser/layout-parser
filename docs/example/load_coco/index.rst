@@ -129,7 +129,7 @@ Model Predictions on loaded data
 
 We could also check how the trained layout model performs on the input
 image. Following this
-`instruction <https://github.com/Layout-Parser/layout-parser/blob/master/examples/Deep%20Layout%20Parsing.ipynb>`__,
+`instruction <https://github.com/Layout-Parser/layout-parser/blob/main/examples/Deep%20Layout%20Parsing.ipynb>`__,
 we could conveniently load a layout prediction model and run predictions
 on the existing image.
 
