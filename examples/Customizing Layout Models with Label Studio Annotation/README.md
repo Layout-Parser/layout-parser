@@ -7,3 +7,4 @@
 [Webinar Video](https://www.youtube.com/watch?v=puOKTFXRyr4) | [Slides](https://szj.io/assets/files/talks/2022-Feb-LayoutParser-and-Label-Studio-Webinar.pdf) | [Notebooks](Customizing%20Layout%20Models%20with%20Label%20Studio%20Annotation.ipynb)
 </div>
 
+![Overview of the Pipeline](pipeline-overview.jpg)
