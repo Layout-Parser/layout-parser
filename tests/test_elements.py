@@ -236,12 +236,25 @@ def test_layout():
     r = Rectangle(3, 3, 5, 6)
     t = TextBlock(i, id=1, type=2, text="12")
 
+    # Test Initializations 
+    l = Layout([i, q, r])
+    l = Layout((i,q))
+    Layout([l])
+    with pytest.raises(ValueError):
+        Layout(l)
+
+    # Test tuple-like inputs 
+    l = Layout((i, q, r))
+    assert l._blocks == [i, q, r]
+    l.append(i)
+
+    # Test apply functions 
     l = Layout([i, q, r])
     l.get_texts()
-    l.condition_on(i)
-    l.relative_to(q)
-    l.filter_by(t)
-    l.is_in(r)
+    assert l.filter_by(t) == Layout([i])
+    assert l.condition_on(i) == Layout([block.condition_on(i) for block in [i, q, r]])
+    assert l.relative_to(q) == Layout([block.relative_to(q) for block in [i, q, r]])
+    assert l.is_in(r) == Layout([block.is_in(r) for block in [i, q, r]])
     assert l.get_homogeneous_blocks() == [i.to_quadrilateral(), q, r.to_quadrilateral()]
 
     i2 = TextBlock(i, id=1, type=2, text="12")
