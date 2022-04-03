@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/layout-parser.png" alt="Layout Parser Logo" width="35%">
+  <img src="https://github.com/Layout-Parser/layout-parser/raw/main/.github/layout-parser.png" alt="Layout Parser Logo" width="35%">
   <h3 align="center">
   A unified toolkit for Deep Learning Based Document Image Analysis
   </h3>
@@ -21,7 +21,7 @@
 
 ## What is LayoutParser
 
-![Example Usage](.github/example.png)
+![Example Usage](https://github.com/Layout-Parser/layout-parser/raw/main/.github/example.png)
 
 LayoutParser aims to provide a wide range of tools that aims to streamline Document Image Analysis (DIA) tasks. Please check the LayoutParser [demo video](https://youtu.be/8yA5xB4Dg8c) (1 min) or [full talk](https://www.youtube.com/watch?v=YG0qepPgyGY) (15 min) for details. And here are some key features:
 
