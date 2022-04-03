@@ -228,6 +228,7 @@ def draw_box(
     box_width=None,
     box_alpha=0,
     color_map=None,
+    colors=None,
     show_element_id=False,
     show_element_type=False,
     id_font_size=None,
@@ -258,6 +259,11 @@ def draw_box(
             :const:`DEFAULT_OUTLINE_COLOR` for the outlines.
             Defaults to None, when a color palette is is automatically
             created based on the input layout.
+        colors (list, optional):
+            A list-like object of colors, e.g., `['red', 'green', 'blue']`,
+            of the same length as the number of blocks in the layout input/
+            Defaults to None. When `colors` is set, it will override the
+            `color_map`.
         show_element_id (bool, optional):
             Whether to display `block.id` on the top-left corner of
             the block.
@@ -308,25 +314,31 @@ def draw_box(
     if show_element_id or show_element_type:
         font_obj = _create_font_object(id_font_size, id_font_path)
 
-    if color_map is None:
-        all_types = set([b.type for b in layout if hasattr(b, "type")])
-        color_map = _create_color_palette(all_types)
+    if colors is not None:
+        if len(colors) != len(layout):
+            raise ValueError(
+                f"The number of colors {len(colors)} is not equal to the number of blocks {len(layout)}"
+            )
+    else:
+        if color_map is None:
+            all_types = set([b.type for b in layout if hasattr(b, "type")])
+            color_map = _create_color_palette(all_types)
+        colors = [
+            DEFAULT_OUTLINE_COLOR
+            if not isinstance(ele, TextBlock)
+            else color_map.get(ele.type, DEFAULT_OUTLINE_COLOR)
+            for ele in layout
+        ]
 
-    for idx, ele in enumerate(layout):
+    for idx, (ele, color) in enumerate(zip(layout, colors)):
 
         if isinstance(ele, Interval):
             ele = ele.put_on_canvas(canvas)
 
-        outline_color = (
-            DEFAULT_OUTLINE_COLOR
-            if not isinstance(ele, TextBlock)
-            else color_map.get(ele.type, DEFAULT_OUTLINE_COLOR)
-        )
-
         if box_width > 0:
-            _draw_box_outline_on_handler(draw, ele, outline_color, box_width)
+            _draw_box_outline_on_handler(draw, ele, color, box_width)
 
-        _draw_transparent_box_on_handler(draw, ele, outline_color, box_alpha)
+        _draw_transparent_box_on_handler(draw, ele, color, box_alpha)
 
         if show_element_id or show_element_type:
             text = ""
@@ -393,7 +405,6 @@ def draw_text(
             image canvas:
             * `lr` - left and right
             * `ud` - up and down
-
             Defaults to 'lr'.
         font_size (:obj:`str`, optional):
             Set to change the size of the font used for
@@ -436,7 +447,6 @@ def draw_text(
             Set to change the color of the drawn layout box boundary.
             Defaults to None, when the color is set to
             :const:`DEFAULT_OUTLINE_COLOR`.
-        
         with_layout (bool, optional):
             Whether to draw the layout boxes on the input (image) canvas.
             Defaults to False.
