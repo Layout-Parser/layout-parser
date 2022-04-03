@@ -140,7 +140,6 @@ def load_dataframe(df: pd.DataFrame, block_type: str = None) -> Layout:
     else:
         df["block_type"] = block_type
 
-    print((df.columns), TextBlock._features, any(col in TextBlock._features for col in df.columns))
     if any(col in TextBlock._features for col in df.columns):
         # Automatically setting index for textblock
         if "id" not in df.columns:
