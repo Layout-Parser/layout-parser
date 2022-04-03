@@ -323,7 +323,8 @@ def draw_box(
             else color_map.get(ele.type, DEFAULT_OUTLINE_COLOR)
         )
 
-        _draw_box_outline_on_handler(draw, ele, outline_color, box_width)
+        if box_width > 0:
+            _draw_box_outline_on_handler(draw, ele, outline_color, box_width)
 
         _draw_transparent_box_on_handler(draw, ele, outline_color, box_alpha)
 
