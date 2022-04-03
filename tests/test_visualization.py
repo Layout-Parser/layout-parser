@@ -45,11 +45,40 @@ def test_viz():
 
     # Test colors
     draw_box(image, layout, box_color=["red", "green", "blue"])
+    draw_box(image, layout, box_color="red")
+
     draw_text(image, layout, box_color=["red", "green", "blue"])
     with pytest.raises(ValueError):
         draw_box(image, layout, box_color=["red", "green", "blue", "yellow"])
     with pytest.raises(ValueError):
-        draw_text(image, layout, box_color=["red", "green", "blue", "yellow"], with_layout=True)
+        draw_text(
+            image,
+            layout,
+            box_color=["red", "green", "blue", "yellow"],
+            with_layout=True,
+        )
+
+    # Test alphas
+    draw_box(image, layout, box_alpha=0)
+    draw_box(image, layout, box_alpha=[0.1, 0.2, 0.3])
+    with pytest.raises(ValueError):
+        draw_box(image, layout, box_color=[0.1, 0.2, 0.3, 0.5])
+    with pytest.raises(ValueError):
+        draw_box(image, layout, box_color=[0.1, 0.2, 0.3, 1.5])
+
+    # Test widths
+    draw_box(image, layout, box_width=1)
+    draw_box(image, layout, box_width=[1, 2, 3])
+    with pytest.raises(ValueError):
+        draw_box(image, layout, box_width=[1, 2, 3, 4])
+
+    draw_box(
+        image,
+        layout,
+        box_alpha=[0.1, 0.2, 0.3],
+        box_width=[1, 2, 3],
+        box_color=["red", "green", "blue"],
+    )
 
     for idx, level in enumerate(
         [
