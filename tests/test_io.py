@@ -60,7 +60,7 @@ def test_csv():
     _l.page_data = {"width": 200, "height": 200}
     assert _l == l
 
-    i2 = TextBlock(i, "")
+    i2 = i # <- Allow mixmode loading
     r2 = TextBlock(r, id=24)
     q2 = TextBlock(q, text="test", parent=45)
     l2 = Layout([i2, r2, q2])

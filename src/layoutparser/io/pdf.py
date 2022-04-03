@@ -65,12 +65,13 @@ def extract_words_for_page(
     )
 
     page_tokens = load_dataframe(
-        df.rename(
+        df.reset_index().rename(
             columns={
                 "x0": "x_1",
                 "x1": "x_2",
                 "top": "y_1",
                 "bottom": "y_2",
+                "index": "id",
                 "fontname": "type",  # also loading fontname as "type"
             }
         ),
