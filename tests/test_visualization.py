@@ -44,12 +44,12 @@ def test_viz():
     draw_text(image, layout)
 
     # Test colors
-    draw_box(image, layout, colors=["red", "green", "blue"])
-    draw_text(image, layout, colors=["red", "green", "blue"])
+    draw_box(image, layout, box_color=["red", "green", "blue"])
+    draw_text(image, layout, box_color=["red", "green", "blue"])
     with pytest.raises(ValueError):
-        draw_box(image, layout, colors=["red", "green", "blue", "yellow"])
+        draw_box(image, layout, box_color=["red", "green", "blue", "yellow"])
     with pytest.raises(ValueError):
-        draw_text(image, layout, colors=["red", "green", "blue", "yellow"], with_layout=True)
+        draw_text(image, layout, box_color=["red", "green", "blue", "yellow"], with_layout=True)
 
     for idx, level in enumerate(
         [

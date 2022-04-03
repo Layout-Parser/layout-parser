@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Union, Dict, Any, Tuple
+from typing import List, Optional, Union, Dict, Any, Tuple, Dict
 import functools
 import os
 import sys
@@ -223,19 +223,19 @@ def draw_transparent_box(
 
 @image_loader
 def draw_box(
-    canvas,
-    layout,
-    box_width=None,
-    box_alpha=0,
-    color_map=None,
-    colors=None,
-    show_element_id=False,
-    show_element_type=False,
-    id_font_size=None,
-    id_font_path=None,
-    id_text_color=None,
-    id_text_background_color=None,
-    id_text_background_alpha=1,
+    canvas: Image.Image,
+    layout: Layout,
+    box_width: Optional[int] = None,
+    box_alpha: Optional[float] = 0,
+    box_color: Optional[List] = None,
+    color_map: Optional[Dict] = None,
+    show_element_id: bool = False,
+    show_element_type: bool = False,
+    id_font_size: Optional[int] = None,
+    id_font_path: Optional[str] = None,
+    id_text_color: Optional[str] = None,
+    id_text_background_color: Optional[str] = None,
+    id_text_background_alpha: Optional[float] = 1,
 ):
     """Draw the layout region on the input canvas(image).
 
@@ -253,17 +253,17 @@ def draw_box(
             A float range from 0 to 1. Set to change the alpha of the
             drawn layout box.
             Defaults to 0 - the layout box will be fully transparent.
+        box_color (list, optional):
+            A list-like object of colors, e.g., `['red', 'green', 'blue']`,
+            of the same length as the number of blocks in the layout input/
+            Defaults to None. When `box_color` is set, it will override the
+            `color_map`.
         color_map (dict, optional):
             A map from `block.type` to the colors, e.g., `{1: 'red'}`.
             You can set it to `{}` to use only the
             :const:`DEFAULT_OUTLINE_COLOR` for the outlines.
             Defaults to None, when a color palette is is automatically
             created based on the input layout.
-        colors (list, optional):
-            A list-like object of colors, e.g., `['red', 'green', 'blue']`,
-            of the same length as the number of blocks in the layout input/
-            Defaults to None. When `colors` is set, it will override the
-            `color_map`.
         show_element_id (bool, optional):
             Whether to display `block.id` on the top-left corner of
             the block.
@@ -314,23 +314,23 @@ def draw_box(
     if show_element_id or show_element_type:
         font_obj = _create_font_object(id_font_size, id_font_path)
 
-    if colors is not None:
-        if len(colors) != len(layout):
+    if box_color is not None:
+        if len(box_color) != len(layout):
             raise ValueError(
-                f"The number of colors {len(colors)} is not equal to the number of blocks {len(layout)}"
+                f"The number of colors {len(box_color)} is not equal to the number of blocks {len(layout)}"
             )
     else:
         if color_map is None:
             all_types = set([b.type for b in layout if hasattr(b, "type")])
             color_map = _create_color_palette(all_types)
-        colors = [
+        box_color = [
             DEFAULT_OUTLINE_COLOR
             if not isinstance(ele, TextBlock)
             else color_map.get(ele.type, DEFAULT_OUTLINE_COLOR)
             for ele in layout
         ]
 
-    for idx, (ele, color) in enumerate(zip(layout, colors)):
+    for idx, (ele, color) in enumerate(zip(layout, box_color)):
 
         if isinstance(ele, Interval):
             ele = ele.put_on_canvas(canvas)
@@ -378,18 +378,18 @@ def draw_box(
 def draw_text(
     canvas,
     layout,
-    arrangement="lr",
-    font_size=None,
-    font_path=None,
-    text_color=None,
-    text_background_color=None,
-    text_background_alpha=1,
-    vertical_text=False,
-    with_box_on_text=False,
-    text_box_width=None,
-    text_box_color=None,
-    text_box_alpha=0,
-    with_layout=False,
+    arrangement: str = "lr",
+    font_size: Optional[int] = None,
+    font_path: Optional[str] = None,
+    text_color: Optional[str] = None,
+    text_background_color: Optional[str] = None,
+    text_background_alpha: Optional[float] = None,
+    vertical_text: bool = False,
+    with_box_on_text: bool = False,
+    text_box_width: Optional[int] = None,
+    text_box_color: Optional[str] = None,
+    text_box_alpha: Optional[float] = None,
+    with_layout: bool = False,
     **kwargs,
 ):
     """Draw the (detected) text in the `layout` according to
