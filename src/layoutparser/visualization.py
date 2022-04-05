@@ -364,6 +364,8 @@ def draw_box(
             )
 
     # A post check of the lengths of the input lists
+    # To support more versions of python, we do not use 
+    # zip(*, strict=True)
     assert len(layout) == len(box_color) == len(box_alpha) == len(box_width)
 
     for idx, (ele, color, alpha, width) in enumerate(
