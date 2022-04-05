@@ -318,7 +318,7 @@ def draw_box(
         font_obj = _create_font_object(id_font_size, id_font_path)
 
     if box_alpha is None:
-        box_alpha = [0]
+        box_alpha = [0] * len(layout)
     else:
         if isinstance(box_alpha, (float, int)):
             box_alpha = [box_alpha] * len(layout)
@@ -362,6 +362,11 @@ def draw_box(
             raise ValueError(
                 f"The number of colors {len(box_color)} is not equal to the number of blocks {len(layout)}"
             )
+
+    # A post check of the lengths of the input lists
+    # To support more versions of python, we do not use 
+    # zip(*, strict=True)
+    assert len(layout) == len(box_color) == len(box_alpha) == len(box_width)
 
     for idx, (ele, color, alpha, width) in enumerate(
         zip(layout, box_color, box_alpha, box_width)
