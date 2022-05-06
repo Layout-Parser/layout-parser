@@ -60,7 +60,7 @@ def test_csv():
     _l.page_data = {"width": 200, "height": 200}
     assert _l == l
 
-    i2 = i # <- Allow mixmode loading
+    i2 = TextBlock(i, "")
     r2 = TextBlock(r, id=24)
     q2 = TextBlock(q, text="test", parent=45)
     l2 = Layout([i2, r2, q2])
@@ -79,10 +79,3 @@ def test_pdf():
 
     assert len(set(ele.type for ele in page_layout)) == 3
     # Only three types of font show-up in the file
-    
-def test_empty_pdf():
-    pdf_layout = load_pdf("tests/fixtures/io/empty.pdf")
-    assert len(pdf_layout) == 1 # Only one page
-    
-    page_layout = pdf_layout[0]
-    assert len(page_layout) == 0 # No selectable tokens on the page

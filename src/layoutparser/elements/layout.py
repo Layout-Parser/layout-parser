@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from typing import List, Union, Dict, Dict, Any, Optional
-from collections.abc import MutableSequence, Iterable
+from collections.abc import MutableSequence
 from copy import copy
 
 import pandas as pd
@@ -47,21 +47,6 @@ class Layout(MutableSequence):
     """
 
     def __init__(self, blocks: Optional[List] = None, *, page_data: Dict = None):
-
-        if not (
-            (blocks is None)
-            or (isinstance(blocks, Iterable) and blocks.__class__.__name__ != "Layout")
-        ):
-
-            if blocks.__class__.__name__ == "Layout":
-                error_msg = f"Please check the input: it should be lp.Layout([layout]) instead of lp.Layout(layout)"
-            else:
-                error_msg = f"Blocks should be a list of layout elements or empty (None), instead got {blocks}.\n"
-            raise ValueError(error_msg)
-            
-        if isinstance(blocks, tuple):
-            blocks = list(blocks) # <- more robust handling for tuple-like inputs
-
         self._blocks = blocks if blocks is not None else []
         self.page_data = page_data or {}
 
@@ -91,7 +76,10 @@ class Layout(MutableSequence):
 
     def __eq__(self, other):
         if isinstance(other, Layout):
-            return self._blocks == other._blocks and self.page_data == other.page_data
+            return (
+                all((a, b) for a, b in zip(self, other))
+                and self.page_data == other.page_data
+            )
         else:
             return False
 

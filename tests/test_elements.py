@@ -16,7 +16,13 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from layoutparser.elements import Interval, Rectangle, Quadrilateral, TextBlock, Layout
+from layoutparser.elements import (
+    Interval,
+    Rectangle,
+    Quadrilateral,
+    TextBlock,
+    Layout
+)
 from layoutparser.elements.errors import InvalidShapeError, NotSupportedShapeError
 
 
@@ -236,25 +242,12 @@ def test_layout():
     r = Rectangle(3, 3, 5, 6)
     t = TextBlock(i, id=1, type=2, text="12")
 
-    # Test Initializations 
-    l = Layout([i, q, r])
-    l = Layout((i,q))
-    Layout([l])
-    with pytest.raises(ValueError):
-        Layout(l)
-
-    # Test tuple-like inputs 
-    l = Layout((i, q, r))
-    assert l._blocks == [i, q, r]
-    l.append(i)
-
-    # Test apply functions 
     l = Layout([i, q, r])
     l.get_texts()
-    assert l.filter_by(t) == Layout([i])
-    assert l.condition_on(i) == Layout([block.condition_on(i) for block in [i, q, r]])
-    assert l.relative_to(q) == Layout([block.relative_to(q) for block in [i, q, r]])
-    assert l.is_in(r) == Layout([block.is_in(r) for block in [i, q, r]])
+    l.condition_on(i)
+    l.relative_to(q)
+    l.filter_by(t)
+    l.is_in(r)
     assert l.get_homogeneous_blocks() == [i.to_quadrilateral(), q, r.to_quadrilateral()]
 
     i2 = TextBlock(i, id=1, type=2, text="12")
@@ -293,39 +286,17 @@ def test_layout():
         l + l2
 
     # Test sort
-    ## When sorting inplace, it should return None
-    l = Layout([i])
-    assert l.sort(key=lambda x: x.coordinates[1], inplace=True) is None
-
-    ## Make sure only sorting inplace works
     l = Layout([i, i.shift(2)])
     l.sort(key=lambda x: x.coordinates[1], reverse=True)
-    assert l != Layout([i.shift(2), i])
-    l.sort(key=lambda x: x.coordinates[1], reverse=True, inplace=True)
     assert l == Layout([i.shift(2), i])
 
     l = Layout([q, r, i], page_data={"width": 200, "height": 400})
-    assert l.sort(key=lambda x: x.coordinates[0]) == Layout(
+    assert l.sort(key=lambda x: x.coordinates[0], inplace=False) == Layout(
         [i, q, r], page_data={"width": 200, "height": 400}
     )
 
     l = Layout([q, t])
-    assert l.sort(key=lambda x: x.coordinates[0]) == Layout([t, q])
-
-
-def test_layout_comp():
-    a = Layout([Rectangle(1, 2, 3, 4)])
-    b = Layout([Rectangle(1, 2, 3, 4)])
-
-    assert a == b
-
-    a.append(Rectangle(1, 2, 3, 5))
-    assert a != b
-    b.append(Rectangle(1, 2, 3, 5))
-    assert a == b
-
-    a = Layout([TextBlock(Rectangle(1, 2, 3, 4))])
-    assert a != b
+    assert l.sort(key=lambda x: x.coordinates[0], inplace=False) == Layout([q, t])
 
 
 def test_shape_operations():

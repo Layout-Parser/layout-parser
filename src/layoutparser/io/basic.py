@@ -69,7 +69,7 @@ def load_dict(data: Union[Dict, List[Dict]]) -> Union[BaseLayoutElement, Layout]
     if isinstance(data, dict):
         if "page_data" in data:
             # It is a layout instance
-            return Layout(load_dict(data["blocks"])._blocks, page_data=data["page_data"])
+            return Layout(load_dict(data["blocks"]), page_data=data["page_data"])
         else:
 
             if data["block_type"] not in BASECOORD_ELEMENT_NAMEMAP:
@@ -140,9 +140,7 @@ def load_dataframe(df: pd.DataFrame, block_type: str = None) -> Layout:
     else:
         df["block_type"] = block_type
 
-    if any(col in TextBlock._features for col in df.columns):
-        # Automatically setting index for textblock
-        if "id" not in df.columns:
-            df["id"] = df.index
-            
+    if "id" not in df.columns:
+        df["id"] = df.index
+
     return load_dict(df.apply(lambda x: x.dropna().to_dict(), axis=1).to_list())

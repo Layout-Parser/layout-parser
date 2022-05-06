@@ -53,10 +53,6 @@ def extract_words_for_page(
     )
 
     df = pd.DataFrame(tokens)
-    
-    if len(df) == 0:
-        return Layout()
-    
     df[["x0", "x1"]] = (
         df[["x0", "x1"]].clip(lower=0, upper=int(page.width)).astype("float")
     )
@@ -65,13 +61,12 @@ def extract_words_for_page(
     )
 
     page_tokens = load_dataframe(
-        df.reset_index().rename(
+        df.rename(
             columns={
                 "x0": "x_1",
                 "x1": "x_2",
                 "top": "y_1",
                 "bottom": "y_2",
-                "index": "id",
                 "fontname": "type",  # also loading fontname as "type"
             }
         ),

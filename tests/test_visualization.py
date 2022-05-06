@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
-
 from layoutparser.elements import *
 from layoutparser.ocr import *
 from layoutparser.visualization import *
@@ -32,52 +30,26 @@ def test_viz():
     draw_box(image, Layout([]))
     draw_text(image, Layout([]))
 
-    layout = Layout(
-        [
-            Interval(0, 10, axis="x"),
-            Rectangle(0, 50, 100, 80),
-            Quadrilateral(np.array([[10, 10], [30, 40], [90, 40], [10, 20]])),
-        ]
-    )
-
-    draw_box(image, layout)
-    draw_text(image, layout)
-
-    # Test colors
-    draw_box(image, layout, box_color=["red", "green", "blue"])
-    draw_box(image, layout, box_color="red")
-
-    draw_text(image, layout, box_color=["red", "green", "blue"])
-    with pytest.raises(ValueError):
-        draw_box(image, layout, box_color=["red", "green", "blue", "yellow"])
-    with pytest.raises(ValueError):
-        draw_text(
-            image,
-            layout,
-            box_color=["red", "green", "blue", "yellow"],
-            with_layout=True,
-        )
-
-    # Test alphas
-    draw_box(image, layout, box_alpha=0)
-    draw_box(image, layout, box_alpha=[0.1, 0.2, 0.3])
-    with pytest.raises(ValueError):
-        draw_box(image, layout, box_color=[0.1, 0.2, 0.3, 0.5])
-    with pytest.raises(ValueError):
-        draw_box(image, layout, box_color=[0.1, 0.2, 0.3, 1.5])
-
-    # Test widths
-    draw_box(image, layout, box_width=1)
-    draw_box(image, layout, box_width=[1, 2, 3])
-    with pytest.raises(ValueError):
-        draw_box(image, layout, box_width=[1, 2, 3, 4])
-
     draw_box(
         image,
-        layout,
-        box_alpha=[0.1, 0.2, 0.3],
-        box_width=[1, 2, 3],
-        box_color=["red", "green", "blue"],
+        Layout(
+            [
+                Interval(0, 10, axis="x"),
+                Rectangle(0, 50, 100, 80),
+                Quadrilateral(np.array([[10, 10], [30, 40], [90, 40], [10, 20]])),
+            ]
+        ),
+    )
+
+    draw_text(
+        image,
+        Layout(
+            [
+                Interval(0, 10, axis="x"),
+                Rectangle(0, 50, 100, 80),
+                Quadrilateral(np.array([[10, 10], [30, 40], [90, 40], [10, 20]])),
+            ]
+        ),
     )
 
     for idx, level in enumerate(
@@ -110,7 +82,7 @@ def test_viz():
             show_element_id=True,
             id_font_size=8,
             box_alpha=0.25,
-            id_text_background_alpha=0.25,
+            id_text_background_alpha=0.25
         )
 
         draw_box(image, layout)

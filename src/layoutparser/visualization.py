@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional, Union, Dict, Any, Tuple, Dict
+from typing import List, Union, Dict, Any, Tuple
 import functools
 import os
 import sys
@@ -223,19 +223,18 @@ def draw_transparent_box(
 
 @image_loader
 def draw_box(
-    canvas: Image.Image,
-    layout: Layout,
-    box_width: Optional[Union[List[int], int]] = None,
-    box_alpha: Optional[Union[List[float], float]] = None,
-    box_color: Optional[Union[List[str], str]] = None,
-    color_map: Optional[Dict] = None,
-    show_element_id: bool = False,
-    show_element_type: bool = False,
-    id_font_size: Optional[int] = None,
-    id_font_path: Optional[str] = None,
-    id_text_color: Optional[str] = None,
-    id_text_background_color: Optional[str] = None,
-    id_text_background_alpha: Optional[float] = 1,
+    canvas,
+    layout,
+    box_width=None,
+    box_alpha=0,
+    color_map=None,
+    show_element_id=False,
+    show_element_type=False,
+    id_font_size=None,
+    id_font_path=None,
+    id_text_color=None,
+    id_text_background_color=None,
+    id_text_background_alpha=1,
 ):
     """Draw the layout region on the input canvas(image).
 
@@ -244,29 +243,15 @@ def draw_box(
             The canvas to draw the layout boxes.
         layout (:obj:`Layout` or :obj:`list`):
             The layout of the canvas to show.
-        box_width (:obj:`int` or :obj:`List[int]`, optional):
+        box_width (:obj:`int`, optional):
             Set to change the width of the drawn layout box boundary.
             Defaults to None, when the boundary is automatically
             calculated as the the :const:`DEFAULT_BOX_WIDTH_RATIO`
             * the maximum of (height, width) of the canvas.
-            If box_with is a list, it will assign different widths to
-            the corresponding layout object, and should have the same
-            length as the number of blocks in `layout`.
-        box_alpha (:obj:`float`  or :obj:`List[float]`, optional):
-            A float or list of floats ranging from 0 to 1. Set to change
-            the alpha of the drawn layout box.
+        box_alpha (:obj:`float`, optional):
+            A float range from 0 to 1. Set to change the alpha of the
+            drawn layout box.
             Defaults to 0 - the layout box will be fully transparent.
-            If box_alpha is a list of floats, it will assign different
-            alphas to the corresponding layout object, and should have
-            the same length as the number of blocks in `layout`.
-        box_color (:obj:`str`  or :obj:`List[str]`, optional):
-            A string or a list of strings for box colors, e.g.,
-            `['red', 'green', 'blue']` or `'red'`.
-            If box_color is a list of strings, it will assign different
-            colors to the corresponding layout object, and should have
-            the same length as the number of blocks in `layout`.
-            Defaults to None. When `box_color` is set, it will override the
-            `color_map`.
         color_map (dict, optional):
             A map from `block.type` to the colors, e.g., `{1: 'red'}`.
             You can set it to `{}` to use only the
@@ -305,6 +290,9 @@ def draw_box(
             A Image object containing the `layout` draw upon the input `canvas`.
     """
 
+    assert 0 <= box_alpha <= 1, ValueError(
+        f"The box_alpha value {box_alpha} is not within range [0,1]."
+    )
     assert 0 <= id_text_background_alpha <= 1, ValueError(
         f"The id_text_background_alpha value {id_text_background_alpha} is not within range [0,1]."
     )
@@ -314,71 +302,30 @@ def draw_box(
     id_text_background_color = id_text_background_color or DEFAULT_TEXT_BACKGROUND
     id_text_color = id_text_color or DEFAULT_TEXT_COLOR
 
+    if box_width is None:
+        box_width = _calculate_default_box_width(canvas)
+
     if show_element_id or show_element_type:
         font_obj = _create_font_object(id_font_size, id_font_path)
 
-    if box_alpha is None:
-        box_alpha = [0] * len(layout)
-    else:
-        if isinstance(box_alpha, (float, int)):
-            box_alpha = [box_alpha] * len(layout)
+    if color_map is None:
+        all_types = set([b.type for b in layout if hasattr(b, "type")])
+        color_map = _create_color_palette(all_types)
 
-        if len(box_alpha) != len(layout):
-            raise ValueError(
-                f"The number of alphas {len(box_alpha)} is not equal to the number of blocks {len(layout)}"
-            )
-        if not all(0 <= a <= 1 for a in box_alpha):
-            raise ValueError(
-                f"The box_alpha value {box_alpha} is not within range [0,1]."
-            )
-
-    if box_width is None:
-        box_width = _calculate_default_box_width(canvas)
-        box_width = [box_width] * len(layout)
-    else:
-        if isinstance(box_width, (float, int)):
-            box_width = [box_width] * len(layout)
-
-        if len(box_width) != len(layout):
-            raise ValueError(
-                f"The number of widths {len(box_width)} is not equal to the number of blocks {len(layout)}"
-            )
-
-    if box_color is None:
-        if color_map is None:
-            all_types = set([b.type for b in layout if hasattr(b, "type")])
-            color_map = _create_color_palette(all_types)
-        box_color = [
-            DEFAULT_OUTLINE_COLOR
-            if not isinstance(ele, TextBlock)
-            else color_map.get(ele.type, DEFAULT_OUTLINE_COLOR)
-            for ele in layout
-        ]
-    else:
-        if isinstance(box_color, str):
-            box_color = [box_color] * len(layout)
-
-        if len(box_color) != len(layout):
-            raise ValueError(
-                f"The number of colors {len(box_color)} is not equal to the number of blocks {len(layout)}"
-            )
-
-    # A post check of the lengths of the input lists
-    # To support more versions of python, we do not use 
-    # zip(*, strict=True)
-    assert len(layout) == len(box_color) == len(box_alpha) == len(box_width)
-
-    for idx, (ele, color, alpha, width) in enumerate(
-        zip(layout, box_color, box_alpha, box_width)
-    ):
+    for idx, ele in enumerate(layout):
 
         if isinstance(ele, Interval):
             ele = ele.put_on_canvas(canvas)
 
-        if width > 0:
-            _draw_box_outline_on_handler(draw, ele, color, width)
+        outline_color = (
+            DEFAULT_OUTLINE_COLOR
+            if not isinstance(ele, TextBlock)
+            else color_map.get(ele.type, DEFAULT_OUTLINE_COLOR)
+        )
 
-        _draw_transparent_box_on_handler(draw, ele, color, alpha)
+        _draw_box_outline_on_handler(draw, ele, outline_color, box_width)
+
+        _draw_transparent_box_on_handler(draw, ele, outline_color, box_alpha)
 
         if show_element_id or show_element_type:
             text = ""
@@ -418,18 +365,18 @@ def draw_box(
 def draw_text(
     canvas,
     layout,
-    arrangement: str = "lr",
-    font_size: Optional[int] = None,
-    font_path: Optional[str] = None,
-    text_color: Optional[str] = None,
-    text_background_color: Optional[str] = None,
-    text_background_alpha: Optional[float] = None,
-    vertical_text: bool = False,
-    with_box_on_text: bool = False,
-    text_box_width: Optional[int] = None,
-    text_box_color: Optional[str] = None,
-    text_box_alpha: Optional[float] = None,
-    with_layout: bool = False,
+    arrangement="lr",
+    font_size=None,
+    font_path=None,
+    text_color=None,
+    text_background_color=None,
+    text_background_alpha=1,
+    vertical_text=False,
+    with_box_on_text=False,
+    text_box_width=None,
+    text_box_color=None,
+    text_box_alpha=0,
+    with_layout=False,
     **kwargs,
 ):
     """Draw the (detected) text in the `layout` according to
@@ -445,6 +392,7 @@ def draw_text(
             image canvas:
             * `lr` - left and right
             * `ud` - up and down
+
             Defaults to 'lr'.
         font_size (:obj:`str`, optional):
             Set to change the size of the font used for
@@ -487,6 +435,7 @@ def draw_text(
             Set to change the color of the drawn layout box boundary.
             Defaults to None, when the color is set to
             :const:`DEFAULT_OUTLINE_COLOR`.
+        
         with_layout (bool, optional):
             Whether to draw the layout boxes on the input (image) canvas.
             Defaults to False.
@@ -497,11 +446,6 @@ def draw_text(
         :obj:`PIL.Image.Image`:
             A Image object containing the drawn text from `layout`.
     """
-
-    if text_background_alpha is None:
-        text_background_alpha = 1
-    if text_box_alpha is None:
-        text_box_alpha = 0
 
     assert 0 <= text_background_alpha <= 1, ValueError(
         f"The text_background_color value {text_background_alpha} is not within range [0,1]."

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Layout-Parser/layout-parser/raw/main/.github/layout-parser.png" alt="Layout Parser Logo" width="35%">
+  <img src="https://github.com/Layout-Parser/layout-parser/raw/master/.github/layout-parser.png" alt="Layout Parser Logo" width="35%">
   <h3 align="center">
   A unified toolkit for Deep Learning Based Document Image Analysis
   </h3>
@@ -7,7 +7,7 @@
 
 <p align=center>
 <a href="https://pypi.org/project/layoutparser/"><img src="https://img.shields.io/pypi/v/layoutparser?color=%23099cec&label=PyPI%20package&logo=pypi&logoColor=white" title="The current version of Layout Parser"></a>
-<a href="https://github.com/Layout-Parser/layout-parser/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/layoutparser" title="Layout Parser uses Apache 2 License"></a>
+<a href="https://github.com/Layout-Parser/layout-parser/blob/master/LICENSE"><img src="https://img.shields.io/pypi/l/layoutparser" title="Layout Parser uses Apache 2 License"></a>
 <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/layoutparser">
 </p>
 
@@ -21,7 +21,7 @@
 
 ## What is LayoutParser
 
-![Example Usage](https://github.com/Layout-Parser/layout-parser/raw/main/.github/example.png)
+![Example Usage](.github/example.png)
 
 LayoutParser aims to provide a wide range of tools that aims to streamline Document Image Analysis (DIA) tasks. Please check the LayoutParser [demo video](https://youtu.be/8yA5xB4Dg8c) (1 min) or [full talk](https://www.youtube.com/watch?v=YG0qepPgyGY) (15 min) for details. And here are some key features:
 
@@ -111,9 +111,9 @@ Extra steps are needed if you want to use Detectron2-based models. Please check 
 
 We provide a series of examples for to help you start using the layout parser library: 
 
-1. [Table OCR and Results Parsing](https://github.com/Layout-Parser/layout-parser/blob/main/examples/OCR%20Tables%20and%20Parse%20the%20Output.ipynb): `layoutparser` can be used for conveniently OCR documents and convert the output in to structured data. 
+1. [Table OCR and Results Parsing](https://github.com/Layout-Parser/layout-parser/blob/master/examples/OCR%20Tables%20and%20Parse%20the%20Output.ipynb): `layoutparser` can be used for conveniently OCR documents and convert the output in to structured data. 
 
-2. [Deep Layout Parsing Example](https://github.com/Layout-Parser/layout-parser/blob/main/examples/Deep%20Layout%20Parsing.ipynb): With the help of Deep Learning, `layoutparser` supports the analysis very complex documents and processing of the hierarchical structure in the layouts. 
+2. [Deep Layout Parsing Example](https://github.com/Layout-Parser/layout-parser/blob/master/examples/Deep%20Layout%20Parsing.ipynb): With the help of Deep Learning, `layoutparser` supports the analysis very complex documents and processing of the hierarchical structure in the layouts. 
 
 ## Contributing
 
