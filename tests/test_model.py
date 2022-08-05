@@ -44,11 +44,6 @@ ALL_EFFDET_MODEL_CONFIGS = [
     "lp://MFD/tf_efficientdet_d1/config",
 ]
 
-AUTOMODEL_CONFIGS = [
-    "lp://detectron2/PubLayNet/faster_rcnn_R_50_FPN_3x/config",
-    "lp://paddledetection/PubLayNet/ppyolov2_r50vd_dcn_365e/config",
-    "lp://efficientdet/PubLayNet/tf_efficientdet_d0/config",
-]
 
 def _construct_valid_config_variations(config, backend_name):
     dataset_name, arch_name, identifier = config[len("lp://") :].split("/")
@@ -152,8 +147,36 @@ def test_EffDetModel(is_large_scale=False):
             EfficientDetLayoutModel, ALL_EFFDET_MODEL_CONFIGS[0]
         )
 
+
 def test_AutoModel():
-    for config in AUTOMODEL_CONFIGS:
+
+    # Full configs
+    auto_model_config_1 = [
+        "lp://detectron2/PubLayNet/faster_rcnn_R_50_FPN_3x/config",
+        "lp://paddledetection/PubLayNet/ppyolov2_r50vd_dcn_365e/config",
+        "lp://efficientdet/PubLayNet/tf_efficientdet_d0/config",
+    ]
+    for config in auto_model_config_1:
         model = AutoLayoutModel(config)
         image = cv2.imread("tests/fixtures/model/test_model_image.jpg")
         layout = model.detect(image)
+
+    # Dataset name only
+    # It will use the first available model
+    auto_model_config_2 = [
+        "lp://PubLayNet",
+        "lp://MFD",
+    ]
+    for config in auto_model_config_1:
+        model = AutoLayoutModel(config)
+        model.DETECTOR_NAME == "efficientdet"
+
+    # Automodel name that doesn't work
+
+    # 1. No available backend for the model
+    with pytest.raises(ValueError):
+        model = AutoLayoutModel("lp://prima")
+
+    # 2. completely Invalid name
+    with pytest.raises(ValueError):
+        model = AutoLayoutModel("lp://test")
