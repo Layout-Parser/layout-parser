@@ -177,6 +177,6 @@ def test_AutoModel():
     with pytest.raises(ValueError):
         model = AutoLayoutModel("lp://prima")
 
-    # 2. completely Invalid name
+    # 2. Completely invalid name
     with pytest.raises(ValueError):
         model = AutoLayoutModel("lp://test")
