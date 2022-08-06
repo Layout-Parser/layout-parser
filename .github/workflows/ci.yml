@@ -61,6 +61,8 @@ jobs:
         pip install pytest
         pip install -e ".[paddledetection]"
         pytest tests_deps/test_only_paddledetection.py
+      env:
+        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   test_all_methods_all_backends:
     needs: [test_only_effdet_backend, test_only_detectron2_backend, test_only_paddledetection_backend]
