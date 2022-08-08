@@ -12,21 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Union, Dict, Dict, Any, Optional
-from collections.abc import MutableSequence, Iterable
+from collections.abc import Iterable, MutableSequence
 from copy import copy
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from .base import BaseCoordElement, BaseLayoutElement
-from .layout_elements import (
-    Interval,
-    Rectangle,
-    Quadrilateral,
-    TextBlock,
+from layoutparser.elements.base import BaseCoordElement, BaseLayoutElement
+from layoutparser.elements.layout_elements import (
     ALL_BASECOORD_ELEMENTS,
-    BASECOORD_ELEMENT_NAMEMAP,
     BASECOORD_ELEMENT_INDEXMAP,
+    BASECOORD_ELEMENT_NAMEMAP,
+    Interval,
+    Quadrilateral,
+    Rectangle,
+    TextBlock,
 )
 
 
@@ -47,20 +47,20 @@ class Layout(MutableSequence):
     """
 
     def __init__(self, blocks: Optional[List] = None, *, page_data: Dict = None):
-
         if not (
-            (blocks is None)
-            or (isinstance(blocks, Iterable) and blocks.__class__.__name__ != "Layout")
+            blocks is None
+            or isinstance(blocks, Iterable)
+            and blocks.__class__.__name__ != "Layout"
         ):
-
             if blocks.__class__.__name__ == "Layout":
-                error_msg = f"Please check the input: it should be lp.Layout([layout]) instead of lp.Layout(layout)"
+                error_msg = "Please check the input: it should be lp.Layout([layout]) instead of lp.Layout(layout)"
+
             else:
                 error_msg = f"Blocks should be a list of layout elements or empty (None), instead got {blocks}.\n"
+
             raise ValueError(error_msg)
-            
         if isinstance(blocks, tuple):
-            blocks = list(blocks) # <- more robust handling for tuple-like inputs
+            blocks = list(blocks)  # <- more robust handling for tuple-like inputs
 
         self._blocks = blocks if blocks is not None else []
         self.page_data = page_data or {}
@@ -82,8 +82,7 @@ class Layout(MutableSequence):
         return len(self._blocks)
 
     def __iter__(self):
-        for ele in self._blocks:
-            yield ele
+        yield from self._blocks
 
     def __repr__(self):
         info_str = ", ".join([f"{key}={val}" for key, val in vars(self).items()])
@@ -98,9 +97,7 @@ class Layout(MutableSequence):
     def __add__(self, other):
         if isinstance(other, Layout):
             if self.page_data == other.page_data:
-                return self.__class__(
-                    self._blocks + other._blocks, page_data=self.page_data
-                )
+                return self.__class__(self._blocks + other._blocks, page_data=self.page_data)
             elif self.page_data == {} or other.page_data == {}:
                 return self.__class__(
                     self._blocks + other._blocks,
@@ -113,9 +110,7 @@ class Layout(MutableSequence):
         elif isinstance(other, list):
             return self.__class__(self._blocks + other, page_data=self.page_data)
         else:
-            raise ValueError(
-                f"Invalid input type for other {other.__class__.__name__}."
-            )
+            raise ValueError(f"Invalid input type for other {other.__class__.__name__}.")
 
     def insert(self, key, value):
         self._blocks.insert(key, value)
@@ -124,14 +119,10 @@ class Layout(MutableSequence):
         return self.__class__(copy(self._blocks), page_data=self.page_data)
 
     def relative_to(self, other):
-        return self.__class__(
-            [ele.relative_to(other) for ele in self], page_data=self.page_data
-        )
+        return self.__class__([ele.relative_to(other) for ele in self], page_data=self.page_data)
 
     def condition_on(self, other):
-        return self.__class__(
-            [ele.condition_on(other) for ele in self], page_data=self.page_data
-        )
+        return self.__class__([ele.condition_on(other) for ele in self], page_data=self.page_data)
 
     def is_in(self, other, soft_margin={}, center=False):
         return self.__class__(
@@ -234,9 +225,7 @@ class Layout(MutableSequence):
             :obj:`Layout`:
                 A new layout object with all the elements scaled in the specified values.
         """
-        return self.__class__(
-            [ele.scale(scale_factor) for ele in self], page_data=self.page_data
-        )
+        return self.__class__([ele.scale(scale_factor) for ele in self], page_data=self.page_data)
 
     def crop_image(self, image):
         return [ele.crop_image(image) for ele in self]
@@ -297,9 +286,7 @@ class Layout(MutableSequence):
             else:
                 block = ele
 
-            max_coord_level = max(
-                max_coord_level, BASECOORD_ELEMENT_INDEXMAP[block._name]
-            )
+            max_coord_level = max(max_coord_level, BASECOORD_ELEMENT_INDEXMAP[block._name])
         target_coord_name = ALL_BASECOORD_ELEMENTS[max_coord_level]._name
 
         if has_textblock:
@@ -338,11 +325,5 @@ class Layout(MutableSequence):
             pd.DataFrame:
                 The dataframe representation of layout object
         """
-        if enforce_same_type:
-            blocks = self.get_homogeneous_blocks()
-        else:
-            blocks = self
-
-        df = pd.DataFrame([ele.to_dict() for ele in blocks])
-
-        return df
+        blocks = self.get_homogeneous_blocks() if enforce_same_type else self
+        return pd.DataFrame([ele.to_dict() for ele in blocks])
