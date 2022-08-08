@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Dict, Dict, Any
 from abc import ABC, abstractmethod
 from copy import copy
+from typing import Any, Dict, List
+
 
 class BaseLayoutElement:
     def set(self, inplace=False, **kwargs):
@@ -49,13 +50,11 @@ class BaseCoordElement(ABC, BaseLayoutElement):
     @abstractmethod
     def _name(self) -> str:
         """The name of the class"""
-        pass
 
     @property
     @abstractmethod
     def _features(self) -> List[str]:
         """A list of features names used for initializing the class object"""
-        pass
 
     #######################################################################
     #########################  Layout Properties  #########################
@@ -108,8 +107,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
                 The BaseCoordElement object of the original element in the absolute coordinate system.
         """
 
-        pass
-
     @abstractmethod
     def relative_to(self, other):
         """
@@ -126,8 +123,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             :obj:`BaseCoordElement`:
                 The BaseCoordElement object of the original element in the relative coordinate system.
         """
-
-        pass
 
     @abstractmethod
     def is_in(self, other, soft_margin={}, center=False):
@@ -146,8 +141,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         Returns:
             :obj:`bool`: Returns `True` if the current element is in the other element and `False` if not.
         """
-
-        pass
 
     #######################################################################
     ################# Shape Operations (intersect, union)  ################
@@ -186,8 +179,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             :obj:`BaseCoordElement`: The padded BaseCoordElement object.
         """
 
-        pass
-
     @abstractmethod
     def shift(self, shift_distance=0):
         """
@@ -202,8 +193,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             :obj:`BaseCoordElement`: The shifted BaseCoordElement of the same shape-specific class.
         """
 
-        pass
-
     @abstractmethod
     def scale(self, scale_factor=1):
         """
@@ -216,8 +205,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         Returns:
             :obj:`BaseCoordElement`: The scaled BaseCoordElement of the same shape-specific class.
         """
-
-        pass
 
     #######################################################################
     ################################# MISC ################################
@@ -235,8 +222,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             :obj:`Numpy array`: The array of the cropped image.
         """
 
-        pass
-
     #######################################################################
     ########################## Import and Export ##########################
     #######################################################################
@@ -252,9 +237,7 @@ class BaseCoordElement(ABC, BaseLayoutElement):
         """
 
         data = {
-            key: getattr(self, key)
-            for key in self._features
-            if getattr(self, key) is not None
+            key: getattr(self, key) for key in self._features if getattr(self, key) is not None
         }
         data["block_type"] = self._name
         return data
@@ -267,9 +250,6 @@ class BaseCoordElement(ABC, BaseLayoutElement):
             data (:obj:`dict`): The dictionary representation of the object
         """
 
-        assert (
-            cls._name == data["block_type"]
-        ), f"Incompatible block types {data['block_type']}"
+        assert cls._name == data["block_type"], f"Incompatible block types {data['block_type']}"
 
         return cls(**{f: data[f] for f in cls._features})
-

@@ -12,28 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Union, Dict, Dict, Any, Optional, Tuple
+import functools
+import warnings
 from collections.abc import Iterable
 from copy import copy
 from inspect import getmembers, isfunction
-import warnings
-import functools
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from PIL import Image
 from cv2 import getPerspectiveTransform as _getPerspectiveTransform
 from cv2 import warpPerspective as _warpPerspective
+from PIL import Image
 
-from .base import BaseCoordElement, BaseLayoutElement
-from .utils import (
+from layoutparser.elements.base import BaseCoordElement, BaseLayoutElement
+from layoutparser.elements.errors import InvalidShapeError, NotSupportedShapeError
+from layoutparser.elements.utils import (
     cvt_coordinates_to_points,
     cvt_points_to_coordinates,
     perspective_transformation,
-    vertice_in_polygon,
     polygon_area,
+    vertice_in_polygon,
 )
-from .errors import NotSupportedShapeError, InvalidShapeError
 
 
 def mixin_textblock_meta(func):
@@ -53,19 +53,16 @@ def inherit_docstrings(cls=None, *, base_class=None):
     # Refer to https://stackoverflow.com/a/17393254
     if cls is None:
         return functools.partial(inherit_docstrings, base_class=base_class)
-
     for name, func in getmembers(cls, isfunction):
         if func.__doc__:
             continue
-        if base_class == None:
+        if base_class is None:
             for parent in cls.__mro__[1:]:
                 if hasattr(parent, name):
                     func.__doc__ = getattr(parent, name).__doc__
                     break
-        else:
-            if hasattr(base_class, name):
-                func.__doc__ = getattr(base_class, name).__doc__
-
+        elif hasattr(base_class, name):
+            func.__doc__ = getattr(base_class, name).__doc__
     return cls
 
 
@@ -103,14 +100,11 @@ class Interval(BaseCoordElement):
     _features = ["start", "end", "axis", "canvas_height", "canvas_width"]
 
     def __init__(self, start, end, axis, canvas_height=None, canvas_width=None):
-
-        assert start <= end, f"Invalid input for start and end. Start must <= end."
+        assert start <= end, "Invalid input for start and end. Start must <= end."
         self.start = start
         self.end = end
-
         assert axis in ["x", "y"], f"Invalid axis {axis}. Axis must be in 'x' or 'y'"
         self.axis = axis
-
         self.canvas_height = canvas_height or 0
         self.canvas_width = canvas_width or 0
 
@@ -123,11 +117,7 @@ class Interval(BaseCoordElement):
         Returns:
             :obj:`numeric`: Output the numeric value of the height.
         """
-
-        if self.axis == "x":
-            return self.canvas_height
-        else:
-            return self.end - self.start
+        return self.canvas_height if self.axis == "x" else self.end - self.start
 
     @property
     def width(self):
@@ -138,11 +128,7 @@ class Interval(BaseCoordElement):
         Returns:
             :obj:`numeric`: Output the numeric value of the width.
         """
-
-        if self.axis == "y":
-            return self.canvas_width
-        else:
-            return self.end - self.start
+        return self.canvas_width if self.axis == "y" else self.end - self.start
 
     @property
     def coordinates(self):
@@ -154,13 +140,11 @@ class Interval(BaseCoordElement):
             :obj:`Tuple(numeric)`:
                 Output the numeric values of the coordinates in a Tuple of size four.
         """
-
-        if self.axis == "x":
-            coords = (self.start, 0, self.end, self.canvas_height)
-        else:
-            coords = (0, self.start, self.canvas_width, self.end)
-
-        return coords
+        return (
+            (self.start, 0, self.end, self.canvas_height)
+            if self.axis == "x"
+            else (0, self.start, self.canvas_width, self.end)
+        )
 
     @property
     def points(self):
@@ -223,90 +207,63 @@ class Interval(BaseCoordElement):
 
     @support_textblock
     def condition_on(self, other):
-
         if isinstance(other, Interval):
-            if other.axis == self.axis:
-                d = other.start
-                # Reset the canvas size in the absolute coordinates
-                return self.__class__(self.start + d, self.end + d, self.axis)
-            else:
+            if other.axis != self.axis:
                 return copy(self)
-
+            d = other.start
+            return self.__class__(self.start + d, self.end + d, self.axis)
         elif isinstance(other, Rectangle):
-
             return self.put_on_canvas(other).to_rectangle().condition_on(other)
-
         elif isinstance(other, Quadrilateral):
-
             return self.put_on_canvas(other).to_quadrilateral().condition_on(other)
-
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
     @support_textblock
     def relative_to(self, other):
-
         if isinstance(other, Interval):
-            if other.axis == self.axis:
-                d = other.start
-                # Reset the canvas size in the absolute coordinates
-                return self.__class__(self.start - d, self.end - d, self.axis)
-            else:
+            if other.axis != self.axis:
                 return copy(self)
-
+            d = other.start
+            return self.__class__(self.start - d, self.end - d, self.axis)
         elif isinstance(other, Rectangle):
-
             return self.put_on_canvas(other).to_rectangle().relative_to(other)
-
         elif isinstance(other, Quadrilateral):
-
             return self.put_on_canvas(other).to_quadrilateral().relative_to(other)
-
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
     @support_textblock
     def is_in(self, other, soft_margin={}, center=False):
-
         other = other.pad(**soft_margin)
-
         if isinstance(other, Interval):
             if self.axis != other.axis:
                 return False
             else:
-                if not center:
-                    return other.start <= self.start <= self.end <= other.end
-                else:
-                    return other.start <= self.center <= other.end
+                return (
+                    other.start <= self.center <= other.end
+                    if center
+                    else other.start <= self.start <= self.end <= other.end
+                )
 
-        elif isinstance(other, Rectangle) or isinstance(other, Quadrilateral):
+        elif isinstance(other, (Rectangle, Quadrilateral)):
             x_1, y_1, x_2, y_2 = other.coordinates
-
             if center:
-                if self.axis == "x":
-                    return x_1 <= self.center <= x_2
-                else:
-                    return y_1 <= self.center <= y_2
-            else:
-                if self.axis == "x":
-                    return x_1 <= self.start <= self.end <= x_2
-                else:
-                    return y_1 <= self.start <= self.end <= y_2
+                return (
+                    x_1 <= self.center <= x_2 if self.axis == "x" else y_1 <= self.center <= y_2
+                )
 
+            if self.axis == "x":
+                return x_1 <= self.start <= self.end <= x_2
+            else:
+                return y_1 <= self.start <= self.end <= y_2
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
     @support_textblock
     def intersect(self, other: BaseCoordElement, strict: bool = True):
-        """"""
-
         if isinstance(other, Interval):
-            if self.axis != other.axis:
-                if self.axis == "x" and other.axis == "y":
-                    return Rectangle(self.start, other.start, self.end, other.end)
-                else:
-                    return Rectangle(other.start, self.start, other.end, self.end)
-            else:
+            if self.axis == other.axis:
                 return self.__class__(
                     max(self.start, other.start),
                     min(self.end, other.end),
@@ -315,35 +272,38 @@ class Interval(BaseCoordElement):
                     self.canvas_width,
                 )
 
+            if self.axis == "x" and other.axis == "y":
+                return Rectangle(self.start, other.start, self.end, other.end)
+            else:
+                return Rectangle(other.start, self.start, other.end, self.end)
         elif isinstance(other, Rectangle):
             x_1, y_1, x_2, y_2 = other.coordinates
             if self.axis == "x":
                 return Rectangle(max(x_1, self.start), y_1, min(x_2, self.end), y_2)
             elif self.axis == "y":
                 return Rectangle(x_1, max(y_1, self.start), x_2, min(y_2, self.end))
-
         elif isinstance(other, Quadrilateral):
             if strict:
                 raise NotSupportedShapeError(
                     "The intersection between an Interval and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
                 )
-            else:
-                warnings.warn(
-                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return self.intersect(other.to_rectangle())
 
+            warnings.warn(
+                f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return self.intersect(other.to_rectangle())
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
     @support_textblock
     def union(self, other: BaseCoordElement, strict: bool = True):
-        """"""
         if isinstance(other, Interval):
             if self.axis != other.axis:
                 raise InvalidShapeError(
-                    f"Unioning two intervals of different axes is not allowed."
+                    "Unioning two intervals of different axes is not allowed."
                 )
+
             else:
                 return self.__class__(
                     min(self.start, other.start),
@@ -359,18 +319,17 @@ class Interval(BaseCoordElement):
                 return Rectangle(min(x_1, self.start), y_1, max(x_2, self.end), y_2)
             elif self.axis == "y":
                 return Rectangle(x_1, min(y_1, self.start), x_2, max(y_2, self.end))
-
         elif isinstance(other, Quadrilateral):
             if strict:
                 raise NotSupportedShapeError(
                     "The intersection between an Interval and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
                 )
-            else:
-                warnings.warn(
-                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return self.union(other.to_rectangle())
 
+            warnings.warn(
+                f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return self.union(other.to_rectangle())
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
@@ -408,9 +367,7 @@ class Interval(BaseCoordElement):
         """
 
         if isinstance(shift_distance, Iterable):
-            shift_distance = (
-                shift_distance[0] if self.axis == "x" else shift_distance[1]
-            )
+            shift_distance = shift_distance[0] if self.axis == "x" else shift_distance[1]
             warnings.warn(
                 f"Input shift for multiple axes. Only use the distance for the {self.axis} axis"
             )
@@ -560,23 +517,13 @@ class Rectangle(BaseCoordElement):
 
     @support_textblock
     def condition_on(self, other):
-
         if isinstance(other, Interval):
-            if other.axis == "x":
-                dx, dy = other.start, 0
-            else:
-                dx, dy = 0, other.start
-
-            return self.__class__(
-                self.x_1 + dx, self.y_1 + dy, self.x_2 + dx, self.y_2 + dy
-            )
+            dx, dy = (other.start, 0) if other.axis == "x" else (0, other.start)
+            return self.__class__(self.x_1 + dx, self.y_1 + dy, self.x_2 + dx, self.y_2 + dy)
 
         elif isinstance(other, Rectangle):
             dx, dy, _, _ = other.coordinates
-
-            return self.__class__(
-                self.x_1 + dx, self.y_1 + dy, self.x_2 + dx, self.y_2 + dy
-            )
+            return self.__class__(self.x_1 + dx, self.y_1 + dy, self.x_2 + dx, self.y_2 + dy)
 
         elif isinstance(other, Quadrilateral):
             transformed_points = perspective_transformation(
@@ -584,28 +531,18 @@ class Rectangle(BaseCoordElement):
             )
 
             return other.__class__(transformed_points, self.height, self.width)
-
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
     @support_textblock
     def relative_to(self, other):
         if isinstance(other, Interval):
-            if other.axis == "x":
-                dx, dy = other.start, 0
-            else:
-                dx, dy = 0, other.start
-
-            return self.__class__(
-                self.x_1 - dx, self.y_1 - dy, self.x_2 - dx, self.y_2 - dy
-            )
+            dx, dy = (other.start, 0) if other.axis == "x" else (0, other.start)
+            return self.__class__(self.x_1 - dx, self.y_1 - dy, self.x_2 - dx, self.y_2 - dy)
 
         elif isinstance(other, Rectangle):
             dx, dy, _, _ = other.coordinates
-
-            return self.__class__(
-                self.x_1 - dx, self.y_1 - dy, self.x_2 - dx, self.y_2 - dy
-            )
+            return self.__class__(self.x_1 - dx, self.y_1 - dy, self.x_2 - dx, self.y_2 - dy)
 
         elif isinstance(other, Quadrilateral):
             transformed_points = perspective_transformation(
@@ -613,7 +550,6 @@ class Rectangle(BaseCoordElement):
             )
 
             return other.__class__(transformed_points, self.height, self.width)
-
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
@@ -636,9 +572,7 @@ class Rectangle(BaseCoordElement):
         elif isinstance(other, Rectangle):
             x_interval = other.to_interval(axis="x")
             y_interval = other.to_interval(axis="y")
-            return self.is_in(x_interval, center=center) and self.is_in(
-                y_interval, center=center
-            )
+            return self.is_in(x_interval, center=center) and self.is_in(y_interval, center=center)
 
         elif isinstance(other, Quadrilateral):
 
@@ -658,11 +592,8 @@ class Rectangle(BaseCoordElement):
 
     @support_textblock
     def intersect(self, other: BaseCoordElement, strict: bool = True):
-        """"""
-
         if isinstance(other, Interval):
             return other.intersect(self)
-
         elif isinstance(other, Rectangle):
 
             return self.__class__(
@@ -677,21 +608,19 @@ class Rectangle(BaseCoordElement):
                 raise NotSupportedShapeError(
                     "The intersection between a Rectangle and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
                 )
-            else:
-                warnings.warn(
-                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return self.intersect(other.to_rectangle())
 
+            warnings.warn(
+                f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return self.intersect(other.to_rectangle())
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
     @support_textblock
     def union(self, other: BaseCoordElement, strict: bool = True):
-        """"""
         if isinstance(other, Interval):
             return other.intersect(self)
-
         elif isinstance(other, Rectangle):
             return self.__class__(
                 min(self.x_1, other.x_1),
@@ -705,12 +634,12 @@ class Rectangle(BaseCoordElement):
                 raise NotSupportedShapeError(
                     "The intersection between an Interval and a Quadrilateral might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
                 )
-            else:
-                warnings.warn(
-                    f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return self.union(other.to_rectangle())
 
+            warnings.warn(
+                f"With `strict=False`, the other of shape {other.__class__} will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return self.union(other.to_rectangle())
         else:
             raise Exception(f"Invalid input type {other.__class__} for other")
 
@@ -766,11 +695,7 @@ class Rectangle(BaseCoordElement):
         return image[int(y_1) : int(y_2), int(x_1) : int(x_2)]
 
     def to_interval(self, axis, **kwargs):
-        if axis == "x":
-            start, end = self.x_1, self.x_2
-        else:
-            start, end = self.y_1, self.y_2
-
+        start, end = (self.x_1, self.x_2) if axis == "x" else (self.y_1, self.y_2)
         return Interval(start, end, axis=axis, **kwargs)
 
     def to_quadrilateral(self):
@@ -809,9 +734,7 @@ class Quadrilateral(BaseCoordElement):
     _name = "quadrilateral"
     _features = ["points", "height", "width"]
 
-    def __init__(
-        self, points: Union[np.ndarray, List, List[List]], height=None, width=None
-    ):
+    def __init__(self, points: Union[np.ndarray, List, List[List]], height=None, width=None):
 
         if isinstance(points, np.ndarray):
             if points.shape != (4, 2):
@@ -822,9 +745,7 @@ class Quadrilateral(BaseCoordElement):
             elif len(points) == 4 and isinstance(points[0], list):
                 points = np.array(points)
             else:
-                raise ValueError(
-                    f"Invalid number of points element {len(points)}. Should be 8."
-                )
+                raise ValueError(f"Invalid number of points element {len(points)}. Should be 8.")
         else:
             raise ValueError(
                 f"Invalid input type for points {type(points)}."
@@ -997,9 +918,7 @@ class Quadrilateral(BaseCoordElement):
         elif isinstance(other, Rectangle):
             x_interval = other.to_interval(axis="x")
             y_interval = other.to_interval(axis="y")
-            return self.is_in(x_interval, center=center) and self.is_in(
-                y_interval, center=center
-            )
+            return self.is_in(x_interval, center=center) and self.is_in(y_interval, center=center)
 
         elif isinstance(other, Quadrilateral):
 
@@ -1019,46 +938,47 @@ class Quadrilateral(BaseCoordElement):
 
     @support_textblock
     def intersect(self, other: BaseCoordElement, strict: bool = True):
-        """"""
-
         if strict:
             raise NotSupportedShapeError(
                 "The intersection between a Quadrilateral and other objects might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
             )
+
+        if isinstance(other, (Interval, Rectangle)):
+            warnings.warn(
+                f"With `strict=False`, the current Quadrilateral object will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return other.intersect(self.to_rectangle())
+        elif isinstance(other, Quadrilateral):
+            warnings.warn(
+                f"With `strict=False`, both input Quadrilateral objects will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return self.to_rectangle().intersect(other.to_rectangle())
         else:
-            if isinstance(other, Interval) or isinstance(other, Rectangle):
-                warnings.warn(
-                    f"With `strict=False`, the current Quadrilateral object will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return other.intersect(self.to_rectangle())
-            elif isinstance(other, Quadrilateral):
-                warnings.warn(
-                    f"With `strict=False`, both input Quadrilateral objects will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return self.to_rectangle().intersect(other.to_rectangle())
-            else:
-                raise Exception(f"Invalid input type {other.__class__} for other")
+            raise Exception(f"Invalid input type {other.__class__} for other")
 
     @support_textblock
     def union(self, other: BaseCoordElement, strict: bool = True):
-        """"""
         if strict:
             raise NotSupportedShapeError(
                 "The intersection between a Quadrilateral and other objects might generate Polygon shapes that are not supported in the current version of layoutparser. You can pass `strict=False` in the input that converts the Quadrilateral to Rectangle to avoid this Exception."
             )
+
+        if isinstance(other, (Interval, Rectangle)):
+            warnings.warn(
+                f"With `strict=False`, the current Quadrilateral object will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return other.union(self.to_rectangle())
+        elif isinstance(other, Quadrilateral):
+            warnings.warn(
+                f"With `strict=False`, both input Quadrilateral objects will be converted to {Rectangle} for obtaining the intersection"
+            )
+
+            return self.to_rectangle().union(other.to_rectangle())
         else:
-            if isinstance(other, Interval) or isinstance(other, Rectangle):
-                warnings.warn(
-                    f"With `strict=False`, the current Quadrilateral object will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return other.union(self.to_rectangle())
-            elif isinstance(other, Quadrilateral):
-                warnings.warn(
-                    f"With `strict=False`, both input Quadrilateral objects will be converted to {Rectangle} for obtaining the intersection"
-                )
-                return self.to_rectangle().union(other.to_rectangle())
-            else:
-                raise Exception(f"Invalid input type {other.__class__} for other")
+            raise Exception(f"Invalid input type {other.__class__} for other")
 
     def pad(self, left=0, right=0, top=0, bottom=0, safe_mode=True):
 
@@ -1117,13 +1037,8 @@ class Quadrilateral(BaseCoordElement):
         )
 
     def to_interval(self, axis, **kwargs):
-
         x_1, y_1, x_2, y_2 = self.coordinates
-        if axis == "x":
-            start, end = x_1, x_2
-        else:
-            start, end = y_1, y_2
-
+        start, end = (x_1, x_2) if axis == "x" else (y_1, y_2)
         return Interval(start, end, axis=axis, **kwargs)
 
     def to_rectangle(self):
@@ -1164,9 +1079,7 @@ class Quadrilateral(BaseCoordElement):
 ALL_BASECOORD_ELEMENTS = [Interval, Rectangle, Quadrilateral]
 
 BASECOORD_ELEMENT_NAMEMAP = {ele._name: ele for ele in ALL_BASECOORD_ELEMENTS}
-BASECOORD_ELEMENT_INDEXMAP = {
-    ele._name: idx for idx, ele in enumerate(ALL_BASECOORD_ELEMENTS)
-}
+BASECOORD_ELEMENT_INDEXMAP = {ele._name: idx for idx, ele in enumerate(ALL_BASECOORD_ELEMENTS)}
 
 
 @inherit_docstrings(base_class=BaseCoordElement)
@@ -1195,9 +1108,7 @@ class TextBlock(BaseLayoutElement):
     _name = "textblock"
     _features = ["text", "id", "type", "parent", "next", "score"]
 
-    def __init__(
-        self, block, text=None, id=None, type=None, parent=None, next=None, score=None
-    ):
+    def __init__(self, block, text=None, id=None, type=None, parent=None, next=None, score=None):
 
         assert isinstance(block, BaseCoordElement)
         self.block = block
@@ -1298,12 +1209,10 @@ class TextBlock(BaseLayoutElement):
     def to_interval(self, axis: Optional[str] = None, **kwargs):
         if isinstance(self.block, Interval):
             return self
-        else:
-            if not axis:
-                raise ValueError(
-                    f"Please provide valid `axis` values {'x' or 'y'} as the input"
-                )
-            return self.set(block=self.block.to_interval(axis=axis, **kwargs))
+        if not axis:
+            raise ValueError(f"Please provide valid `axis` values {'x' or 'y'} as the input")
+
+        return self.set(block=self.block.to_interval(axis=axis, **kwargs))
 
     def to_rectangle(self):
         if isinstance(self.block, Rectangle):

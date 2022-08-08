@@ -12,11 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Tuple, Union, Dict
 from abc import ABC, abstractmethod
+from typing import Dict, Optional, Tuple, Union
 
-from .model_config import LayoutModelConfig, add_identifier_for_config, layout_model_config_parser, is_lp_layout_model_config_any_format
-from ..file_utils import requires_backends
+from layoutparser.file_utils import requires_backends
+from layoutparser.models.model_config import (
+    LayoutModelConfig,
+    add_identifier_for_config,
+    is_lp_layout_model_config_any_format,
+    layout_model_config_parser,
+)
+
 
 class BaseLayoutModel(ABC):
 
@@ -25,7 +31,6 @@ class BaseLayoutModel(ABC):
     @abstractmethod
     def DEPENDENCIES(self):
         """DEPENDENCIES lists all necessary dependencies for the class."""
-        pass
 
     @property
     @abstractmethod
@@ -41,30 +46,33 @@ class BaseLayoutModel(ABC):
     def detect(self, image: Union["np.ndarray", "Image.Image"]):
         pass
 
-
     @abstractmethod
     def image_loader(self, image: Union["np.ndarray", "Image.Image"]):
         """It will process the input images appropriately to the target format."""
-        pass
-    
-    def _parse_config(self, config_path:str, identifier:str) -> Union[LayoutModelConfig, str]:
-        
-        if is_lp_layout_model_config_any_format(config_path):
-            config_path = add_identifier_for_config(config_path, identifier)
-            for dataset_name in self.MODEL_CATALOG:
-                if dataset_name in config_path:
-                    default_model_arch = list(self.MODEL_CATALOG[dataset_name].keys())[0]
-                    # Use the first model_name for the dataset as the default_model_arch
-                    return layout_model_config_parser(config_path, self.DETECTOR_NAME, default_model_arch)
-            raise ValueError(f"The config {config_path} is not a valid config for {self.__class__}, "
-                             f"possibly because there aren't models trained for the specified dataset.")
-        else:
-            return config_path
 
-    def config_parser(self, config_path:str, model_path: Optional[str], allow_empty_path=False) -> Tuple[str, str]:
+    def _parse_config(self, config_path: str, identifier: str) -> Union[LayoutModelConfig, str]:
+
+        if not is_lp_layout_model_config_any_format(config_path):
+            return config_path
+        config_path = add_identifier_for_config(config_path, identifier)
+        for dataset_name in self.MODEL_CATALOG:
+            if dataset_name in config_path:
+                default_model_arch = list(self.MODEL_CATALOG[dataset_name].keys())[0]
+                # Use the first model_name for the dataset as the default_model_arch
+                return layout_model_config_parser(
+                    config_path, self.DETECTOR_NAME, default_model_arch
+                )
+        raise ValueError(
+            f"The config {config_path} is not a valid config for {self.__class__}, "
+            f"possibly because there aren't models trained for the specified dataset."
+        )
+
+    def config_parser(
+        self, config_path: str, model_path: Optional[str], allow_empty_path=False
+    ) -> Tuple[str, str]:
 
         config_path = self._parse_config(config_path, "config")
-        
+
         if isinstance(config_path, str) and model_path is None:
             if not allow_empty_path:
                 raise ValueError(
