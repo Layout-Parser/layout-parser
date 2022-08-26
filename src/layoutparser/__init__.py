@@ -23,6 +23,7 @@ from .file_utils import (
     is_effdet_available,
     is_pytesseract_available,
     is_gcv_available,
+    is_paddleocr_available,
 )
 
 _import_structure = {
@@ -51,6 +52,7 @@ _import_structure = {
         "is_paddle_available",
         "is_pytesseract_available",
         "is_gcv_available",
+        "is_paddleocr_available",
         "requires_backends"
     ],
     "tools": [
@@ -79,6 +81,9 @@ if is_pytesseract_available():
 
 if is_gcv_available():
     _import_structure["ocr.gcv_agent"] = ["GCVAgent", "GCVFeatureType"]
+
+if is_paddleocr_available():
+    _import_structure["ocr.paddleocr_agent"] = ["PaddleOCRAgent", "PaddleOCRFeatureType"]  
 
 sys.modules[__name__] = _LazyModule(
     __name__,

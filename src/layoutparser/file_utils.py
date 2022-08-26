@@ -88,6 +88,16 @@ try:
 except ModuleNotFoundError:
     _gcv_available = False
 
+try:
+    _paddleocr_available = importlib.util.find_spec("paddleocr") is not None
+    try:
+        _paddleocr_version = importlib_metadata.version("paddleocr")
+        logger.debug(f"PaddleOCR version {_paddleocr_version} available.")
+    except importlib_metadata.PackageNotFoundError:
+        _paddleocr_available = False
+except ModuleNotFoundError:
+    _paddleocr_available = False
+
 
 def is_torch_available():
     return _torch_available
@@ -120,6 +130,9 @@ def is_pytesseract_available():
 
 def is_gcv_available():
     return _gcv_available
+
+def is_paddleocr_available():
+    return _paddleocr_available
 
 
 PYTORCH_IMPORT_ERROR = """
@@ -154,6 +167,11 @@ GCV_IMPORT_ERROR = """
 `pip install google-cloud-vision==1`
 """
 
+PADDLEOCR_IMPORT_ERROR = """
+{0} requires the PaddleOCR library but it was not found in your environment. You can install it with pip:
+`pip install paddleocr`
+"""
+
 BACKENDS_MAPPING = dict(
     [
         ("torch", (is_torch_available, PYTORCH_IMPORT_ERROR)),
@@ -162,6 +180,7 @@ BACKENDS_MAPPING = dict(
         ("effdet", (is_effdet_available, EFFDET_IMPORT_ERROR)),
         ("pytesseract", (is_pytesseract_available, PYTESSERACT_IMPORT_ERROR)),
         ("google-cloud-vision", (is_gcv_available, GCV_IMPORT_ERROR)),
+        ("paddleocr", (is_paddleocr_available, PADDLEOCR_IMPORT_ERROR)),
     ]
 )
 

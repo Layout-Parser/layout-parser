@@ -17,6 +17,7 @@ from layoutparser import (
     GCVFeatureType,
     TesseractAgent,
     TesseractFeatureType,
+    PaddleOCRAgent,
 )
 import json, cv2, os
 
@@ -77,3 +78,14 @@ def test_tesseract(test_detect=False):
         assert r3 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PARA)
         assert r4 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.LINE)
         assert r5 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.WORD)
+
+
+def test_paddleocr(test_detect=False):
+
+    ocr_agent = PaddleOCRAgent(languages="en")
+
+    # The results could be different is using another version of PaddleOCR Engine.
+    # PaddleOCR 2.0.1 is used for generating the result.
+    if test_detect:
+        res = ocr_agent.detect(image)
+        print(res)
