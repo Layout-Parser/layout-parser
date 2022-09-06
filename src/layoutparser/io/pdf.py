@@ -16,6 +16,7 @@ from typing import List, Union, Optional, Dict, Tuple
 
 import pdfplumber
 import pandas as pd
+from io import BytesIO
 
 from ..elements import Layout
 from .basic import load_dataframe
@@ -82,7 +83,7 @@ def extract_words_for_page(
 
 
 def load_pdf(
-    filename: str,
+    filename: Union[str,bytes],
     load_images: bool = False,
     x_tolerance: int = 1.5,
     y_tolerance: int = 2,
@@ -97,7 +98,7 @@ def load_pdf(
     in a list of Layout objects with the original page order.
 
     Args:
-        filename (str): The path to the PDF file.
+        filename (Union[str,bytes]): The path to the PDF file or the bitstream.
         load_images (bool, optional):
             Whether load screenshot for each page of the PDF file.
             When set to true, the function will return both the layout and
@@ -178,6 +179,8 @@ def load_pdf(
         >>> lp.draw_box(pdf_images[0], pdf_layout[0])
     """
 
+    if type(filename) == bytes:
+        filename = BytesIO(filename)
     plumber_pdf_object = pdfplumber.open(filename)
 
     all_page_layout = []
@@ -207,7 +210,10 @@ def load_pdf(
     else:
         import pdf2image
 
-        pdf_images = pdf2image.convert_from_path(filename, dpi=dpi)
+        if type(filename) == bytes:
+            pdf_images = pdf2image.convert_from_bytes(filename, dpi=dpi)
+        else:
+            pdf_images = pdf2image.convert_from_path(filename, dpi=dpi)
 
         for page_id, page_image in enumerate(pdf_images):
             image_width, image_height = page_image.size
