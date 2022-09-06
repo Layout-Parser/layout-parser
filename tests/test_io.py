@@ -86,3 +86,14 @@ def test_empty_pdf():
     
     page_layout = pdf_layout[0]
     assert len(page_layout) == 0 # No selectable tokens on the page
+
+def test_pdf_with_bites():
+    from io import BytesIO
+    pdf_layout = load_pdf(BytesIO("tests/fixtures/io/example.pdf").read())
+    assert len(pdf_layout) == 1
+    
+    page_layout = pdf_layout[0]
+    for attr_name in ["width", "height", "index"]:
+        assert attr_name in page_layout.page_data
+
+    assert len(set(ele.type for ele in page_layout)) == 3
