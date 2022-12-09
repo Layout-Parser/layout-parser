@@ -126,7 +126,7 @@ def simple_line_detection(
     detected_lines = generalized_connected_component_analysis_1d(
         layout,
         scoring_func=partial(
-            is_line_wise_close, y_tolerance=x_tolerance, x_tolerance=y_tolerance
+            is_line_wise_close, y_tolerance=y_tolerance, x_tolerance=x_tolerance
         ),
         aggregation_func=lambda seq: reduce(layout[0].__class__.union, seq),
     )
