@@ -78,6 +78,8 @@ def extract_words_for_page(
         block_type="rectangle",
     )
 
+    page.flush_cashe()
+
     return page_tokens
 
 
@@ -201,6 +203,8 @@ def load_pdf(
         page_tokens.page_data["index"] = page_id
         
         all_page_layout.append(page_tokens)
+
+    plumber_pdf_object.flush_cashe()
 
     if not load_images:
         return all_page_layout
