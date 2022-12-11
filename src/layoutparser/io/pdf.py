@@ -78,6 +78,8 @@ def extract_words_for_page(
         block_type="rectangle",
     )
 
+    page.flush_cashe()
+
     return page_tokens
 
 
@@ -181,26 +183,30 @@ def load_pdf(
     plumber_pdf_object = pdfplumber.open(filename)
 
     all_page_layout = []
-    for page_id in range(len(plumber_pdf_object.pages)):
-        cur_page = plumber_pdf_object.pages[page_id]
 
-        page_tokens = extract_words_for_page(
-            cur_page,
-            x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance,
-            keep_blank_chars=keep_blank_chars,
-            use_text_flow=use_text_flow,
-            horizontal_ltr=horizontal_ltr,
-            vertical_ttb=vertical_ttb,
-            extra_attrs=extra_attrs,
-        )
+    with plumber_pdf_object:
+        for page_id in range(len(plumber_pdf_object.pages)):
+            cur_page = plumber_pdf_object.pages[page_id]
 
-        # Adding metadata for the current page
-        page_tokens.page_data["width"] = float(cur_page.width)
-        page_tokens.page_data["height"] = float(cur_page.height)
-        page_tokens.page_data["index"] = page_id
-        
-        all_page_layout.append(page_tokens)
+            page_tokens = extract_words_for_page(
+                cur_page,
+                x_tolerance=x_tolerance,
+                y_tolerance=y_tolerance,
+                keep_blank_chars=keep_blank_chars,
+                use_text_flow=use_text_flow,
+                horizontal_ltr=horizontal_ltr,
+                vertical_ttb=vertical_ttb,
+                extra_attrs=extra_attrs,
+            )
+
+            # Adding metadata for the current page
+            page_tokens.page_data["width"] = float(cur_page.width)
+            page_tokens.page_data["height"] = float(cur_page.height)
+            page_tokens.page_data["index"] = page_id
+            
+            all_page_layout.append(page_tokens)
+
+    plumber_pdf_object.flush_cashe()
 
     if not load_images:
         return all_page_layout
