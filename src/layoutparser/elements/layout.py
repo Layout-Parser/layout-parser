@@ -46,7 +46,7 @@ class Layout(MutableSequence):
             Defaults to None.
     """
 
-    def __init__(self, blocks: Optional[List] = None, *, page_data: Dict = None):
+    def __init__(self, blocks: Optional[List["Layout"]] = None, *, page_data: Dict = None):
 
         if not (
             (blocks is None)
