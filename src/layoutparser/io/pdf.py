@@ -16,6 +16,7 @@ from typing import List, Union, Optional, Dict, Tuple
 
 import pdfplumber
 import pandas as pd
+from PIL import Image
 
 from ..elements import Layout
 from .basic import load_dataframe
