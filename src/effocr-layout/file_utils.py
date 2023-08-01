@@ -88,6 +88,14 @@ try:
 except ModuleNotFoundError:
     _gcv_available = False
 
+try:
+    _effocr_available = importlib.util.find_spec("onnxruntime") is not None \
+                    and importlib.util.find_spec("onnx") is not None \
+                    and importlib.util.find_spec("faiss") is not None  
+except ModuleNotFoundError:
+    _effocr_available = False
+
+
 
 def is_torch_available():
     return _torch_available
@@ -120,6 +128,9 @@ def is_pytesseract_available():
 
 def is_gcv_available():
     return _gcv_available
+
+def is_effocr_available():
+    return _effocr_available
 
 
 PYTORCH_IMPORT_ERROR = """
@@ -154,6 +165,13 @@ GCV_IMPORT_ERROR = """
 `pip install google-cloud-vision==1`
 """
 
+EFFOCR_IMPORT_ERROR = """
+{0} requires the onnxruntime, onnx and faiss libraries but at least one was not found in your environment. You can install it with pip:
+`pip install onnxruntime onnx faiss`
+Note that `faiss` can be installed with eiter the CPU or GPU version, but the GPU version requires CUDA. See 
+https://github.com/facebookresearch/faiss/blob/main/INSTALL.md for more details.
+"""
+
 BACKENDS_MAPPING = dict(
     [
         ("torch", (is_torch_available, PYTORCH_IMPORT_ERROR)),
@@ -162,6 +180,7 @@ BACKENDS_MAPPING = dict(
         ("effdet", (is_effdet_available, EFFDET_IMPORT_ERROR)),
         ("pytesseract", (is_pytesseract_available, PYTESSERACT_IMPORT_ERROR)),
         ("google-cloud-vision", (is_gcv_available, GCV_IMPORT_ERROR)),
+        ("effocr", (is_effocr_available, EFFOCR_IMPORT_ERROR))
     ]
 )
 

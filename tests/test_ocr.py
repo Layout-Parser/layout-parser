@@ -17,10 +17,13 @@ from layoutparser import (
     GCVFeatureType,
     TesseractAgent,
     TesseractFeatureType,
+    EffOCRAgent,
+    EffOCRFeatureType,
 )
 import json, cv2, os
 
 image = cv2.imread("tests/fixtures/ocr/test_gcv_image.jpg")
+effocr_image = cv2.imread("tests/fixtures/ocr/test_effocr_image.jpg")
 
 
 def test_gcv_agent(test_detect=False):
@@ -77,3 +80,28 @@ def test_tesseract(test_detect=False):
         assert r3 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.PARA)
         assert r4 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.LINE)
         assert r5 == ocr_agent.gather_data(res, agg_level=TesseractFeatureType.WORD)
+
+'''
+Test the EffOCRAgent, which implements EffOCR -- https://scholar.harvard.edu/sites/scholar.harvard.edu/files/dell/files/effocr.pdf
+'''
+def test_effocr(test_detect=True):
+    ocr_agent = EffOCRAgent()
+    
+    # res = ocr_agent.load_response("tests/fixtures/ocr/test_effocr_response.json")
+    # r0 = ocr_agent.gather_text_annotations(res)
+    # r1 = ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.BLOCK)
+    # r2 = ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.PARA)
+    # r3 = ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.LINE)
+    # r4 = ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.WORD)
+    # r5 = ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.CHAR)
+
+    if test_detect:
+        res = ocr_agent.detect(effocr_image, return_response=True)
+        assert "The tug boat Alice" in res[0]
+        assert False
+        # assert r0 == res["text"]
+        # assert r1 == ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.BLOCK)
+        # assert r2 == ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.PARA)
+        # assert r3 == ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.LINE)
+        # assert r4 == ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.WORD)
+        # assert r5 == ocr_agent.gather_data(res, agg_level=EffOCRFeatureType.CHAR)
