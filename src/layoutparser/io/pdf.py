@@ -92,6 +92,8 @@ def load_pdf(
     vertical_ttb: bool = True,
     extra_attrs: Optional[List[str]] = None,
     dpi: int = DEFAULT_PDF_DPI,
+    first_page: Optional[int] = None,
+    last_page: Optional[int] = None
 ) -> Union[List[Layout], Tuple[List[Layout], List["Image.Image"]]]:
     """Load all tokens for each page from a PDF file, and save them
     in a list of Layout objects with the original page order.
@@ -159,7 +161,10 @@ def load_pdf(
             pdf_layouts, it can be rendered appropriately.
             Defaults to `DEFAULT_PDF_DPI=72`, which is also the default rendering dpi
             from the pdfplumber PDF parser.
-
+        first_page (int, optional):
+            First page to process.
+        last_page (int, optional):
+            Last page to process before stopping.
     Returns:
         List[Layout]:
             When `load_images=False`, it will only load the pdf_tokens from
@@ -182,6 +187,8 @@ def load_pdf(
 
     all_page_layout = []
     for page_id in range(len(plumber_pdf_object.pages)):
+        if (first_page and page_id < first_page - 1) or (last_page and page_id >= last_page):
+            continue
         cur_page = plumber_pdf_object.pages[page_id]
 
         page_tokens = extract_words_for_page(
@@ -207,7 +214,7 @@ def load_pdf(
     else:
         import pdf2image
 
-        pdf_images = pdf2image.convert_from_path(filename, dpi=dpi)
+        pdf_images = pdf2image.convert_from_path(filename, dpi=dpi, first_page=first_page, last_page=last_page)
 
         for page_id, page_image in enumerate(pdf_images):
             image_width, image_height = page_image.size
