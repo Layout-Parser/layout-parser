@@ -31,7 +31,7 @@ pip install layoutparser torchvision && pip install "detectron2@git+https://gith
 
 This might take some time as the command will *compile* the library. If you also want to install a Detectron2 version 
 with GPU support or encounter some issues during the installation process, please refer to the official Detectron2 
-[installation instruction](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md) for detailed
+[installation instruction](https://detectron2.readthedocs.io/en/latest/tutorials/install.html) for detailed
 information. 
 
 #### For Windows users
