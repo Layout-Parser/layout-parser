@@ -18,53 +18,53 @@ from ..base_catalog import PathManager
 
 MODEL_CATALOG = {
     "HJDataset": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/6icw6at8m28a2ho/model_final.pth?dl=1",
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/893paxpy5suvlx9/model_final.pth?dl=1",
-        "retinanet_R_50_FPN_3x": "https://www.dropbox.com/s/yxsloxu3djt456i/model_final.pth?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/6icw6at8m28a2ho/model_final.pth",
+        "mask_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/893paxpy5suvlx9/model_final.pth",
+        "retinanet_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/yxsloxu3djt456i/model_final.pth",
     },
     "PubLayNet": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/dgy9c10wykk4lq4/model_final.pth?dl=1",
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/d9fc9tahfzyl6df/model_final.pth?dl=1",
-        "mask_rcnn_X_101_32x8d_FPN_3x": "https://www.dropbox.com/s/57zjbwv6gh3srry/model_final.pth?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/dgy9c10wykk4lq4/model_final.pth",
+        "mask_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/d9fc9tahfzyl6df/model_final.pth",
+        "mask_rcnn_X_101_32x8d_FPN_3x": "https://dl.dropboxusercontent.com/s/57zjbwv6gh3srry/model_final.pth",
     },
     "PrimaLayout": {
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/h7th27jfv19rxiy/model_final.pth?dl=1"
+        "mask_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/h7th27jfv19rxiy/model_final.pth"
     },
     "NewspaperNavigator": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/6ewh6g8rqt2ev3a/model_final.pth?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/6ewh6g8rqt2ev3a/model_final.pth",
     },
     "TableBank": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/8v4uqmz1at9v72a/model_final.pth?dl=1",
-        "faster_rcnn_R_101_FPN_3x": "https://www.dropbox.com/s/6vzfk8lk9xvyitg/model_final.pth?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/8v4uqmz1at9v72a/model_final.pth",
+        "faster_rcnn_R_101_FPN_3x": "https://dl.dropboxusercontent.com/s/6vzfk8lk9xvyitg/model_final.pth",
     },
     "MFD": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/7xel0i3iqpm2p8y/model_final.pth?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/7xel0i3iqpm2p8y/model_final.pth",
     },
 }
 
 CONFIG_CATALOG = {
     "HJDataset": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/j4yseny2u0hn22r/config.yml?dl=1",
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/4jmr3xanmxmjcf8/config.yml?dl=1",
-        "retinanet_R_50_FPN_3x": "https://www.dropbox.com/s/z8a8ywozuyc5c2x/config.yml?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/j4yseny2u0hn22r/config.yml",
+        "mask_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/4jmr3xanmxmjcf8/config.yml",
+        "retinanet_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/z8a8ywozuyc5c2x/config.yml",
     },
     "PubLayNet": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/f3b12qc4hc0yh4m/config.yml?dl=1",
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/u9wbsfwz4y0ziki/config.yml?dl=1",
-        "mask_rcnn_X_101_32x8d_FPN_3x": "https://www.dropbox.com/s/nau5ut6zgthunil/config.yaml?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/f3b12qc4hc0yh4m/config.yml",
+        "mask_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/u9wbsfwz4y0ziki/config.yml",
+        "mask_rcnn_X_101_32x8d_FPN_3x": "https://dl.dropboxusercontent.com/s/nau5ut6zgthunil/config.yaml",
     },
     "PrimaLayout": {
-        "mask_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/yc92x97k50abynt/config.yaml?dl=1"
+        "mask_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/yc92x97k50abynt/config.yaml"
     },
     "NewspaperNavigator": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/wnido8pk4oubyzr/config.yml?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/wnido8pk4oubyzr/config.yml",
     },
     "TableBank": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/7cqle02do7ah7k4/config.yaml?dl=1",
-        "faster_rcnn_R_101_FPN_3x": "https://www.dropbox.com/s/h63n6nv51kfl923/config.yaml?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/7cqle02do7ah7k4/config.yaml",
+        "faster_rcnn_R_101_FPN_3x": "https://dl.dropboxusercontent.com/s/h63n6nv51kfl923/config.yaml",
     },
     "MFD": {
-        "faster_rcnn_R_50_FPN_3x": "https://www.dropbox.com/s/ld9izb95f19369w/config.yaml?dl=1",
+        "faster_rcnn_R_50_FPN_3x": "https://dl.dropboxusercontent.com/s/ld9izb95f19369w/config.yaml",
     },
 }
 
