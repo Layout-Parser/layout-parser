@@ -23,7 +23,7 @@
 
 ![Example Usage](https://github.com/Layout-Parser/layout-parser/raw/main/.github/example.png)
 
-LayoutParser aims to provide a wide range of tools that aims to streamline Document Image Analysis (DIA) tasks. Please check the LayoutParser [demo video](https://youtu.be/8yA5xB4Dg8c) (1 min) or [full talk](https://www.youtube.com/watch?v=YG0qepPgyGY) (15 min) for details. And here are some key features:
+LayoutParser aims to provide a wide range of tools that streamline Document Image Analysis (DIA) tasks. Please check the LayoutParser [demo video](https://youtu.be/8yA5xB4Dg8c) (1 min) or [full talk](https://www.youtube.com/watch?v=YG0qepPgyGY) (15 min) for details. And here are some key features:
 
 - LayoutParser provides a rich repository of deep learning models for layout detection as well as a set of unified APIs for using them. For example, 
   
