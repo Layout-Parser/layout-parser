@@ -111,7 +111,12 @@ Extra steps are needed if you want to use Detectron2-based models. Please check 
 
 We provide a series of examples for to help you start using the layout parser library: 
 
-1. [Table OCR and Results Parsing](https://github.com/Layout-Parser/layout-parser/blob/main/examples/OCR%20Tables%20and%20Parse%20the%20Output.ipynb): `layoutparser` can be used for conveniently OCR documents and convert the output in to structured data. 
+1. Table OCR and Results Parsing: `layoutparser` can be used for conveniently OCR documents and convert the output in to structured data. Currently, `layoutparser` supports two types of OCR engines: Google Cloud Vision and Tesseract OCR engine. And we are going to provide more support in the future.
+
+    The tutorials are as follows : 
+    1. [Google Cloud Vision](https://github.com/Layout-Parser/layout-parser/blob/main/examples/OCR%20Tables%20and%20Parse%20the%20Output.ipynb)
+    2. [Tesseract OCR](./examples/OCR_tesserocr_example.ipynb)
+
 
 2. [Deep Layout Parsing Example](https://github.com/Layout-Parser/layout-parser/blob/main/examples/Deep%20Layout%20Parsing.ipynb): With the help of Deep Learning, `layoutparser` supports the analysis very complex documents and processing of the hierarchical structure in the layouts. 
 
