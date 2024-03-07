@@ -389,7 +389,12 @@ def draw_box(
                 text = str(ele.type) if not text else text + ": " + str(ele.type)
 
             start_x, start_y = ele.coordinates[:2]
-            text_w, text_h = font_obj.getsize(text)
+            
+            # Compatibility with Pillow>=10.0.1 
+            if hasattr(font_obj, 'getsize'):
+                text_w, text_h = font_obj.getsize(text)
+            else:
+                text_w, text_h = font_obj.getbbox(text)[2:4]
 
             text_box_object = Rectangle(
                 start_x, start_y, start_x + text_w, start_y + text_h
