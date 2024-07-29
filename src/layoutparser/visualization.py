@@ -61,12 +61,26 @@ def _draw_vertical_text(
     Ref: https://github.com/Belval/TextRecognitionDataGenerator/blob/7f4c782c33993d2b6f712d01e86a2f342025f2df/trdg/computer_text_generator.py
     """
 
-    space_height = int(image_font.getsize(" ")[1] * space_width)
+    space_bbox = image_font.getbbox(" ")
+    space_height = (space_bbox[3] - space_bbox[1]) * space_width
 
-    char_heights = [
-        image_font.getsize(c)[1] if c != " " else space_height for c in text
-    ]
-    text_width = max([image_font.getsize(c)[0] for c in text])
+    char_heights = []
+    for c in text:
+        if c != " ":
+            char_bbox = image_font.getbbox(c)
+            char_height = char_bbox[3] - char_bbox[1]
+        else:
+            char_height = space_height
+        char_heights.append(char_height)
+    
+    max_width = 0
+    for c in text:
+        char_bbox = image_font.getbbox(c)
+        char_width = char_bbox[2] - char_bbox[0]
+        if char_width > max_width:
+            max_width = char_width
+
+    text_width = max_width
     text_height = sum(char_heights) + character_spacing * len(text)
 
     txt_img = Image.new("RGBA", (text_width, text_height), color=text_background_color)
@@ -389,7 +403,9 @@ def draw_box(
                 text = str(ele.type) if not text else text + ": " + str(ele.type)
 
             start_x, start_y = ele.coordinates[:2]
-            text_w, text_h = font_obj.getsize(text)
+            left, top, right, bottom = font_obj.getbbox(text)
+            text_w = right - left
+            text_h = bottom - top
 
             text_box_object = Rectangle(
                 start_x, start_y, start_x + text_w, start_y + text_h
