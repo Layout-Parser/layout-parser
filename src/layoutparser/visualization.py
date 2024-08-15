@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional, Union, Dict, Any, Tuple, Dict
+from typing import List, Optional, Union, Dict, Any, Tuple
 import functools
 import os
 import sys
@@ -37,7 +37,7 @@ _font_path = os.path.join(_lib_path, "misc", "NotoSerifCJKjp-Regular.otf")
 
 DEFAULT_BOX_WIDTH_RATIO = 0.005
 DEFAULT_OUTLINE_COLOR = "red"
-DEAFULT_COLOR_PALETTE = "#f6bd60-#f7ede2-#f5cac3-#84a59d-#f28482"
+DEFAULT_COLOR_PALETTE = "#f6bd60-#f7ede2-#f5cac3-#84a59d-#f28482"
 # From https://coolors.co/f6bd60-f7ede2-f5cac3-84a59d-f28482
 
 DEFAULT_FONT_PATH = _font_path
@@ -389,7 +389,7 @@ def draw_box(
                 text = str(ele.type) if not text else text + ": " + str(ele.type)
 
             start_x, start_y = ele.coordinates[:2]
-            text_w, text_h = font_obj.getsize(text)
+            text_w, text_h = font_obj.getbbox(text)[2:4]
 
             text_box_object = Rectangle(
                 start_x, start_y, start_x + text_w, start_y + text_h
