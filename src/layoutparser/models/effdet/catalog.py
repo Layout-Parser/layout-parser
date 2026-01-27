@@ -18,12 +18,12 @@ from ..base_catalog import PathManager
 
 MODEL_CATALOG = {
     "PubLayNet": {
-        "tf_efficientdet_d0": "https://www.dropbox.com/s/ukbw5s673633hsw/publaynet-tf_efficientdet_d0.pth.tar?dl=1",
-        "tf_efficientdet_d1": "https://www.dropbox.com/s/gxy11xkkiwnpgog/publaynet-tf_efficientdet_d1.pth.tar?dl=1"
+        "tf_efficientdet_d0": "https://huggingface.co/layoutparser/efficientdet/resolve/main/PubLayNet/tf_efficientdet_d0/publaynet-tf_efficientdet_d0.pth.tar",
+        "tf_efficientdet_d1": "https://huggingface.co/layoutparser/efficientdet/resolve/main/PubLayNet/tf_efficientdet_d1/publaynet-tf_efficientdet_d1.pth.tar"
     },
     "MFD": {
-        "tf_efficientdet_d0": "https://www.dropbox.com/s/dkr22iux7thlhel/mfd-tf_efficientdet_d0.pth.tar?dl=1",
-        "tf_efficientdet_d1": "https://www.dropbox.com/s/icmbiaqr5s9bz1x/mfd-tf_efficientdet_d1.pth.tar?dl=1"
+        "tf_efficientdet_d0": "https://huggingface.co/layoutparser/efficientdet/resolve/main/MFD/tf_efficientdet_d0/mfd-tf_efficientdet_d0.pth.tar",
+        "tf_efficientdet_d1": "https://huggingface.co/layoutparser/efficientdet/resolve/main/MFD/tf_efficientdet_d1/mfd-tf_efficientdet_d1.pth.tar"
     }
 }
 

@@ -29,6 +29,17 @@ class DropboxHandler(HTTPURLHandler):
     def _isfile(self, path):
         return path in self.cache_map
 
+class HuggingfaceHandler(HTTPURLHandler):
+    """
+    Supports download and file check for Huggingface links
+    """
+
+    def _get_supported_prefixes(self):
+        return ["https://huggingface.co"]
+
+    def _isfile(self, path):
+        return path in self.cache_map
 
 PathManager = PathManagerBase()
 PathManager.register_handler(DropboxHandler())
+PathManager.register_handler(HuggingfaceHandler())
