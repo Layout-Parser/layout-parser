@@ -35,7 +35,7 @@ class HuggingfaceHandler(HTTPURLHandler):
     """
 
     def _get_supported_prefixes(self):
-        return ["https://www.huggingface.co"]
+        return ["https://huggingface.co"]
 
     def _isfile(self, path):
         return path in self.cache_map
