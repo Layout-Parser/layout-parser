@@ -131,3 +131,7 @@ If you find `layoutparser` helpful to your work, please consider citing our tool
   year={2021}
 }
 ```
+
+---
+
+*[Mukller](https://github.com/Mukller)*
