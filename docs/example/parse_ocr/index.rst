@@ -24,7 +24,7 @@ Initiate GCV OCR engine and check the image
 
 Currently, ``layoutparser`` supports two types of OCR engines: Google
 Cloud Vision and Tesseract OCR engine. And we are going to provide more
-support in the future. In this toturial, we will use the Google Cloud
+support in the future. In this tutorial, we will use the Google Cloud
 Vision engine as an example.
 
 .. code:: python
@@ -76,7 +76,7 @@ response:
 
    | In this format, GCV automatically find the best aggregation level
      for the text, and return the results in a list. We can
-   | use the ``ocr_agent.gather_text_annotations`` to reterive this type
+   | use the ``ocr_agent.gather_text_annotations`` to retrieve this type
      of information.
 
 2. full_text_annotations
